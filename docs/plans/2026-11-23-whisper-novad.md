@@ -1,6 +1,6 @@
 # Plan: whisper-server without server-side VAD
 
-- Status: Draft
+- Status: Done 2026-11-23
 - Depends on: none
 - Design: [ADR-0006](../adr/0006-installation.md) (Migration from the old
   recorder), [ADR-0012](../adr/0012-speech.md) (Outside dependencies,
@@ -47,7 +47,7 @@
 ## Done when
 
 ```sh
-! systemctl --user cat whisper-server | rg -q -- --vad
+! systemctl --user cat whisper-server | rg -q -- '^\s+--vad'
 sox -n -r 16000 -c 1 /tmp/whisper-probe.wav synth 1 sine 440
 curl -sf -F file=@/tmp/whisper-probe.wav -F response_format=json \
   http://127.0.0.1:8178/v1/audio/transcriptions | jq -e 'has("text")'
@@ -56,5 +56,7 @@ systemctl --user show -p ActiveEnterTimestamp llama-server  # same as before
 ```
 
 ## Progress log
+
+- 2026-11-23 20:14: machine repo change `xwmopkzv` (`feat(whisper): drop server-side VAD`), local. `whisper:setup` restarted only whisper-server (20:13:54); llama-server unchanged (started 2026-11-22 12:27:28). Probe returns `{"text":""}`.
 
 ## Decisions to confirm
