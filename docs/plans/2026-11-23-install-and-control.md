@@ -137,6 +137,17 @@ mise run build
 }
 ```
 
+- 2026-11-23: Step 9 complete. All Done when commands pass. Final
+  `mise run build`: 474 passed, two timing tests deselected. The
+  control timing test was run separately and passed. Added a failing
+  timeout regression, then made systemctl timeouts report command errors.
+  Built-wheel VCS smoke confirms unchanged installer file contents and
+  mtimes, no reload and no restart on the second install. Unit templates
+  ship in the wheel; test files do not. All smoke homes, roots and wheel
+  directories were temporary and deleted. No deploy, system install,
+  remote write, hardware access or real service action was run. Status
+  remains unchanged.
+
 ## Decisions to confirm
 
 - One-shot helpers use no automatic restart. `Restart=always` is invalid

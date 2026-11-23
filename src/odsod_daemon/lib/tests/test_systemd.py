@@ -145,3 +145,14 @@ async def test_dbus_loads_units_before_reading_properties(monkeypatch):
     result = await source.get("capture.service")
     assert result is not None
     assert result.active_state == "failed"
+
+
+def test_control_timeout_is_a_reportable_failure(monkeypatch):
+    import subprocess
+
+    def timeout(*args, **kwargs):
+        raise subprocess.TimeoutExpired("systemctl", 120)
+
+    monkeypatch.setattr(subprocess, "run", timeout)
+    with pytest.raises(RuntimeError, match="timed out"):
+        systemd.control("stop", "odsod-daemon-capture.service")

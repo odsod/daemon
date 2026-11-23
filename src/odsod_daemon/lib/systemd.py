@@ -168,12 +168,15 @@ def control(*arguments: str, check: bool = True) -> bool:
     """Run a bounded user-manager command, shared by install and control."""
     import subprocess
 
-    result = subprocess.run(
-        ["systemctl", "--user", *arguments],
-        capture_output=True,
-        text=True,
-        timeout=120,
-    )
+    try:
+        result = subprocess.run(
+            ["systemctl", "--user", *arguments],
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+    except subprocess.TimeoutExpired as error:
+        raise RuntimeError(f"systemctl {' '.join(arguments)} timed out") from error
     if check and result.returncode:
         raise RuntimeError(
             f"systemctl {' '.join(arguments)}: "
