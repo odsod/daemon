@@ -30,7 +30,7 @@ def state(name, active="active", age=10):
 def healthy():
     return Snapshot(
         now=NOW,
-        units={name: state(name) for name in ("capture", "pipeline")},
+        units={name: state(name) for name in ("capture", "pipeline", "tray")},
         newest_audio={"mic": clock.iso(NOW), "sys": clock.iso(NOW)},
     )
 
@@ -77,7 +77,7 @@ def test_partial_build_requires_shipped_units(missing):
     assert all(
         not s.expected
         for s in report.services
-        if any(n in s.unit for n in ("session", "tray", "keys"))
+        if any(n in s.unit for n in ("session", "keys"))
     )
     snapshot.units[missing] = None
     assert evaluate(snapshot, ControlConfig()).exit_code == 2

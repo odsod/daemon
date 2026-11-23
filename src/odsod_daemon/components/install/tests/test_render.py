@@ -10,6 +10,7 @@ def test_shipped_templates(tmp_path: Path):
         *render.SUPPORT,
         "odsod-daemon-capture.service",
         "odsod-daemon-pipeline.service",
+        "odsod-daemon-tray.service",
     }
     capture = files["odsod-daemon-capture.service"]
     assert "ExecCondition=/bin/sh -c '! test -e %t/odsod-daemon/paused'" in capture

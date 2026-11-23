@@ -9,7 +9,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
-SERVICES: tuple[str, ...] = ("capture", "pipeline")
+SERVICES: tuple[str, ...] = ("capture", "pipeline", "tray")
 
 Source = Literal["git", "dev"]
 
