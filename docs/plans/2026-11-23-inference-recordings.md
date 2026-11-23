@@ -1,6 +1,6 @@
 # Plan: inference recordings and measures
 
-- Status: Draft
+- Status: Done 2026-11-23
 - Depends on: [python-scaffold](2026-11-23-python-scaffold.md),
   [whisper-novad](2026-11-23-whisper-novad.md),
   [audio-fixtures](2026-11-23-audio-fixtures.md)
