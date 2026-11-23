@@ -46,6 +46,11 @@ mise run build
   bench` passed. Pure line, echo, gap, local-day and finish rules pass
   33 table checks, ruff and pyright.
 
+- 2026-11-23: Writer and pipeline line implemented. Complete-line writes,
+  partial-line repair, echo release, finish/cap immutability, silence,
+  a 3,600-line backlog, and missing signals pass (41 component checks).
+  Ruff and pyright pass.
+
 ## Decisions to confirm
 
 - Mic text shorter than three normalized tokens is never dropped. This
@@ -54,3 +59,6 @@ mise run build
   midnight. This lets logout gaps appear before the day is finished.
 - Echo hold age uses the text record timestamp, so restart does not reset
   the hold limit. Missing sys coverage holds mic text up to that limit.
+
+- Replay orders records by write timestamp, with stable stream order for
+  ties. Held mic lines append when released. Gap lines append on closure.

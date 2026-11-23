@@ -20,7 +20,7 @@ COMPONENTS = [
     transcription,
     cleanup,
     signals,
-    # transcript,
+    transcript,
     # interactions,
     # publish,
 ]
