@@ -1,6 +1,6 @@
 # Plan: install, version and the control commands
 
-- Status: Draft
+- Status: Done 2026-11-23
 - Depends on: [python-scaffold](2026-11-23-python-scaffold.md),
   [capture](2026-11-23-capture.md) (pause and resume stop and start it);
   step 8 also needs [whisper-novad](2026-11-23-whisper-novad.md) and
