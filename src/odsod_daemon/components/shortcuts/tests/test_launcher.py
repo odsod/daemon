@@ -110,3 +110,28 @@ async def test_real_spawn_runs_a_fake_systemd_run_from_path(
 
     assert log.read_text().startswith("--user --scope --unit=app-odsod-meet-")
     assert failures(caplog) == ["run [odsod] meet: start failed: exit 1: Unit exists"]
+
+
+def test_environment_puts_the_odsodctl_directory_first_once():
+    env = launcher.environment({"PATH": "/usr/bin:/bin", "HOME": "/h"}, "/venv/bin")
+    assert env == {"PATH": "/venv/bin:/usr/bin:/bin", "HOME": "/h"}
+    again = launcher.environment({"PATH": "/usr/bin:/venv/bin"}, "/venv/bin")
+    assert again["PATH"] == "/usr/bin:/venv/bin"
+    assert launcher.environment({}, "/venv/bin")["PATH"] == "/venv/bin"
+
+
+@pytest.mark.looptime(False)
+async def test_launched_command_finds_odsodctl_on_path(tmp_path, monkeypatch, caplog):
+    import sys
+    from pathlib import Path
+
+    seen = tmp_path / "path"
+    fake = tmp_path / "systemd-run"
+    fake.write_text(f'#!/bin/sh\necho "$PATH" > {seen}\nexit 0\n')
+    fake.chmod(0o755)
+    monkeypatch.setenv("PATH", f"{tmp_path}:/usr/bin:/bin")
+
+    await launcher.launch(meet())
+
+    entries = seen.read_text().strip().split(":")
+    assert str(Path(sys.executable).parent) in entries

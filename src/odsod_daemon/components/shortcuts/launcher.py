@@ -9,10 +9,13 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import re
 import secrets
+import sys
 import tempfile
-from collections.abc import Awaitable, Callable, Sequence
+from collections.abc import Awaitable, Callable, Mapping, Sequence
+from pathlib import Path
 from typing import IO, Protocol
 
 from odsod_daemon.components.shortcuts.contract import Shortcut
@@ -49,13 +52,23 @@ def argv(shortcut: Shortcut, suffix: str) -> list[str]:
     ]
 
 
+def environment(env: Mapping[str, str], directory: str) -> dict[str, str]:
+    """``env`` with ``directory`` first on ``PATH``, unless it is there."""
+    entries = [entry for entry in env.get("PATH", "").split(":") if entry]
+    if directory not in entries:
+        entries.insert(0, directory)
+    return {**env, "PATH": ":".join(entries)}
+
+
 async def spawn(command: Sequence[str], stderr: IO[bytes]) -> Process:
+    # The user manager PATH may lack odsodctl; it sits next to this interpreter.
     return await asyncio.create_subprocess_exec(
         *command,
         stdin=asyncio.subprocess.DEVNULL,
         stdout=asyncio.subprocess.DEVNULL,
         stderr=stderr,
         start_new_session=True,
+        env=environment(os.environ, str(Path(sys.executable).parent)),
     )
 
 

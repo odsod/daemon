@@ -42,6 +42,30 @@ def installed_dir(env: Mapping[str, str] | None = None) -> Path:
     return data_home / "kwin/scripts" / PLUGIN_ID
 
 
+def kwinrc_path(env: Mapping[str, str] | None = None) -> Path:
+    env = os.environ if env is None else env
+    home = Path(env.get("HOME", str(Path.home())))
+    return Path(env.get("XDG_CONFIG_HOME", home / ".config")) / "kwinrc"
+
+
+def enabled(kwinrc: Path) -> bool:
+    """True if ``kwinrc`` enables the plugin in its ``[Plugins]`` group."""
+    try:
+        text = kwinrc.read_text(encoding="utf-8")
+    except OSError:
+        return False
+    group = ""
+    for raw in text.splitlines():
+        line = raw.strip()
+        if line.startswith("[") and line.endswith("]"):
+            group = line
+            continue
+        key, sep, value = line.partition("=")
+        if group == "[Plugins]" and sep and key.strip() == f"{PLUGIN_ID}Enabled":
+            return value.strip() == "true"
+    return False
+
+
 def render(dest: Path, list_path: Path = LIST_PATH) -> None:
     """Copy the template to ``dest`` with the list in place of the placeholder."""
     shutil.copytree(TEMPLATE, dest, dirs_exist_ok=True)
@@ -109,17 +133,21 @@ async def ensure(
     run: Runner = run_tool,
     reload: Reload,
     installed: Path | None = None,
+    kwinrc: Path | None = None,
     list_path: Path = LIST_PATH,
 ) -> bool:
     """Install and reload the script if it differs. Return True when current.
 
-    A failed step gets three tries with backoff, then one log line.
+    A failed step gets three tries with backoff, then one log line. A package
+    on disk with the plugin disabled, as a failed reload leaves it, counts as
+    different, so the next start tries again.
     """
     installed = installed_dir() if installed is None else installed
+    kwinrc = kwinrc_path() if kwinrc is None else kwinrc
     with tempfile.TemporaryDirectory() as tmp:
         rendered = Path(tmp) / PLUGIN_ID
         render(rendered, list_path)
-        if same(rendered, installed):
+        if same(rendered, installed) and enabled(kwinrc):
             LOG.info("kwin script: up to date")
             return True
         error: Exception | None = None

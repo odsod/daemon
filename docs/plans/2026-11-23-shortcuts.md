@@ -106,6 +106,10 @@ uv run python -c "from odsod_daemon.services.session import COMPONENTS; from ods
   deselected); `uv run pytest src/odsod_daemon/components/shortcuts`
   (53 passed); `odsodctl shortcuts --json` gives a non-empty list; the
   not-shipped check passes. The wheel holds `shortcuts.json` and `kwin/`.
+- 2026-11-23: Review fixes: `ensure()` installs again when the package on
+  disk matches but `kwinrc` does not enable the plugin, as a failed reload
+  leaves it. Launched commands get the directory of the running interpreter
+  first on `PATH`, so `[odsod] note` finds `odsodctl` in its scope.
 
 ## Decisions to confirm
 
