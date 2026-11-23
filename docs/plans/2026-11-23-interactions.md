@@ -58,6 +58,12 @@ mise run build
   coverage after a failing regression check. All 26 component tests, Ruff
   and component Pyright pass.
 
+- 2026-11-23: Step 4: CLI system fixtures use the signals, speech-text and
+  transcript-finished contracts directly. Four system tests pass: named
+  Swedish lines, inline note, English summary, no dictation, one document
+  and one finished record after two drains, plus malformed/schema/HTTP
+  failures. System-test Ruff and Pyright pass.
+
 ## Decisions to confirm
 
 - Front matter uses JSON syntax, which is valid YAML. The public
@@ -68,3 +74,6 @@ mise run build
 - `--once` exits when power, pending speech or host availability blocks the
   gate. It waits through bounded model-error retries while the gate holds.
 - Local document times use `TZ`, or the IANA zone of `/etc/localtime`.
+
+- Per the workspace task, the system test seeds signals and transcript
+  records directly. It does not run a CDP collector or the transcript worker.
