@@ -61,7 +61,7 @@ Proposed
   template.
 - `contract.py` exports the package-data names of the C source directory
   and the system unit template as constants (`C_SOURCE_DIR`,
-  `SYSTEM_UNIT`). operations imports them to build and install the service
+  `SYSTEM_UNIT`). The install subsystem imports them to build and install the service
   without reaching into keys internals (ADR-0010 seam; ADR-0009, rule 2).
 
 ### Writes

@@ -188,7 +188,7 @@ benchmark: reads stored audio and results
   supervision.
 - [ADR-0005](0005-components-and-implementation.md): the index of
   components, languages and tools, with the architecture diagram.
-- [ADR-0006](0006-installation.md): install and operations.
+- [ADR-0006](0006-installation.md): install.
 - [ADR-0007](0007-keys-service.md): the keys service and the dictation socket.
 - [ADR-0008](0008-shortcuts-and-kwin-script.md): the shortcuts component and
   the KWin script.

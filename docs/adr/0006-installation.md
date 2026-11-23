@@ -1,4 +1,4 @@
-# ADR-0006: Install and operations
+# ADR-0006: Install
 
 ## Status
 
@@ -105,7 +105,7 @@ Proposed
 
 ```
 components/install/
-├── __init__.py       SUBSYSTEM = "operations"
+├── __init__.py       SUBSYSTEM = "install"
 ├── contract.py       InstallRecord, PreviousCommit
 ├── cli.py            typer: install [--system]
 ├── source.py         Read direct_url.json; dev commit and dirty from git
@@ -115,7 +115,7 @@ components/install/
 ├── units/            Unit, timer, target and D-Bus templates
 └── tests/
 components/version/
-├── __init__.py       SUBSYSTEM = "operations"
+├── __init__.py       SUBSYSTEM = "install"
 ├── cli.py            typer: version [--json]
 └── tests/
 ```

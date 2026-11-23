@@ -73,7 +73,7 @@ This ADR defines the code layout. ADR-0005 refers to it.
 | control      | health, status, pause, resume, tray, notify-failed | [ADR-0018](0018-control.md)                   |
 | bench        | bench                                              | [ADR-0019](0019-bench.md)                     |
 | shortcuts    | shortcuts                                          | [ADR-0008](0008-shortcuts-and-kwin-script.md) |
-| operations   | install, version                                   | [ADR-0006](0006-installation.md)              |
+| install      | install, version                                   | [ADR-0006](0006-installation.md)              |
 
 Subsystem rules:
 

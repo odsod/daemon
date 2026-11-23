@@ -486,12 +486,12 @@ System tests in `tests/`:
 
 - One pure function decides the state. A new fault code from a service
   needs no change in control, only its severity in ADR-0010.
-- control depends on capture for the Mic muted mark, and on operations for
+- control depends on capture for the Mic muted mark, and on the install subsystem for
   the install record.
 - control reads three streams for the backlog. A change to their seam
   fields changes this ADR.
 - `odsodctl status` works over SSH; the tray needs the graphical session.
 - Seam decisions (orchestrator, 2026-11-23): control reads the audio
   buffer (size only), utterances, text and coverage; capture reports the
-  `mic-muted` mark; operations writes `state/install/current`;
+  `mic-muted` mark; install writes `state/install/current`;
   `lib.systemd` reads the system bus.

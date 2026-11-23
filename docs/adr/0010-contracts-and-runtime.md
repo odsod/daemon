@@ -61,11 +61,11 @@ them.
 | `run/status.json`                                                     | dictation                                               | control, speech                                                          |
 | `run/muted.json`                                                      | dictation                                               | dictation (`unmute-stale`)                                               |
 | `run/paused`                                                          | control                                                 | capture unit, control                                                    |
-| `state/install/current`                                               | operations                                              | control, bench                                                           |
-| `state/install/previous-commit`                                       | operations                                              | control                                                                  |
+| `state/install/current`                                               | install                                                 | control, bench                                                           |
+| `state/install/previous-commit`                                       | install                                                 | control                                                                  |
 | `config/glossary.txt`                                                 | owner                                                   | speech, interactions, bench                                              |
 | `speech` config section, prompts `cleanup.md`, `cleanup-dictation.md` | owner (speech owns the schema)                          | speech, bench (sandbox overrides)                                        |
-| Keys package-data constants                                           | keys (`contract.py`)                                    | operations (`install --system` builds and installs keys)                 |
+| Keys package-data constants                                           | keys (`contract.py`)                                    | install (`install --system` builds and installs keys)                    |
 | Keys socket                                                           | keys                                                    | dictation ([ADR-0007](0007-keys-service.md))                             |
 | KWin D-Bus calls                                                      | shortcuts                                               | shortcuts ([ADR-0008](0008-shortcuts-and-kwin-script.md))                |
 
@@ -293,8 +293,8 @@ Mic muted as `mic-muted`.
 | `retention`                                        | capture    | No       | Run by the retention timer                         |
 | `shortcuts`                                        | shortcuts  | Yes      |                                                    |
 | `bench cases\|list\|run\|accept\|delete\|report`   | bench      | Yes      | Extra `bench`                                      |
-| `install [--system]`                               | operations | No       |                                                    |
-| `version`                                          | operations | Yes      |                                                    |
+| `install [--system]`                               | install    | No       |                                                    |
+| `version`                                          | install    | Yes      |                                                    |
 
 - Each component that has commands exports a typer app from `cli.py` in its
   folder. The root `cli.py` mounts them and adds `run` and `config check`.
