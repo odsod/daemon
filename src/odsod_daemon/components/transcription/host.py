@@ -77,9 +77,12 @@ class Host:
         attempts: int,
         once: bool,
         raw_on_host: bool = False,
+        before_request: Callable[[], Awaitable[None]] | None = None,
     ) -> tuple[T, int]:
         tried = 0
         while True:
+            if before_request is not None:
+                await before_request()
             try:
                 result = await call()
             except Exception as error:

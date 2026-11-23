@@ -219,3 +219,40 @@ async def test_battery_tailnet_sends_request(temp_root, monkeypatch):
 )
 def test_transport_faults(exception, kind):
     assert fault_kind(exception) == kind
+
+
+async def test_new_dictation_goes_before_ambient_retry(temp_root, monkeypatch):
+    start, end = setup_audio(temp_root)
+    setup_audio(temp_root, "en-chinese-feet", "mic")
+    ambient = utterance(start, end, "sys", "ambient")
+    dic = utterance(start, end, "dic", "dictation")
+    streams.append(
+        streams.day_path(temp_root / "state/utterances/ambient", start.date()), ambient
+    )
+    calls = []
+
+    async def response(self, audio, *, fields, **kwargs):
+        calls.append(fields["language"])
+        if len(calls) == 1:
+            streams.append(
+                streams.day_path(
+                    temp_root / "state/utterances/dictation", start.date()
+                ),
+                dic,
+            )
+            reply = httpx.Response(500, request=httpx.Request("POST", self.url))
+            raise httpx.HTTPStatusError("retry", request=reply.request, response=reply)
+        return inference.WhisperResponse(text="Words", language="english")
+
+    monkeypatch.setattr(inference.WhisperClient, "transcribe", response)
+    monkeypatch.setattr(
+        "odsod_daemon.components.transcription.worker.presence",
+        lambda *args: (True, 0.9),
+    )
+    # Dictation uses the same time range as ambient; extend its buffer for this check.
+    mic = temp_root / "state/audio/mic"
+    sys = temp_root / "state/audio/sys"
+    for file in sys.glob("*.pcm"):
+        (mic / file.name).write_bytes(file.read_bytes())
+    await run(Speech(), once=True)
+    assert calls == ["auto", "en", "auto"]

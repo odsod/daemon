@@ -1,5 +1,7 @@
 """One Whisper request at a time, with dictation first on every dequeue."""
 
+from collections.abc import Awaitable, Callable
+
 from odsod_daemon.components.cleanup.language import code
 from odsod_daemon.components.segmentation.config import Speech
 from odsod_daemon.components.transcription.contract import AsrRecord
@@ -37,7 +39,12 @@ def available(state, channel, start, end) -> bool:
 
 
 async def transcribe(
-    record: dict, speech: Speech, host: Host, *, once: bool
+    record: dict,
+    speech: Speech,
+    host: Host,
+    *,
+    once: bool,
+    before_request: Callable[[], Awaitable[None]] | None = None,
 ) -> AsrRecord:
     roots = paths.roots()
     dic = record["channel"] == "dic"
@@ -84,6 +91,7 @@ async def transcribe(
             lambda: client.transcribe(encoded, fields=request_fields),
             attempts=speech.attempts,
             once=once,
+            before_request=before_request,
         )
         result.attempts = attempts
         language = code(response.language)
@@ -97,6 +105,7 @@ async def transcribe(
                 lambda: client.transcribe(encoded, fields=request_fields),
                 attempts=speech.attempts,
                 once=once,
+                before_request=before_request,
             )
             result.attempts += attempts
         result.text = response.text.strip()
@@ -121,7 +130,32 @@ async def run(speech: Speech, *, once: bool = False) -> None:
     inputs = [roots.state / f"utterances/{kind}" for kind in ("dictation", "ambient")]
     output = roots.state / "asr" / speech.backend
     host = Host("whisper")
-    battery_since = None
+
+    async def wait_for_power() -> None:
+        began = clock.monotonic()
+        url = config.load_common().inference.whisper_url
+        while inference.is_loopback(url) and not power.on_mains():
+            if once and clock.monotonic() - began >= 60:
+                raise HostUnavailable("on battery; work remains pending")
+            await clock.sleep(2)
+
+    def append(result: AsrRecord) -> None:
+        streams.append(
+            streams.day_path(output, clock.utc_now().date()),
+            result.model_dump(mode="json"),
+        )
+
+    async def dictation_first() -> None:
+        # Recheck before retries and the fallback request, not just on dequeue.
+        await wait_for_power()
+        while todo := pending(records(inputs[0]), records(output)):
+            append(
+                await transcribe(
+                    todo[0], speech, host, once=once, before_request=wait_for_power
+                )
+            )
+        await wait_for_power()
+
     async with Inbox(inputs) as inbox:
         while True:
             inbox.prepare()
@@ -133,17 +167,10 @@ async def run(speech: Speech, *, once: bool = False) -> None:
                     return
                 await inbox.wait()
                 continue
-            url = config.load_common().inference.whisper_url
-            if inference.is_loopback(url) and not power.on_mains():
-                if battery_since is None:
-                    battery_since = clock.monotonic()
-                if once and clock.monotonic() - battery_since >= 60:
-                    raise HostUnavailable("on battery; work remains pending")
-                await clock.sleep(2)
-                continue
-            battery_since = None
-            result = await transcribe(todo[0], speech, host, once=once)
-            streams.append(
-                streams.day_path(output, clock.utc_now().date()),
-                result.model_dump(mode="json"),
+            await wait_for_power()
+            before = wait_for_power if todo[0]["channel"] == "dic" else dictation_first
+            append(
+                await transcribe(
+                    todo[0], speech, host, once=once, before_request=before
+                )
             )

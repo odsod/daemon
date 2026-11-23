@@ -271,3 +271,10 @@ async def test_health_heartbeat_preserves_faults(temp_root, monkeypatch):
     assert slept == [60]
     faults = json.loads(file.path.read_text())["faults"]
     assert [f["key"] for f in faults] == ["whisper"]
+
+
+def test_english_drain_keeps_sample_alignment(temp_root):
+    _start, end = setup_audio(temp_root, "en-study-in-scarlet", "mic")
+    runner = ChannelRunner("mic", Speech())
+    runner.advance(once=True)
+    assert abs(runner.last_covered - end.timestamp()) < 0.001

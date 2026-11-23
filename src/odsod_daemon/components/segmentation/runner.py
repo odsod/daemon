@@ -103,7 +103,9 @@ class ChannelRunner:
         idle = clock.monotonic() - self.last_advance >= self.settings.idle_close_s
         advanced = False
         while self.cursor < limit:
-            end = min(limit, self.cursor + FRAME / audio.SAMPLE_RATE)
+            # Derive frame ends from integer samples, not accumulated float steps.
+            sample = round((self.cursor - oldest) * audio.SAMPLE_RATE)
+            end = min(limit, oldest + (sample + FRAME) / audio.SAMPLE_RATE)
             if (
                 not (once or idle)
                 and end - self.cursor < FRAME / audio.SAMPLE_RATE - 0.000001
