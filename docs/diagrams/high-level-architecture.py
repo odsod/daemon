@@ -32,9 +32,7 @@ p.boundary(
         (2385, 345),
         (2385, 990),
         (2190, 990),
-        (2190, 1228),
-        (1460, 1228),
-        (1460, 1135),
+        (2190, 1135),
         (80, 1135),
         (80, 985),
         (255, 985),
@@ -56,10 +54,12 @@ comp(
     [("l", 0.5, "EVDEV"), ("t", 0.5, "UINPUT"), ("r", 0.5, "SOCKET")],
 )
 
-p.frame(580, T, 880, 150, "D", "SESSION")
+p.frame(580, T, 540, 150, "D", "SESSION")
 comp(2, 640, T + 50, 200, "DICTATION", [("l", 0.5, "SOCKET"), ("t", 0.5, "PACTL")])
-comp(3, 1080, T + 50, 160, "TRAY")
-comp(4, 1265, T + 50, 180, "SHORTCUTS", [("r", 0.5, "D-BUS")])
+comp(4, 900, T + 50, 180, "SHORTCUTS", [("t", 0.5, "D-BUS")])
+
+p.frame(1180, T, 280, 150, "E", "TRAY")
+comp(3, 1230, T + 50, 180, "TRAY")
 
 ky = T + 50 + BH / 2
 p.flow([(480, ky), (640, ky)], "START, STOP,\nPASTE", width=HEAVY, both=True)
@@ -81,15 +81,14 @@ p.flow([(400, T + 50), (400, 160), (1570, 160)], "REMAPPED KEYS, PASTE CHORD", a
 p.flow([(740, T + 50), (740, 158)], width=THIN)
 p.open_end(740, 140, ["MUTE MEETING CAPTURE STREAMS (TO PIPEWIRE)"], size=11)
 
-p.flow([(1160, T + 50), (1160, 158)], width=THIN)
-p.open_end(1160, 140, ["TO KDE PLASMA (SYSTEM TRAY)"], size=11)
+p.flow([(990, T + 50), (990, 178), (1570, 178)], "SHORTCUTS", at=1, width=THIN, both=True)
 
-p.flow([(1445, ky), (1570, ky)], "SHORTCUTS", width=THIN, both=True)
+p.flow([(1410, ky), (1570, ky)], "TRAY ICON", width=THIN)
 
 # run/ files
-p.store(890, 365, 150, 70, "run/", ["status.json, muted.json"])
-p.flow([(840, ky + 18), (965, ky + 18), (965, 365)], width=THIN)
-p.flow([(1040, 400), (1160, 400), (1160, T + 50 + BH)], width=THIN)
+p.store(860, 365, 240, 70, "run/", ["status, health/, muted, paused"])
+p.flow([(815, T + 50 + BH), (815, 400), (860, 400)], width=THIN)
+p.flow([(1100, 400), (1320, 400), (1320, T + 50 + BH)], width=THIN)
 
 # ------------------------------------------------------------------ B capture, audio buffer
 p.frame(300, 470, 200, 140, "B", "CAPTURE")
@@ -123,8 +122,8 @@ comp(10, 1710, RA, 160, "TRANSCRIPT")
 p.store(1950, RA - 5, 170, 295, "documents/", ["TRANSCRIPTS/", "INTERACTIONS/"])
 
 comp(9, 330, RB, 160, "SIGNALS", [("l", 0.5, "CDP")])
-p.store(560, RB - 5, 160, 80, "events/", ["SIGNALS, USER"])
-p.store(1020, RB - 5, 160, 80, "interactions/", ["BOUNDARIES"])
+p.store(560, RB - 5, 160, 80, "events/", ["SIGNALS, USER, CAPTURE"])
+p.store(1020, RB - 5, 160, 80, "interactions/", ["OK, SKIPPED"])
 comp(11, 1480, RB, 160, "INTERACTIONS", [("b", 0.5, "HTTP")])
 comp(12, 1950, 1015, 170, "PUBLISH", [("r", 0.5, "COPY")])
 
@@ -144,7 +143,6 @@ p.flow([(1870, ra), (1950, ra)], width=HEAVY)
 p.flow([(1010, 580), (1010, 640)], width=HEAVY, arrow=False)
 p.flow([(1010, 640), (410, 640), (410, RA)], width=HEAVY)
 p.flow([(870, 640), (870, RA)], width=HEAVY)
-p.flow([(1010, 640), (1445, 640), (1445, rb), (1480, rb)], width=THIN)
 p.dot(1010, 640)
 p.dot(870, 640)
 
@@ -185,6 +183,7 @@ p.flow(
     dash=DASHED,
 )
 p.flow([(1480, RB + 20), (1180, RB + 20)], width=THIN, dash=DASHED)
+p.flow([(1610, RA + 75), (1610, RB)], "PASS 1 TEXT", width=THIN, dash=DASHED)
 p.flow([(1640, rb), (1950, rb)], "SPEAKERS, SUMMARY", width=THIN, dash=DASHED)
 p.tag(1900, rb, "BATCH")
 
@@ -206,9 +205,6 @@ p.ext(1000, 1150, 430, 56, "INFERENCE HOST", ["WHISPER-SERVER, LLAMA-SERVER"], s
 comp(13, 100, 1020, 160, "NOTE, PIN")
 p.flow([(260, 1056), (600, 1056), (600, RB + 75)], width=THIN)
 
-comp(16, 1700, 1130, 170, "DIARIZE")
-p.flow([(1625, RB + BH), (1625, 1166), (1700, 1166)], width=THIN, dash=DASHED)
-
 comp(15, 2170, RA, 160, "BENCH")
 p.flow([(2250, 640), (2250, RA)], width=THIN)
 p.text(2260, 650, "AUDIO, ASR TEXT", 10, anchor="start")
@@ -229,7 +225,7 @@ def service(ch):
 COMPONENTS = [
     (1, "KEYS", "INPUT", "A", "REMAP; DICTATION KEY; PASTE CHORD"),
     (2, "DICTATION", "SPEECH", "D", "MEETING MUTE, UTTERANCE, CLIPBOARD"),
-    (3, "TRAY", "CONTROL", "D", "MODE AND HEALTH; PAUSE"),
+    (3, "TRAY", "CONTROL", "E", "MODE AND HEALTH; PAUSE"),
     (4, "SHORTCUTS", "INPUT", "D", "GLOBAL SHORTCUTS; LAUNCH APPS"),
     (5, "CAPTURE", "SPEECH", "B", "MIC AND SYSTEM AUDIO TO THE BUFFER"),
     (6, "SEGMENTATION", "SPEECH", "C", "AUDIO TO UTTERANCES"),
@@ -241,9 +237,9 @@ COMPONENTS = [
     (12, "PUBLISH", "DOCUMENTS", "C", "COPY TO TARGET DIRS"),
     (13, "NOTE, PIN", "CONTROL", "", "OWNER EVENTS"),
     (14, "STATUS, PAUSE", "CONTROL", "", "HEALTH VIEW; PAUSE, RESUME (NOT DRAWN)"),
-    (15, "BENCH", "CONTROL", "", "WER PER BACKEND AND STRATEGY"),
-    (16, "DIARIZE", "CONTROL", "", "SPEAKER TURNS, ONE-SHOT"),
-    (17, "INSTALL, MODELS", "CONTROL", "", "SETUP (NOT DRAWN)"),
+    (15, "BENCH", "CONTROL", "", "WER AND LATENCY PER SETUP"),
+    (16, "RETENTION, UNMUTE", "CONTROL", "", "DELETE OLD AUDIO; UNMUTE (NOT DRAWN)"),
+    (17, "INSTALL, VERSION", "CONTROL", "", "SETUP; INSTALLED COMMIT (NOT DRAWN)"),
 ]
 
 

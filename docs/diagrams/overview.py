@@ -1,4 +1,4 @@
-"""Overview schematic: the four services on one host. Hero image of the README.
+"""Overview schematic: the five services on one host. Hero image of the README.
 
 Usage: uv run docs/diagrams/overview.py docs/diagrams/overview.svg
 """
@@ -13,7 +13,8 @@ p.header("OD-ADR-0002", "SYSTEM CONFIGURATION")
 
 # ------------------------------------------------------------------ blocks
 KX, KY, KW, KH = 250, 205, 210, 100  # keys
-SX, SY, SW, SH = 600, 195, 360, 120  # session
+SX, SY, SW, SH = 600, 195, 250, 120  # session
+TX, TY, TW, TH = 885, 195, 150, 50  # tray
 CX, CY, CW, CH = 250, 380, 210, 100  # capture
 DX, DY, DW, DH = 600, 360, 360, 140  # centered on the capture flow  # state drum
 PX, PY, PW, PH = 250, 570, 710, 190  # pipeline
@@ -41,9 +42,13 @@ p.port(SX, SY, SW, SH, "b", 0.5, "FILES")
 sw, sg = 94, 17
 sx0 = SX + 22
 sy = KY + KH / 2 - 22  # centered on the keys socket line
-for i, name in enumerate(["DICTATION", "TRAY", "SHORTCUTS"]):
+for i, name in enumerate(["DICTATION", "SHORTCUTS"]):
     p.block(sx0 + i * (sw + sg), sy, sw, 44, name, width=1.4, size=12)
-sx_last = sx0 + 2 * (sw + sg) + sw
+sx_last = sx0 + 1 * (sw + sg) + sw
+
+p.block(TX, TY, TW, TH, "TRAY", size=16)
+p.callout(TX, TY, "E", 17)
+FX = DX + DW / 2  # vertical flows through the state drum
 
 p.block(
     CX, CY, CW, CH, "CAPTURE", ports=[("l", 0.5, "PCM"), ("r", 0.5, "AUDIO")], size=20
@@ -93,7 +98,7 @@ p.flow(
     both=True,
 )
 p.flow(
-    [(SX + SW / 2, DY + DH), (SX + SW / 2, PY)], "READ, WRITE", width=HEAVY, both=True
+    [(FX, DY + DH), (FX, PY)], "READ, WRITE", width=HEAVY, both=True
 )
 
 # ------------------------------------------------------------------ outside systems
@@ -126,7 +131,9 @@ p.flow(
     width=THIN,
     both=True,
 )
-p.lines(972, KY + KH / 2 - 19, ["SHORTCUTS,", "APP LAUNCH"], 11, anchor="start", lead=12)
+p.lines(862, KY + KH / 2 + 16, ["SHORTCUTS,", "APP LAUNCH"], 11, anchor="start", lead=12)
+p.flow([(TX + TW, TY + TH / 2), (1110, TY + TH / 2)], width=THIN)
+p.flow([(TX + 57, TY + TH), (TX + 57, DY + 10)], "STATUS,\nHEALTH", width=THIN)
 
 p.ext(1110, 690, 250, 76, "TARGET DIRS", ["VAULT INBOX"], size=17)
 p.flow(
@@ -140,7 +147,7 @@ ix = PX + PW * 0.47
 p.ext(
     ix - 230, 815, 460, 52, "INFERENCE HOST", ["WHISPER-SERVER · LLAMA-SERVER"], size=17
 )
-p.flow([(ix, PY + PH), (ix, 815)], "AUDIO SLICES, TEXT", width=THIN, both=True)
+p.flow([(ix, PY + PH), (ix, 815)], "TAILNET: AUDIO SLICES, TEXT", width=THIN, both=True)
 
 # ------------------------------------------------------------------ key
 kx, ky, kw = 1100, 335, 260
@@ -160,14 +167,15 @@ p.table(
         (letter("B"), "CAPTURE", "NEVER STOPS"),
         (letter("C"), "PIPELINE", "RESTARTS FREELY"),
         (letter("D"), "SESSION", "GRAPHICAL SESSION"),
+        (letter("E"), "TRAY", "GRAPHICAL SESSION"),
     ],
     [(22, "middle"), (44, "start"), (126, "start")],
     row_h=30,
 )
-p.text(kx, ky + 200, "HEAVY LINE: SPEECH PATH", 11, anchor="start", fill=GRAY)
-p.text(kx, ky + 216, "DASHED LINE: BATCH PASS", 11, anchor="start", fill=GRAY)
-p.text(kx, ky + 232, "DASHED BOX: OUTSIDE SYSTEM", 11, anchor="start", fill=GRAY)
-p.text(kx, ky + 248, "DASH-DOT LINE: ODSOD-DAEMON", 11, anchor="start", fill=GRAY)
+p.text(kx, ky + 230, "HEAVY LINE: SPEECH PATH", 11, anchor="start", fill=GRAY)
+p.text(kx, ky + 246, "DASHED LINE: BATCH PASS", 11, anchor="start", fill=GRAY)
+p.text(kx, ky + 262, "DASHED BOX: OUTSIDE SYSTEM", 11, anchor="start", fill=GRAY)
+p.text(kx, ky + 278, "DASH-DOT LINE: ODSOD-DAEMON", 11, anchor="start", fill=GRAY)
 
 p.footer("OD-2-001", "Figure 1-1.  Service Configuration", "1-1")
 with open(sys.argv[1] if len(sys.argv) > 1 else "overview.svg", "w") as f:

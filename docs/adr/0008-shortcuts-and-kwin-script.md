@@ -31,8 +31,8 @@ Proposed
 ### Move both parts into this repo
 
 - The service becomes the **`shortcuts`** component, in the session service.
-  It has the same lifecycle as `dictation` and `tray`: it needs the graphical
-  session and is idle otherwise.
+  It has the same lifecycle as `dictation`: it needs the graphical session
+  and is idle otherwise.
 - The KWin script moves to `components/shortcuts/kwin/` and ships as
   package data.
   `odsodctl install` installs or upgrades it with `kpackagetool6` and reloads
@@ -73,6 +73,15 @@ is the component.
 - `Run` starts each command with `systemd-run --user --scope`, so the app
   lives in its own unit. A restart of the session service never kills a
   launched app.
+- A command that fails to start gives one log line with the app and the
+  error. No desktop notification.
+
+### `odsodctl shortcuts` lists the chords
+
+- `odsodctl shortcuts` prints each chord and its action from the shortcut
+  list in the package, the same list the KWin script registers. `--json`
+  prints the list as JSON. It is a read-only subcommand of the `shortcuts`
+  component ([ADR-0009](0009-taxonomy-and-code-organization.md)).
 
 ### What stays in the `machine` repo
 
@@ -93,7 +102,7 @@ is the component.
 - Rejected: the script moves and changes in the same commit anyway, and the
   old name does not say which service owns it.
 
-### A fifth service for shortcuts
+### A service of its own for shortcuts
 
 - Rejected: same lifecycle as the session service. Principle 13 splits services
   by lifecycle, not by module.

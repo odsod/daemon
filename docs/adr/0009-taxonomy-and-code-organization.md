@@ -17,14 +17,14 @@ Proposed
   ([ADR-0002](0002-high-level-architecture.md), goal "Agent-coded"). The
   owner and agents must find all code for a component from its name alone.
 - The list of components will change. The structure must not.
-- The code layout in [ADR-0005](0005-components-and-implementation.md)
-  sorts code by layer (`contracts/`, `files/`, `clients/`, `components/`) and
-  by language (`keys/`, `kwin/`). One component is then spread over four or
-  more folders.
+- An earlier draft of [ADR-0005](0005-components-and-implementation.md)
+  sorted code by layer (`contracts/`, `files/`, `clients/`, `components/`)
+  and by language (`keys/`, `kwin/`). One component was then spread over
+  four or more folders.
 
 ## Decision
 
-This ADR supersedes the "Code layout" section of ADR-0005.
+This ADR defines the code layout. ADR-0005 refers to it.
 
 ### Taxonomy
 
@@ -36,6 +36,10 @@ This ADR supersedes the "Code layout" section of ADR-0005.
 | **command**   | A component that runs on demand and has no service                                   | `components/<command>/`                                  | `odsodctl <command>`                                   |
 
 - Each component runs in exactly one service or is a command.
+- A service component may also expose read-only `odsodctl` subcommands from
+  its own folder, such as `odsodctl transcript`, `odsodctl shortcuts` and
+  `odsodctl dictation last`. They read the component's files and never run
+  its service loop.
 - Services group components by lifecycle (ADR-0002, principle 13). Moving a
   component to another service, or into its own, changes one file in
   `services/` and no component code.
@@ -52,7 +56,7 @@ This ADR supersedes the "Code layout" section of ADR-0005.
 │   ├── components/<component>/    BEHAVIOR     one folder per component, flat
 │   └── lib/<mechanism>/           MECHANISM    shared code with no business logic
 ├── tests/                         SYSTEM TESTS across components
-└── docs/                          adr/ diagrams/ research/
+└── docs/                          adr/ diagrams/ prd/ research/
 ```
 
 - The package root holds only these four entries. Each is one tier.
@@ -87,7 +91,9 @@ components/<component>/
 5. **A component owns all of its parts, in any language.** C, JavaScript,
    prompts, models and unit templates live in their component, never in a
    folder per language. They ship as package data
-   ([ADR-0006](0006-installation.md)).
+   ([ADR-0006](0006-installation.md)). `components/install/` owns the user
+   unit and timer templates, because it writes them. `components/keys/` owns
+   the system unit template.
 6. **The writer owns the contract.** Each path has one writer (ADR-0002,
    principle 6), so the writer's `contract.py` holds its model. This also
    covers the keys socket and D-Bus messages. A change to a contract model is
@@ -130,7 +136,7 @@ The repo follows the standard layout of a packaged uv project
 | ------------ | ------------------------------------------------------------------------------------------------------------- |
 | Layout       | `src/odsod_daemon/`, build backend `uv_build`                                                                 |
 | Entry point  | `[project.scripts]` `odsodctl = "odsod_daemon.cli:app"`                                                       |
-| Dependencies | Runtime in `[project.dependencies]`; extras (`diarize`, `bench`) in `[project.optional-dependencies]`         |
+| Dependencies | Runtime in `[project.dependencies]`; extras (`bench`; later `diarize`) in `[project.optional-dependencies]`   |
 | Dev tools    | pytest, ruff, pyright and import-linter in `[dependency-groups] dev` (PEP 735). `uv run` installs them        |
 | Tool config  | All in `pyproject.toml`: `[tool.pytest]`, `[tool.ruff]`, `[tool.pyright]`, `[tool.importlinter]`              |
 | Package data | Non-Python files in a component ship in the wheel. `[tool.uv.build-backend] wheel-exclude` drops `tests` dirs |
@@ -153,13 +159,13 @@ Tests:
 
 ### How the structure absorbs change
 
-| Change                                   | What moves                                 |
-| ---------------------------------------- | ------------------------------------------ |
-| New component                            | New folder, table row and diagram box      |
-| Component splits or merges               | Its folders; contracts show who reads what |
-| Component moves to another service       | One line in `services/`                    |
-| A helper is needed by a second component | It moves to `lib/` under rule 7            |
-| New service                              | One file in `services/`, one unit template |
+| Change                                   | What moves                                                          |
+| ---------------------------------------- | ------------------------------------------------------------------- |
+| New component                            | New folder, table row and diagram box                               |
+| Component splits or merges               | Its folders; contracts show who reads what                          |
+| Component moves to another service       | One line in `services/`                                             |
+| A helper is needed by a second component | It moves to `lib/` under rule 7                                     |
+| New service                              | One file in `services/`, one unit template in `components/install/` |
 
 The tree stays three levels deep below the package: tier, component, file.
 More components make the list in `components/` longer and never add a level.
