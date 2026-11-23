@@ -56,6 +56,7 @@ Proposed
 | Audio arrays                           | `numpy`                                       |
 | VAD                                    | Silero VAD model (ONNX) on `onnxruntime`, CPU |
 | Tray icon                              | `PySide6` (`QSystemTrayIcon`, `QtAsyncio`)    |
+| D-Bus (KWin, KGlobalAccel)             | `dbus-fast` (asyncio)                         |
 | Prompt templates                       | `jinja2`                                      |
 | Diarization (optional extra `diarize`) | `pyannote.audio`                              |
 | Benchmark (optional extra `bench`)     | `jiwer`                                       |
@@ -74,10 +75,11 @@ Proposed
 ```
 pyproject.toml, uv.lock, .python-version
 keys/                 # ADR-0007: odsod-daemon-keys.c, unit template
+kwin/                 # ADR-0008: KWin script package (metadata.json, main.js)
 src/odsod_daemon/
   cli.py              # typer app: one subcommand per component and command
   config.py           # pydantic config models, meeting profiles
-  contracts/          # pydantic models for every stream record, document, socket message
+  contracts/          # pydantic models for every stream record, document, socket and D-Bus message
   files/              # ADR-0003: paths, streams, documents, audio, pending, watch
   clients/            # wire clients: whisper, llm, cdp, keys socket. No business logic.
   health/             # unit states, audio freshness, backlog (tray, status)
@@ -90,12 +92,12 @@ tests/                # mirrors src/odsod_daemon; file-in, file-out fixtures
 
 - **Boundaries (import-linter):** a component imports only `contracts`,
   `files`, `clients`, `config` and `health`, never another component.
-  Components talk only through files and the keys socket.
+  Components talk only through files, the keys socket and D-Bus.
 - **`health`** is a shared module, not a component: unit states from systemd,
   audio freshness and backlog from files. `tray` and `odsodctl status` use
   it.
-- **Contracts are code.** Each stream in ADR-0003 and each socket message in
-  ADR-0007 has one pydantic model in `contracts/`. A change to a model is a
+- **Contracts are code.** Each stream in ADR-0003, each socket message in
+  ADR-0007 and each D-Bus message in ADR-0008 has one pydantic model in `contracts/`. A change to a model is a
   change to the interface.
 - **Each component** exposes one async `run(config)` entry point and can run
   alone: `odsodctl run <component>`.
@@ -120,6 +122,7 @@ Regenerate with
 | capture           | Record mic and system audio to the audio buffer            | capture           | `pw-record`                      |
 | dictation         | The dictation loop: meeting mute, utterance, clipboard     | session           | keys socket, `pactl`, `wl-copy`  |
 | tray              | Tray icon: mode and health; pause and resume               | session           | PySide6, `systemctl`             |
+| shortcuts         | Register global shortcuts; launch apps for the KWin script | session           | `dbus-fast`, `systemd-run`       |
 | segmentation      | Cut ambient audio into utterances; detect interaction ends | pipeline          | Silero VAD                       |
 | transcription     | Turn utterances into text; one worker per ASR backend      | pipeline          | whisper-server, Silero VAD       |
 | cleanup           | Fix ASR text with an LLM and the glossary                  | pipeline          | llama-server                     |
@@ -128,7 +131,7 @@ Regenerate with
 | reprocessing      | Diarize, name speakers, summarize finished interactions    | pipeline          | `odsodctl diarize`, llama-server |
 | publish           | Copy finished documents to configured targets              | pipeline          |                                  |
 | note, pin, status | Owner events; health view                                  | command           | `systemctl`                      |
-| install           | Write and enable the units; build the keys daemon          | command           | `systemctl`, `gcc`               |
+| install           | Write and enable the units; build keys; install KWin script | command          | `systemctl`, `gcc`, `kpackagetool6` |
 | models            | Download models at install time                            | command           | Hugging Face client              |
 | diarize           | Diarize one audio slice (one-shot)                         | command           | pyannote                         |
 | bench             | Score backends and strategies against references           | command           | jiwer                            |
@@ -204,6 +207,10 @@ Regenerate with
 - Runs in the same daemon as `dictation`, because both need the graphical
   session. They share no code or memory, so `tray` can move to its own unit
   without code changes if it ever proves unstable.
+
+### shortcuts
+
+- Defined in [ADR-0008](0008-shortcuts-and-kwin-script.md).
 
 ### segmentation
 
@@ -314,8 +321,8 @@ Regenerate with
 - `note` and `pin` append one line to `events/user/`.
 - `status` reads unit states from systemd and freshness and backlog from
   files.
-- `install` writes the user units. `install --system` builds and installs the
-  keys daemon (ADR-0004).
+- `install` writes the user units and installs the KWin script (ADR-0008).
+  `install --system` builds and installs the keys daemon (ADR-0004).
 - `models fetch` downloads the pyannote model with the owner's Hugging Face
   login. Silero ships in the package.
 - `version` prints the installed commit (ADR-0006).

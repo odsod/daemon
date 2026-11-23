@@ -68,7 +68,7 @@ The name follows the Unix term
    systemd. No portability layers.
 4. **Self-contained.** The repo ships everything it runs: code, units, models,
    defaults. The `machine` repo installs and configures it.
-5. **Four ways to communicate, each in its place.**
+5. **Five ways to communicate, each in its place.**
    - **Files** between components on one host. Paths and formats are
      documented contracts.
    - **Memory** inside a component: control loops and stream state. A
@@ -76,6 +76,9 @@ The name follows the Unix term
    - **One Unix socket** between the keys daemon and the session daemon, for
      key events and paste requests that must arrive within milliseconds
      ([ADR-0007](0007-keys-daemon.md)).
+   - **D-Bus** between KWin and the session daemon, because a KWin script can
+     reach other processes only through D-Bus
+     ([ADR-0008](0008-shortcuts-and-kwin-script.md)).
    - **HTTP** from each host to the shared inference servers. No broker in
      between.
 6. **Rules for files.**
@@ -111,10 +114,12 @@ The name follows the Unix term
     tray icon) run in the graphical session. All else can restart freely.
     systemd supervises every daemon
     ([ADR-0004](0004-orchestration-with-systemd.md)).
-14. **Python, except the keys daemon.** The best speech and audio tools are
+14. **Python, with two exceptions.** The best speech and audio tools are
     Python libraries. The keys daemon is C: it is small, runs as root and
-    handles key timing ([ADR-0007](0007-keys-daemon.md)). Another language
-    needs an ADR.
+    handles key timing ([ADR-0007](0007-keys-daemon.md)). The KWin script is
+    JavaScript, because KWin requires it
+    ([ADR-0008](0008-shortcuts-and-kwin-script.md)). Another language needs an
+    ADR.
 
 ### Daemons
 
@@ -123,7 +128,7 @@ The name follows the Unix term
 | keys     | root, from boot          | Remap keys; detect the dictation key; inject paste keys |
 | capture  | owner                    | Record mic and system audio to the audio buffer         |
 | pipeline | owner                    | Turn audio into transcripts and interaction documents   |
-| session  | owner, graphical session | Dictation and the tray icon                             |
+| session  | owner, graphical session | Dictation, the tray icon and global shortcuts           |
 
 ### Capabilities
 
@@ -166,6 +171,8 @@ benchmark: reads stored audio and results
   and tools, with the architecture diagram.
 - [ADR-0006](0006-installation.md): installation and upgrade.
 - [ADR-0007](0007-keys-daemon.md): the keys daemon and the dictation socket.
+- [ADR-0008](0008-shortcuts-and-kwin-script.md): the shortcuts component and
+  the KWin script.
 
 ## Alternatives considered
 

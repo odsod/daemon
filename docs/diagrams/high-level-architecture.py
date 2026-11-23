@@ -115,7 +115,7 @@ out.append(f'<rect width="{W}" height="{H}" fill="white"/>')
 text(
     40,
     42,
-    "odsod-daemon: high-level architecture (ADR-0002 to ADR-0007)",
+    "odsod-daemon: high-level architecture (ADR-0002 to ADR-0008)",
     24,
     "bold",
     anchor="start",
@@ -144,7 +144,7 @@ box(
     210,
     "ext",
     "KDE Plasma",
-    ["system tray (D-Bus),", "clipboard, apps"],
+    ["KWin script, tray,", "clipboard, apps"],
     w=180,
 )
 box("chrome", 130, 760, "ext", "Chrome", ["Meet / Teams tabs", "(DevTools Protocol)"])
@@ -168,6 +168,7 @@ box(
     ["mute meeting streams,", "clipboard, utterance"],
 )
 box("indicator", 1450, 210, "session", "tray", ["mode + health;", "pause stops capture"], w=180)
+box("shortcuts", 1950, 210, "session", "shortcuts", ["global shortcuts,", "launch apps"], w=180)
 box(
     "signals",
     350,
@@ -334,6 +335,7 @@ line(
 line([edge("session", "r"), edge("state", "l")], "dictation")
 line([edge("state", "r"), edge("indicator", "l")], "dictation")
 line([edge("indicator", "r"), edge("wayland", "l")], "os", True)
+line([edge("wayland", "r"), edge("shortcuts", "l")], "os", True, "D-Bus", (1815, 202))
 line(
     [edge("session", "t", -40), (970, 120), (110, 120), edge("pw", "t", -20)],
     "os",
@@ -421,7 +423,7 @@ text(lx, ly, "LEGEND", 14, "bold", anchor="start", fill="#777")
 items = [
     ("keys", "odsod-daemon-keys.service (system, root, C)"),
     ("capture", "odsod-daemon-capture.service (always on)"),
-    ("session", "odsod-daemon-session.service: dictation + tray"),
+    ("session", "odsod-daemon-session.service: dictation, tray, shortcuts"),
     ("pipeline", "odsod-daemon-pipeline.service (restartable)"),
     ("cli", "command (on demand)"),
     ("store", "file interface (state/ = $XDG_STATE_HOME/odsod-daemon)"),
