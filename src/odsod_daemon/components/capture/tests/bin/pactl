@@ -1,0 +1,60 @@
+#!/usr/bin/env python3
+"""A fake ``pactl`` for tests.
+
+- ``pactl subscribe`` prints the JSON list in ``FAKE_PACTL_EVENTS`` with the
+  delay in ``FAKE_PACTL_EVENT_DELAY``, then stays alive.
+- ``pactl --format=json get-default-source`` prints ``FAKE_PACTL_DEFAULT``.
+- ``pactl --format=json list sources`` prints the JSON file named by
+  ``FAKE_PACTL_SOURCES``.
+
+``FAKE_PACTL_LOG`` gets one line per run with the arguments.
+"""
+
+import json
+import os
+import sys
+import time
+
+DEFAULT_SOURCE = "fake_mic"
+DEFAULT_SOURCES = [
+    {
+        "index": 1,
+        "name": DEFAULT_SOURCE,
+        "description": "Fake mic",
+        "mute": False,
+        "monitor_source": "",
+    }
+]
+
+
+def main() -> int:
+    args = sys.argv[1:]
+    log = os.environ.get("FAKE_PACTL_LOG")
+    if log:
+        with open(log, "a", encoding="utf-8") as handle:
+            handle.write(json.dumps(args) + "\n")
+    if "subscribe" in args:
+        events = json.loads(os.environ.get("FAKE_PACTL_EVENTS", "[]"))
+        delay = float(os.environ.get("FAKE_PACTL_EVENT_DELAY", "0.2"))
+        for event in events:
+            print(event, flush=True)
+            time.sleep(delay)
+        while True:
+            time.sleep(1)
+    if "get-default-source" in args:
+        print(os.environ.get("FAKE_PACTL_DEFAULT", DEFAULT_SOURCE))
+        return 0
+    if "list" in args:
+        path = os.environ.get("FAKE_PACTL_SOURCES")
+        if path:
+            with open(path, encoding="utf-8") as handle:
+                print(handle.read())
+        else:
+            print(json.dumps(DEFAULT_SOURCES))
+        return 0
+    print("fake pactl: unknown command", file=sys.stderr)
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
