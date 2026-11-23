@@ -12,12 +12,15 @@ from odsod_daemon.components.capture.anchor import (
 
 
 def _steady(anchor: Anchor, count: int, *, first: float = 100.0) -> list:
-    return [anchor.place(first + index * BLOCK_SECONDS) for index in range(count)]
+    placements = [anchor.place(first + index * BLOCK_SECONDS) for index in range(count)]
+    assert anchor.t0 is not None
+    return placements
 
 
 def test_t0_is_first_arrival_minus_block_and_latency() -> None:
     anchor = Anchor(latency_ms=100)
     placement = anchor.place(100.0)
+    assert anchor.t0 is not None
     assert anchor.t0 == pytest.approx(100.0 - BLOCK_SECONDS - 0.1)
     assert placement.start == pytest.approx(anchor.t0)
     assert placement.end == pytest.approx(anchor.t0 + BLOCK_SECONDS)
@@ -27,6 +30,7 @@ def test_t0_is_first_arrival_minus_block_and_latency() -> None:
 def test_steady_blocks_are_continuous_with_no_hole() -> None:
     anchor = Anchor()
     placements = _steady(anchor, 20)
+    assert anchor.t0 is not None
     assert [placed.start for placed in placements] == pytest.approx(
         [anchor.t0 + index * BLOCK_SECONDS for index in range(20)]
     )

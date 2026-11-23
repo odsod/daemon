@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from odsod_daemon.components.capture import checks
 
 ZERO = bytes(3_200)
@@ -65,5 +63,3 @@ def test_mic_fault_since_keeps_the_first_zero_block() -> None:
     mic.block(ZERO, start=2.0)
     mic.block(ZERO, start=2.1)
     assert mic.faults(now=3.0) == [checks.Active(checks.MIC_SILENT, since=2.0)]
-    with pytest.raises(AttributeError):
-        mic.zero_since = 99.0

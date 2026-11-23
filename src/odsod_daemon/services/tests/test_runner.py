@@ -65,6 +65,31 @@ async def test_service_sends_ready_then_watchdog(
     assert ping == b"WATCHDOG=1"
 
 
+@pytest.mark.looptime(False)
+async def test_a_watchdog_owner_component_suppresses_the_runner_ping(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    path = tmp_path / "notify.sock"
+    receiver = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+    receiver.bind(str(path))
+    receiver.settimeout(0.5)
+    monkeypatch.setenv("NOTIFY_SOCKET", str(path))
+    monkeypatch.setenv("WATCHDOG_USEC", "100000")
+    module = blocking_component()
+    vars(module)["WATCHDOG_OWNER"] = True
+
+    service = asyncio.create_task(run_service(ServiceSpec("test", [module])))
+    try:
+        assert await asyncio.to_thread(receiver.recv, 64) == b"READY=1"
+        with pytest.raises(TimeoutError):
+            await asyncio.to_thread(receiver.recv, 64)
+    finally:
+        service.cancel()
+        with suppress(asyncio.CancelledError):
+            await service
+        receiver.close()
+
+
 async def test_service_without_notify_socket_does_not_fail(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

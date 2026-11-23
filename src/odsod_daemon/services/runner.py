@@ -82,11 +82,14 @@ async def run_service(spec: ServiceSpec, *, once: bool = False) -> None:
         return
 
     started = [asyncio.Event() for _ in prepared]
+    owns_watchdog = any(
+        getattr(module, "WATCHDOG_OWNER", False) for module in spec.components
+    )
     async with asyncio.TaskGroup() as group:
         for item, event in zip(prepared, started, strict=True):
             group.create_task(_mark_started(item, event, once=False))
         await asyncio.gather(*(event.wait() for event in started))
         systemd.sd_notify("READY=1")
         interval = systemd.watchdog_interval()
-        if interval is not None:
+        if interval is not None and not owns_watchdog:
             group.create_task(_watchdog(interval))

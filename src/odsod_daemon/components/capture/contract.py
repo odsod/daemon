@@ -7,9 +7,9 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict
 
 CAPTURE_APP_NAME = "odsod-daemon-capture"
-CHANNELS = ("mic", "sys")
 
 Channel = Literal["mic", "sys"]
+CHANNELS: tuple[Channel, ...] = ("mic", "sys")
 GapReason = Literal["suspend", "clock", "stall"] | None
 
 
