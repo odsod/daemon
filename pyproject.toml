@@ -29,6 +29,7 @@ odsodctl = "odsod_daemon.cli:app"
 [dependency-groups]
 dev = [
     "import-linter>=2.17",
+    "jiwer>=4.0.0",
     "looptime>=0.9",
     "pyright>=1.1.414",
     "pytest>=9.2.0",

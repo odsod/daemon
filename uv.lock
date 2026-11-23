@@ -445,6 +445,7 @@ bench = [
 [package.dev-dependencies]
 dev = [
     { name = "import-linter" },
+    { name = "jiwer" },
     { name = "looptime" },
     { name = "pyright" },
     { name = "pytest" },
@@ -471,6 +472,7 @@ provides-extras = ["bench"]
 [package.metadata.requires-dev]
 dev = [
     { name = "import-linter", specifier = ">=2.17" },
+    { name = "jiwer", specifier = ">=4.0.0" },
     { name = "looptime", specifier = ">=0.9" },
     { name = "pyright", specifier = ">=1.1.414" },
     { name = "pytest", specifier = ">=9.2.0" },
