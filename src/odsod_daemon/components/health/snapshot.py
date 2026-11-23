@@ -1,0 +1,147 @@
+"""Read each health source once into an evaluation snapshot."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from datetime import UTC, datetime, timedelta
+from typing import Any
+
+from odsod_daemon.components.health import units
+from odsod_daemon.components.health.backlog import BacklogTracker
+from odsod_daemon.components.health.config import ControlConfig
+from odsod_daemon.components.health.contract import Backlog, Reason, Severity
+from odsod_daemon.components.install.contract import InstallRecord, PreviousCommit
+from odsod_daemon.lib import audio, clock, config, documents, paths, systemd
+
+SEVERITY: dict[str, Severity] = {
+    "capture-stalled": "error",
+    "keys-socket-missing": "error",
+    "mic-muted": "mark",
+    "mic-silent": "warning",
+    "inference-unreachable": "warning",
+    "target-missing": "warning",
+    "no-speaking-indicator": "warning",
+    "interactions-waiting": "warning",
+    "mute-failed": "warning",
+    "stale-mutes-cleared": "warning",
+}
+
+
+@dataclass
+class Snapshot:
+    now: datetime
+    graphical: bool = True
+    units: dict[str, systemd.UnitState | None] = field(default_factory=dict)
+    faults: list[Reason] = field(default_factory=list)
+    newest_audio: dict[str, str | None] = field(default_factory=dict)
+    backlog: Backlog = field(default_factory=lambda: Backlog(count=0, seconds=0))
+    oldest_end: str | None = None
+    status: dict[str, Any] = field(default_factory=dict)
+    paused_since: str | None = None
+    install: InstallRecord | None = None
+    previous: PreviousCommit | None = None
+
+
+def optional(path):
+    try:
+        return documents.read_json(path)
+    except FileNotFoundError:
+        return None
+
+
+async def gather(
+    roots: paths.Roots,
+    source: systemd.UnitStateSource,
+    *,
+    now: datetime | None = None,
+    tracker: BacklogTracker | None = None,
+    settings: ControlConfig | None = None,
+) -> Snapshot:
+    now = now or clock.utc_now()
+    settings = settings or config.section("control", ControlConfig, roots=roots)
+    result = Snapshot(now=now)
+    graphical = await source.get("graphical-session.target")
+    result.graphical = graphical is not None and graphical.active_state == "active"
+    paused = optional(roots.run / "paused")
+    if paused is not None:
+        result.paused_since = paused["since"]
+    for service in units.NAMES:
+        shipped = service in units.SERVICES
+        state = (
+            await source.get(
+                units.unit(service), scope="system" if service == "keys" else "user"
+            )
+            if shipped
+            else None
+        )
+        result.units[service] = state
+        if state is None or state.active_state != "active":
+            continue
+        path = roots.run / "health" / f"{service}.json"
+        try:
+            health = optional(path)
+            if health is not None:
+                for fault in health["faults"]:
+                    result.faults.append(
+                        Reason(
+                            **{
+                                k: fault[k] for k in ("code", "since", "message", "fix")
+                            },
+                            service=service,
+                            severity=SEVERITY[fault["code"]],
+                        )
+                    )
+        except OSError, ValueError, KeyError, TypeError:
+            result.faults.append(
+                Reason(
+                    code="health-unreadable",
+                    severity="warning",
+                    service=service,
+                    since=clock.iso(now),
+                    message=f"Health file of {service} is unreadable.",
+                )
+            )
+    session = result.units.get("session")
+    if session is not None and session.active_state == "active":
+        try:
+            status = optional(roots.run / "status.json")
+            if (
+                status is not None
+                and status["mode"] in ("idle", "dictating")
+                and status["keys"]
+                in ("connected", "paused", "no-inference", "no-socket")
+            ):
+                result.status = status
+        except OSError, ValueError, KeyError, TypeError:
+            pass
+    starts = {}
+    for channel in audio.CHANNELS:
+        end = None
+        for hour in (audio.hour_start(now) - timedelta(hours=1), audio.hour_start(now)):
+            file = audio.hour_file(roots.state, channel, hour)
+            try:
+                size = file.stat().st_size
+            except FileNotFoundError:
+                continue
+            covered = hour + timedelta(seconds=audio.seconds_for(size))
+            end = max(end, covered) if end else covered
+            starts.setdefault(channel, clock.iso(hour))
+        result.newest_audio[channel] = clock.iso(end) if end else None
+    if tracker is None:
+        common = config.load_common(roots)
+        tracker = BacklogTracker(roots.state, common.retention_days)
+        tracker.rebuild(now)
+    result.backlog = tracker.report(
+        now, result.newest_audio, settings.backlog_warning_s, starts
+    )
+    result.oldest_end = tracker.oldest_end
+    current = optional(roots.state / "install/current")
+    previous = optional(roots.state / "install/previous-commit")
+    result.install = InstallRecord.model_validate(current) if current else None
+    result.previous = PreviousCommit.model_validate(previous) if previous else None
+    return result
+
+
+def timestamp(state: systemd.UnitState | None) -> str:
+    seconds = state.state_change_timestamp / 1_000_000 if state else 0
+    return clock.iso(datetime.fromtimestamp(seconds, UTC))

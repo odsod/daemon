@@ -6,4 +6,8 @@ Writes: Nothing; it has no run and no command.
 ADR: docs/adr/0018-control.md
 """
 
+from odsod_daemon.components.health.config import ControlConfig
+
 SUBSYSTEM = "control"
+
+CONFIG_MODEL = ControlConfig

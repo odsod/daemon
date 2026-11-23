@@ -100,6 +100,11 @@ mise run build
   systemctl wrapper. Four fake-systemctl tests cover idempotence, dev
   restarts, logged-out capture and retry after partial restart failure.
 
+- 2026-11-23: Step 5 complete. Snapshot reads active-service faults, unit
+  states, current/previous-hour audio sizes and install records. Pure
+  evaluation and incremental backlog pass 17 tests, including partial
+  builds, ten-day pending work, incomplete lines and day-window rollover.
+
 ## Decisions to confirm
 
 - One-shot helpers use no automatic restart. `Restart=always` is invalid
@@ -107,3 +112,7 @@ mise run build
   avoids recursive failure notifications.
 - ADR-0006 supplies the detailed target membership and pipeline enable
   settings where ADR-0004 uses the broader `default.target` description.
+
+- With audio but no coverage record, backlog starts at the oldest present
+  current/previous-hour audio file. This exposes stalled segmentation
+  before it has emitted its first coverage record.

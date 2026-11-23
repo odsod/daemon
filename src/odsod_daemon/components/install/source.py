@@ -18,6 +18,7 @@ def candidate(metadata: dict | None = None) -> InstallRecord:
         if raw is None:
             raise ValueError("odsod-daemon has no direct_url.json")
         metadata = json.loads(raw)
+    assert metadata is not None
     vcs = metadata.get("vcs_info")
     if vcs:
         return InstallRecord(

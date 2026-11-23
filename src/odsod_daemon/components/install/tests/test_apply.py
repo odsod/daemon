@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from odsod_daemon.components.install.apply import ApplyError, install_user
-from odsod_daemon.components.install.contract import InstallRecord
+from odsod_daemon.components.install.contract import InstallRecord, Source
 from odsod_daemon.lib import documents
 
 BIN = Path(__file__).resolve().parents[5] / "tests/bin"
@@ -21,7 +21,7 @@ def installed(tmp_path: Path, monkeypatch):
     return tmp_path / "root"
 
 
-def record(commit="a", source="git"):
+def record(commit="a", source: Source = "git"):
     return InstallRecord(source=source, commit=commit, installed_at="now")
 
 
