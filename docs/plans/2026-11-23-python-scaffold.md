@@ -1,6 +1,6 @@
 # Plan: Python scaffold and runtime
 
-- Status: Draft
+- Status: Done 2026-11-23
 - Depends on: none
 - Design: [ADR-0009](../adr/0009-taxonomy-and-code-organization.md)
   (Rules, Toolchain layers, Python project conventions),
