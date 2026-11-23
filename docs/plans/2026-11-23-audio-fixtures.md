@@ -1,6 +1,6 @@
 # Plan: audio fixtures
 
-- Status: Draft
+- Status: Done 2026-11-23
 - Depends on: none
 - Design: [ADR-0010](../adr/0010-contracts-and-runtime.md) (Test
   fixtures), [ADR-0012](../adr/0012-speech.md) (Build without hardware)
