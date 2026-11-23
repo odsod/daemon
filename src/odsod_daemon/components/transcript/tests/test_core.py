@@ -172,7 +172,10 @@ def test_midnight_gap_and_open_logout():
     ]
     off = gaps.ranges(capture_records, now)
     output = gaps.lines(off, [], capture_records, CONFIG, ZONE)
-    assert output == []
+    # The open range gives the finished day its pre-midnight line only.
+    assert [line.text for line in output] == [
+        "not recording 23:55:00\u201300:00:00 (logout)"
+    ]
     assert (
         days.finish(
             date(2026, 11, 23),
@@ -190,11 +193,12 @@ def test_midnight_gap_and_open_logout():
     closed = gaps.ranges(
         capture_records + [capture(prev_end, now, ch) for ch in ("mic", "sys")], now
     )
-    output += gaps.lines(closed, [], capture_records, CONFIG, ZONE)
-    assert len(output) == 2
-    assert len({line.time.date() for line in output}) == 2
-    assert output[0].key == f"gap:{clock.iso(prev_end)}"
-    assert "23:54:59\u201300:00:00" in output[0].text
+    closed_output = gaps.lines(closed, [], capture_records, CONFIG, ZONE)
+    assert len(closed_output) == 2
+    assert len({line.time.date() for line in closed_output}) == 2
+    assert closed_output[0].key == output[0].key
+    assert closed_output[1].key == "gap:2026-11-23T23:00:00.000Z"
+    assert "23:54:59\u201300:00:00" in closed_output[0].text
 
 
 @pytest.mark.parametrize(
@@ -281,3 +285,10 @@ def test_cap_only_merges_adjacent_instants():
         },
     ]
     assert len(days.capped_lines(pending, ZONE)) == 2
+
+
+def test_open_range_is_never_a_restart():
+    start = clock.parse_iso("2026-11-23T22:58:00Z")
+    stops = [{"kind": "stop", "channel": "mic", "ts": clock.iso(start)}]
+    [item] = gaps.ranges(stops, start + timedelta(minutes=2))
+    assert gaps.cause(item, [], stops, CONFIG) == "logout"

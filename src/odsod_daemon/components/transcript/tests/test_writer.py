@@ -281,3 +281,69 @@ def test_crash_after_last_line_before_finish(transcript_root, monkeypatch):
         )
         == 1
     )
+
+
+def test_open_gap_across_midnight_gives_one_line_per_day(transcript_root):
+    from odsod_daemon.components.transcript.days import bounds
+
+    day = NOW.astimezone(ZONE).date()
+    _, end = bounds(day, ZONE)
+    stop = end - timedelta(minutes=30)
+    append(transcript_root, "text", RECORDS[0])
+    for channel in ("mic", "sys"):
+        append(
+            transcript_root,
+            "coverage",
+            {
+                "kind": "covered",
+                "channel": channel,
+                "ts": clock.iso(stop),
+                "end": clock.iso(stop),
+            },
+        )
+        append(
+            transcript_root,
+            "events/capture",
+            {"kind": "stop", "channel": channel, "ts": clock.iso(stop)},
+        )
+
+    writer = Writer(TranscriptConfig())
+    writer.flush(end + timedelta(seconds=61))
+    writer.flush(end + timedelta(seconds=120))
+
+    finished = streams.read_day(
+        streams.day_path(transcript_root / "state/finished/transcript", end.date())
+    )
+    assert len(finished) == 1
+    gap_lines = [line for line in read(writer, day) if line.tag == "gap"]
+    assert [line.text for line in gap_lines] == [
+        "not recording 23:30:00\u201300:00:00 (logout)"
+    ]
+    contents = writer.path(day).read_bytes()
+
+    morning = end + timedelta(hours=7)
+    for channel in ("mic", "sys"):
+        append(
+            transcript_root,
+            "events/capture",
+            {
+                "kind": "start",
+                "channel": channel,
+                "ts": clock.iso(morning),
+                "audio_start": clock.iso(morning),
+                "prev_end": clock.iso(stop - timedelta(milliseconds=500)),
+            },
+        )
+    Writer(TranscriptConfig()).flush(morning + timedelta(seconds=5))
+    restarted = Writer(TranscriptConfig())
+    restarted.flush(morning + timedelta(seconds=10))
+
+    assert writer.path(day).read_bytes() == contents
+    next_day = [
+        line
+        for line in read(restarted, end.astimezone(ZONE).date())
+        if line.tag == "gap"
+    ]
+    assert [line.text for line in next_day] == [
+        "not recording 00:00:00\u201307:00:00 (logout)"
+    ]

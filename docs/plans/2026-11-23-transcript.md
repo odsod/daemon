@@ -77,6 +77,11 @@ mise run build
   into `lib.textmatch.overlap`, as ADR-0015 says. interactions now keeps
   short owner replies such as "Yes" too. The guard runs before the
   containment rule.
+- 2026-11-23: Fix: an open recording-off range that crosses local midnight
+  now gives the finished day its pre-midnight gap line, once (ADR-0015 Gaps,
+  `live-transcript` AC-14). The cut part is keyed by its midnight end, so
+  the closed range after the morning restart matches it and writes no
+  duplicate. An open range is never a `restart`.
 
 ## Decisions to confirm
 

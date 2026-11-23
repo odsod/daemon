@@ -89,7 +89,8 @@ def cause(
         return "pause"
     if item.reasons:
         return item.reasons[0]
-    if (item.end - item.start).total_seconds() <= config.restart_max_s:
+    # An open range has no known length yet, so it is never a restart.
+    if item.closed and (item.end - item.start).total_seconds() <= config.restart_max_s:
         return "restart"
     if any(
         r["kind"] == "stop"
@@ -127,16 +128,27 @@ def lines(
         if (item.end - item.start).total_seconds() <= config.gap_min_s:
             continue
         why = cause(item, user, capture, config)
-        for part in segments(item, zone):
-            if not part.closed:
+        parts = segments(item, zone)
+        for index, part in enumerate(parts):
+            cut = index < len(parts) - 1
+            # The part before a midnight cut is complete even while the range
+            # is open, so a finished day gets its line.
+            if not part.closed and not cut:
                 continue
             start, end = part.start.astimezone(zone), part.end.astimezone(zone)
             channel = "" if len(part.channels) > 1 else " " + next(iter(part.channels))
+            # Key a cut part by its midnight end: the open range starts at the
+            # stop record, the closed one at prev_end, and both must match.
+            key = (
+                f"gap:{clock.iso(part.end)}:cut"
+                if cut
+                else f"gap:{clock.iso(part.start)}"
+            )
             result.append(
                 Line(
                     time=start,
                     tag="gap",
-                    key=f"gap:{clock.iso(part.start)}",
+                    key=key,
                     text=(
                         f"not recording{channel} {start:%H:%M:%S}\u2013"
                         f"{end:%H:%M:%S} ({why})"
