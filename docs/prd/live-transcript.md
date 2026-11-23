@@ -26,7 +26,7 @@
   technical words in Swedish speech stay in English.
 - An English speaker joins or leaves a call → the lines follow the new
   language.
-- Owner dictates → the dictated text appears too, marked as dictation.
+- Owner dictates → the dictated text appears once, marked as dictation.
 - A meeting starts or ends in the browser → a line marks it.
 - Owner or an agent runs `odsodctl note "<text>"` → a note line at the
   current time. `odsodctl pin` → a pin line that marks the start of a new
@@ -40,12 +40,17 @@
 - One transcript per host per local day. Owner or an agent runs
   `odsodctl transcript` → today's transcript of this host, while the day
   runs.
-- The local day ends → the transcript is finished and copied to the
-  configured targets, such as the vault inbox. It never changes after that.
-- While the host is on mains power, transcription keeps up with all audio
-  (owner decision, 2026-11-23).
-- On battery, the host runs no speech model itself. Transcription uses the
-  inference host, or waits for mains power (owner decision, 2026-11-23).
+- The local day ends and all its lines are done → the transcript is
+  finished and copied to the configured targets, such as the vault inbox.
+  It never changes after that.
+- Lines of the day are still missing 48 h after the day ends → the
+  transcript is finished anyway. A gap line names each range that was never
+  transcribed.
+- While an inference host is reachable and the host is on mains power,
+  transcription keeps up with all audio (owner decision, 2026-11-23).
+- On battery, the host runs no local speech-to-text model. Transcription
+  uses the inference host, or waits for mains power (owner decision,
+  2026-11-23).
 
 ### When something fails
 
@@ -85,22 +90,27 @@ All numbers are proposed targets for the owner to confirm.
     appear at most 30 min after it returns, with their own times. _Check:
     system test._
 12. **AC-12** The transcript is in the targets at most 10 min after the
-    local day ends, and never changes after that. Transcripts from several
-    hosts do not clash. _Check: system test._
+    local day ends and all its lines are done, and at most 48 h after the
+    day ends in all cases. At 48 h, a gap line names each range that was
+    never transcribed. A delivered transcript never changes. Transcripts
+    from several hosts do not clash. _Check: system test._
 13. **AC-13** `odsodctl transcript` prints today's transcript of this host
     in at most 1 s, and as JSON with `--json`. _Check: system test._
 14. **AC-14** A recording gap of more than 1 min gives one line with its
     start, end and cause (pause, restart, logout or unknown). Speech before
     and after a gap never joins into one line. _Check: system test._
-15. **AC-15** On battery, the host uses no more CPU for transcription than
-    for recording alone. _Check: bench._
+15. **AC-15** On battery, the host runs no local speech-to-text model.
+    Transcription uses the inference host or waits. _Check: system test._
+16. **AC-16** One dictation gives exactly one line, marked as dictation, and
+    no line from the owner for the same speech. _Check: system test._
 
 ## Boundaries
 
 ### Covered by other PRDs
 
 - Speaker names, interaction documents and summaries → the
-  `interactions-and-publishing` PRD.
+  `interactions` PRD.
+- Delivery of the daily transcript to targets → the `publishing` PRD.
 - Recording, and what is kept when → the `ambient-recording` PRD.
 - Dictation itself → the `dictation` PRD.
 - The tray Warning for a growing backlog → the `health-and-control` PRD.
@@ -110,6 +120,9 @@ All numbers are proposed targets for the owner to confirm.
 - Speaker names in the live transcript. The batch pass adds them with full
   context (ADR-0002).
 - Live captions in a window. A window steals focus on Wayland (ADR-0005).
+- A local speech-to-text model on laptops as a fallback when no inference
+  host is reachable. The inference host is on the tailnet, so it is
+  reachable away from home too (owner decision, 2026-11-23).
 - Merging transcripts of the same day from several hosts. The vault's
   ingest agent does it (owner decision, 2026-11-23).
 

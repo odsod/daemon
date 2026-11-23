@@ -15,7 +15,7 @@
   they stay guesses.
 - Some choices need data before an ADR can adopt them: a dictation model on
   the local CPU or in the cloud, a second speech-to-text pass, echo
-  cancellation.
+  cancellation, speaker diarization.
 - The owner's time to check results by hand is short. Agents do the work;
   the owner supervises and accepts.
 
@@ -24,21 +24,25 @@
 - Owner or an agent runs `odsodctl bench cases` → new test cases from the
   stored audio and its text: ambient utterances in Swedish and English,
   dictations, and finished interactions.
-- An agent writes a draft reference for a case: the corrected text, or for
-  a summary, the decisions and next steps it must hold.
-- Owner runs `odsodctl bench review` → sees the draft next to the audio,
-  fixes it if needed, and accepts it. Only accepted references count in a
-  report.
+- Each case is a folder the owner can open. An agent writes a draft
+  reference in it: the corrected text, or for a summary, the decisions and
+  next steps it must hold.
+- Owner plays the case audio in any player, fixes the draft in any editor,
+  and runs `odsodctl bench accept <case>`. There is no review window. Only
+  accepted references count in a report.
 - Agents can do every bench step: build cases, draft references, run setups
   and read reports. The owner accepts references and decides on adoption
   (owner decision, 2026-11-23).
 - Owner or an agent runs `odsodctl bench run <setup>` → the setup runs on all
-  cases with a reference. A setup is a model, a prompt or a setting.
+  cases with a reference, offline, on the saved audio. A setup is a model,
+  a prompt or a setting.
+- Each result names its full setup: model and revision, prompt, settings
+  and daemon commit. Results from a changed setup never mix with old ones.
 - Owner or an agent runs `odsodctl bench report` → a table per measure and
   setup, with the PRD criterion each measure checks. `--json` for agents.
-- Shadow backends: config adds a second speech-to-text backend that runs on
-  live audio next to the main one. Its text is stored but never shown in the
-  transcript.
+- Measures come in stages. First: word error rate and dictation latency.
+  Then, after a timed pilot of their review: speaker names and summary
+  measures.
 - A case keeps its audio with no end date, so new setups can run on it
   later (owner decision, 2026-11-23). Each case is one self-contained unit:
   its audio, its text, its reference, who wrote and accepted the reference,
@@ -49,18 +53,16 @@
 
 ### Measures
 
-| Measure                                     | For                    | Checks                              |
-| ------------------------------------------- | ---------------------- | ----------------------------------- |
-| Word error rate, Swedish and English        | Ambient speech-to-text | `live-transcript` AC-3, AC-4        |
-| Glossary terms spelled right                | Ambient and dictation  | `live-transcript` AC-5              |
-| Echo lines removed                          | Live transcript        | `live-transcript` AC-6              |
-| Word error rate, English                    | Dictation              | `dictation` AC-6                    |
-| Time from release to text, CPU load, cost   | Dictation backends     | `dictation` AC-3                    |
-| Speech time with the right speaker name     | Interaction documents  | `interactions-and-publishing` AC-4  |
-| Summary points that trace to the transcript | Summaries              | `interactions-and-publishing` AC-12 |
-| Decisions and next steps found              | Summaries              | `interactions-and-publishing` AC-13 |
-| CPU and disk use of recording               | Recording              | `ambient-recording` AC-11           |
-| Delay of unmapped keys                      | Keys service           | `keyboard` AC-15                    |
+| Measure                                     | For                    | Checks                       |
+| ------------------------------------------- | ---------------------- | ---------------------------- |
+| Word error rate, Swedish and English        | Ambient speech-to-text | `live-transcript` AC-3, AC-4 |
+| Glossary terms spelled right                | Ambient and dictation  | `live-transcript` AC-5       |
+| Echo lines removed                          | Live transcript        | `live-transcript` AC-6       |
+| Word error rate, English                    | Dictation              | `dictation` AC-6             |
+| Time from release to text, CPU load, cost   | Dictation backends     | `dictation` AC-3             |
+| Speech time with the right speaker name     | Interaction documents  | `interactions` AC-4          |
+| Summary points that trace to the transcript | Summaries              | `interactions` AC-9          |
+| Decisions and next steps found              | Summaries              | `interactions` AC-10         |
 
 ### When something fails
 
@@ -68,13 +70,10 @@
   run goes on with the other cases.
 - The cloud model has no credentials → its setup reports "no credentials"
   and runs on no case.
-- A shadow backend is down → the main transcript is not affected. The tray
-  shows nothing.
 
 ## Acceptance criteria
 
-The 3 h of owner review time per quarter and the case counts are proposed
-targets for the owner to confirm.
+The 3 h of owner review time per quarter and the case counts are targets.
 
 1. **AC-1** `odsodctl bench cases` gives at least 50 ambient cases in each
    language, 50 dictation cases and 10 interactions from 14 days of normal
@@ -82,13 +81,14 @@ targets for the owner to confirm.
 2. **AC-2** Review of one 15 s case with an agent draft takes at most 30 s,
    from audio start to accepted reference. _Check: manual._
 3. **AC-3** All measures in the table can be reported from at most 3 h of
-   owner review per quarter. _Check: manual._
-4. **AC-4** Two runs of the same setup on the same cases give the same
-   scores, except for time measures. _Check: system test._
+   owner review per quarter. A timed pilot confirms this before the speaker
+   and summary measures are added. _Check: manual._
+4. **AC-4** Scoring the same saved output twice gives the same scores. A new
+   inference run may differ. _Check: system test._
 5. **AC-5** Each report row names the setup, the case count, the score and
    the PRD criterion it checks. _Check: system test._
-6. **AC-6** A shadow backend adds no delay to the live transcript, measured
-   as `live-transcript` AC-1 with and without it. _Check: bench._
+6. **AC-6** Removed: live shadow backends are deferred. Setups run offline
+   on saved cases.
 7. **AC-7** A case's audio stays after the audio around it is deleted, until
    the owner or an agent deletes the case. Each case holds its audio, text,
    reference, review state and source in one place. _Check: system test._
@@ -98,12 +98,17 @@ targets for the owner to confirm.
    other cases. _Check: system test._
 10. **AC-10** A report counts only references the owner accepted. Drafts
     show as a separate count. _Check: system test._
+11. **AC-11** Each result records the model and its revision, the prompt,
+    the settings and the daemon commit. A report never puts results from
+    two different setups in one row. _Check: system test._
 
 ## Boundaries
 
 ### Covered by other PRDs
 
 - The targets that the measures check → the PRD named in each row.
+- Recording CPU and disk use → the `ambient-recording` PRD.
+- Delay of unmapped keys → the `keyboard` PRD.
 - Choosing a new backend → an ADR, on bench data (ADR-0002, ADR-0005).
 
 ### Not planned
@@ -111,6 +116,9 @@ targets for the owner to confirm.
 - Public datasets. The bench uses only the owner's own audio.
 - Automatic switch to the best setup. A person decides, in an ADR.
 - Benchmarks of the inference host itself, such as GPU load.
+- A review window or app. A folder, a player and an editor do the job.
+- Live shadow backends next to the main one, for now. Add them only with a
+  measured need and a resource limit (owner decision, 2026-11-23).
 - Recorded key timing to tune the Left Alt hold threshold, for now. The
   owner tunes it from use. Add it later only if the threshold is a real
   problem (owner decision, 2026-11-23).

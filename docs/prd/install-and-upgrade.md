@@ -17,46 +17,51 @@
 
 ## Behavior
 
-- New host → the owner pastes the Hugging Face token once (the only manual
-  step), then runs `mise run daemon:setup` from the `machine` repo → all
-  services run, recording starts, the remaps and shortcuts work.
+- New host → the owner runs `mise run daemon:setup` from the `machine`
+  repo, with no other step → all services run, recording starts, the
+  remaps and shortcuts work. No token or secret is needed (owner decision,
+  2026-11-23).
 - The `machine` repo runs `daemon:setup` again, today when the owner runs it
-  → the host runs the newest `main`. Services restart; recording has a short gap and the keyboard is
-  plain for a moment.
+  → the host runs the newest `main`. Services restart; recording has a short
+  gap and the keyboard is plain for a moment.
+- `daemon:setup` with no new commit → nothing is reinstalled and nothing
+  restarts.
 - An upgrade changes nothing else: config, transcripts, documents, audio
   and bench cases stay.
+- An install or upgrade during a pause → the pause stays.
 - Owner or an agent runs `odsodctl version` → the commit that runs.
-- Bad upgrade → the owner installs an earlier commit with the same command
-  and a commit id. The host runs that commit.
+- Bad upgrade → the owner runs `daemon:setup` with an earlier commit id.
+  The host runs that commit.
 - Owner or an agent develops on a host → `mise run deploy` in the repo
-  switches the live system to the local work. After that, a code change is
-  live after a restart of the changed service, with no reinstall. The next
-  `daemon:setup` from the `machine` repo puts `main` back.
+  installs the local work as the live system. Each code change needs
+  `deploy` again. The next `daemon:setup` from the `machine` repo puts
+  `main` back.
 - A host runs local work → `odsodctl version` says so, with the workspace
-  and commit, and the tray shows a Warning. A host is never left on local
-  work without a sign.
+  and commit. The tray shows a dev mark and `odsodctl status` shows `dev`.
+  This is not a Warning (owner decision, 2026-11-23).
 - The first `daemon:setup` replaces the old remapper, KWin script and D-Bus
-  service from the `machine` repo, with no step by the owner.
+  service from the `machine` repo in one step, with no step by the owner.
+- Move from the old Go recorder → the new system records next to the old
+  one until the new transcript is good. Then the old recorder stops. Its
+  old transcripts stay where they are.
 
 ### When something fails
 
 - The install fails halfway → the services that ran before still run, or
   the command says which step failed and how to rerun it.
 - No network → the install stops before it changes anything.
-- The Hugging Face token is missing → the install says so and names the
-  command to fix it. Everything works except speaker names.
 - A service fails to start after an upgrade → the tray and
-  `odsodctl status` show Error, with the command to roll back.
+  `odsodctl status` show Error, with the `daemon:setup` command and the
+  commit id to roll back to.
 
 ## Acceptance criteria
 
-The commands come from ADR-0006. The timings are proposed targets for the
-owner to confirm. The recording gap during an upgrade is `ambient-recording`
-AC-4.
+The commands come from ADR-0006. The timings are targets. The recording gap
+during an upgrade is `ambient-recording` AC-4.
 
 1. **AC-1** On a host that the `machine` repo provisions, one
-   `daemon:setup` after the token step gives all services running, with no
-   other step. _Check: manual._
+   `daemon:setup` gives all services running, with no other step. _Check:
+   manual._
 2. **AC-2** An upgrade takes at most 5 min on a host with a cached Python
    and network access. _Check: manual._
 3. **AC-3** During an upgrade, the keyboard is plain for at most 2 s, and
@@ -65,11 +70,10 @@ AC-4.
    cases unchanged. _Check: system test._
 5. **AC-5** `odsodctl version` prints the full commit id that runs, also
    over SSH. _Check: system test._
-6. **AC-6** Rolling back to a named commit takes one command and at most
-   5 min. _Check: manual._
-7. **AC-7** Running `daemon:setup` twice in a row changes nothing the second
-   time, and keeps the keys service running if its code did not change.
-   _Check: manual._
+6. **AC-6** Rolling back to a named commit takes one `daemon:setup` command
+   and at most 5 min. _Check: manual._
+7. **AC-7** Running `daemon:setup` with no new commit reinstalls nothing and
+   restarts no service, so recording has no gap. _Check: manual._
 8. **AC-8** After the first `daemon:setup`, the old remapper, KWin script and
    D-Bus service from the `machine` repo are gone, and no key event is
    handled twice. _Check: manual._
@@ -77,13 +81,18 @@ AC-4.
    manual._
 10. **AC-10** A failed step prints which step failed and the command to rerun
     it. _Check: manual._
-11. **AC-11** No running service reads the Hugging Face token. _Check: system
-    test._
-12. **AC-12** After the first `deploy`, a Python change is live in the
-    changed service at most 5 s after one restart command. _Check: manual._
+11. **AC-11** No running service reads a secret. _Check: system test._
+12. **AC-12** `mise run deploy` makes a code change live in at most 60 s
+    (target). _Check: manual._
 13. **AC-13** While a host runs local work, `odsodctl version` prints the
-    workspace path and commit, and `odsodctl status` shows Warning.
-    `daemon:setup` clears both. _Check: system test._
+    workspace path and commit, the tray shows a dev mark, and
+    `odsodctl status` shows `dev`. The dev install alone does not make the
+    state Warning. `daemon:setup` clears all of these. _Check: system test._
+14. **AC-14** An install or upgrade during a pause keeps the pause. _Check:
+    system test._
+15. **AC-15** After a failed upgrade, `odsodctl status` names the
+    `daemon:setup` command and the commit id that ran before. _Check:
+    system test._
 
 ## Boundaries
 
@@ -101,8 +110,11 @@ AC-4.
   `machine` repo decides when a host upgrades (owner decision, 2026-11-23).
 - Hosts that the `machine` repo does not provision, or other Linux
   distributions.
-- Secrets read by running services. The token is used only at install
-  (ADR-0006).
+- Secrets read by running services.
+- Conversion of the old recorder's transcripts and segments. They stay as
+  they are.
+- A live link from the workspace to the running system. Each change goes
+  through `deploy` (owner decision, 2026-11-23).
 
 ## Open questions
 

@@ -40,8 +40,8 @@
 ### When something fails
 
 - The session service is down → window actions still work. App chords do
-  nothing until the session service restarts. The tray icon is gone, as
-  for all session failures.
+  nothing until the session service restarts. The tray shows Error, and a
+  desktop notification names the failed service.
 - The session service crashes → apps already open stay open.
 - An app command fails to start → a line in the session service log names
   the app and the error. No desktop notification: notifications are only
