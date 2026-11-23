@@ -184,7 +184,7 @@ box(
     600,
     "pipeline",
     "segmentation",
-    ["VAD: utterances;", "interaction ends"],
+    ["VAD: audio to", "utterances"],
 )
 box(
     "asrw",
@@ -209,8 +209,8 @@ box(
     1230,
     840,
     "pipeline",
-    "reprocessing",
-    ["diarize, name speakers,", "summarize (pass 2)"],
+    "interactions",
+    ["boundaries; diarize,", "names, summary (pass 2)"],
     badge="HTTP",
 )
 box("bench", 1560, 1060, "cli", "bench", ["score backends", "vs references"])
@@ -226,7 +226,7 @@ out.append(
 )
 text(ax0 + 20, ay - 2, "state/audio/<channel>/", 15, "bold", MONO, anchor="start")
 text(ax0 + 20, ay + 16, "rolling raw audio, time = byte offset", 13, anchor="start")
-text(ax0 + 20, ay + 33, "read by segmentation, transcription, reprocessing, bench", 12, anchor="start", fill="#555")
+text(ax0 + 20, ay + 33, "read by segmentation, transcription, interactions, bench", 12, anchor="start", fill="#555")
 
 box(
     "jobs",
@@ -362,12 +362,6 @@ line([edge("chrome", "r"), edge("signals", "l")], "os", True)
 line([edge("signals", "r"), edge("events", "l", -20)])
 line([edge("note", "r"), edge("events", "l", 20)])
 line(
-    [edge("events", "t", 50), edge("seg", "b", -40)],
-    label="pins, meetings",
-    lpos=(700, 720),
-    lanchor="start",
-)
-line(
     [edge("events", "b", 40), (610, 1130), (2110, 1130), edge("transcript", "b")],
     "ambient",
     label="notes, pins, meetings to the daily log",
@@ -376,16 +370,14 @@ line(
 )
 # batch
 line(
-    [edge("seg", "b", 40), edge("inter", "l")],
+    [edge("jobs", "b", 60), (1070, 760), (1200, 760), edge("reproc", "t", -30)],
     "batch",
-    label="interaction ends",
-    lpos=(880, 760),
 )
-line([edge("inter", "r"), edge("reproc", "l")], "batch")
+line([edge("reproc", "l"), edge("inter", "r")], "batch")
 line(
     [edge("events", "b", -40), (530, 1000), (1200, 1000), edge("reproc", "b", -30)],
     "batch",
-    label="speaker events",
+    label="meetings, pins, speakers",
     lpos=(1180, 990),
     lanchor="end",
 )

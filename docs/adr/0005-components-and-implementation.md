@@ -116,30 +116,41 @@ Diagram source: [`high-level-architecture.py`](../diagrams/high-level-architectu
 Regenerate with
 `uv run docs/diagrams/high-level-architecture.py docs/diagrams/high-level-architecture.svg`.
 
-| Component         | Responsibility                                             | Daemon or command | Main tools                       |
-| ----------------- | ---------------------------------------------------------- | ----------------- | -------------------------------- |
-| keys              | Remap keys; dictation key; paste keys                      | keys              | `evdev` and `uinput` ioctls (C)  |
-| capture           | Record mic and system audio to the audio buffer            | capture           | `pw-record`                      |
-| dictation         | The dictation loop: meeting mute, utterance, clipboard     | session           | keys socket, `pactl`, `wl-copy`  |
-| tray              | Tray icon: mode and health; pause and resume               | session           | PySide6, `systemctl`             |
-| shortcuts         | Register global shortcuts; launch apps for the KWin script | session           | `dbus-fast`, `systemd-run`       |
-| segmentation      | Cut ambient audio into utterances; detect interaction ends | pipeline          | Silero VAD                       |
-| transcription     | Turn utterances into text; one worker per ASR backend      | pipeline          | whisper-server, Silero VAD       |
-| cleanup           | Fix ASR text with an LLM and the glossary                  | pipeline          | llama-server                     |
-| transcript        | Sole writer of the daily transcript                        | pipeline          |                                  |
-| signals           | Meeting and speaker events from the browser                | pipeline          | Chrome DevTools Protocol         |
-| reprocessing      | Diarize, name speakers, summarize finished interactions    | pipeline          | `odsodctl diarize`, llama-server |
-| publish           | Copy finished documents to configured targets              | pipeline          |                                  |
-| note, pin, status | Owner events; health view                                  | command           | `systemctl`                      |
-| install           | Write and enable the units; build keys; install KWin script | command          | `systemctl`, `gcc`, `kpackagetool6` |
-| models            | Download models at install time                            | command           | Hugging Face client              |
-| diarize           | Diarize one audio slice (one-shot)                         | command           | pyannote                         |
-| bench             | Score backends and strategies against references           | command           | jiwer                            |
-| version           | Print the installed commit                                 | command           |                                  |
+Components fall into four domains. Daemons group them by lifecycle
+(ADR-0002 principle 13); domains group them by what they are about. Each
+component owns one job or one output.
+
+| Domain    | Component         | Responsibility                                                       | Daemon or command | Main tools                          |
+| --------- | ----------------- | -------------------------------------------------------------------- | ----------------- | ----------------------------------- |
+| Input     | keys              | Device level: remap keys; dictation key; paste keys                  | keys              | `evdev` and `uinput` ioctls (C)     |
+| Input     | shortcuts         | Compositor level: register global shortcuts; launch apps for KWin    | session           | `dbus-fast`, `systemd-run`          |
+| Speech    | capture           | Record mic and system audio to the audio buffer                      | capture           | `pw-record`                         |
+| Speech    | segmentation      | Cut ambient audio into utterances                                    | pipeline          | Silero VAD                          |
+| Speech    | transcription     | Turn utterances into text; one worker per ASR backend                | pipeline          | whisper-server, Silero VAD          |
+| Speech    | cleanup           | Fix ASR text with an LLM and the glossary                            | pipeline          | llama-server                        |
+| Speech    | dictation         | The dictation loop: meeting mute, utterance, clipboard               | session           | keys socket, `pactl`, `wl-copy`     |
+| Documents | signals           | Meeting and speaker events from the browser                          | pipeline          | Chrome DevTools Protocol            |
+| Documents | transcript        | Sole writer of the daily transcript (live pass)                      | pipeline          |                                     |
+| Documents | interactions      | Sole writer of interactions: boundaries, then documents (batch pass) | pipeline          | `odsodctl diarize`, llama-server    |
+| Documents | publish           | Copy finished documents to configured targets                        | pipeline          |                                     |
+| Control   | tray              | Tray icon: mode and health; pause and resume                         | session           | PySide6, `systemctl`                |
+| Control   | note, pin, status | Owner events; health view                                            | command           | `systemctl`                         |
+| Control   | install           | Write and enable the units; build keys; install the KWin script      | command           | `systemctl`, `gcc`, `kpackagetool6` |
+| Control   | models            | Download models at install time                                      | command           | Hugging Face client                 |
+| Control   | diarize           | Diarize one audio slice (one-shot)                                   | command           | pyannote                            |
+| Control   | bench             | Score backends and strategies against references                     | command           | jiwer                               |
+| Control   | version           | Print the installed commit                                           | command           |                                     |
+
+- `dictation` sits on the edge of Input and Speech. It belongs to Speech: it
+  produces utterances, and uses the keys daemon only as trigger and paste.
 
 ### keys
 
 - Defined in [ADR-0007](0007-keys-daemon.md).
+
+### shortcuts
+
+- Defined in [ADR-0008](0008-shortcuts-and-kwin-script.md).
 
 ### capture
 
@@ -158,59 +169,12 @@ Regenerate with
 - Flags a channel that delivers only digital zeros for a configured time, for
   `health` ([Handy](../research/handy.md)).
 - **Echo:** without a headset, `mic` hears the meeting. Text dedup is the
-  baseline (see `transcript` and `reprocessing`). A PipeWire
+  baseline (see `transcript` and `interactions`). A PipeWire
   `module-echo-cancel` source in monitor mode
   ([Voxtype](../research/voxtype.md)) is a bench experiment: config adds it
   as the extra channel `mic-ec`, never as the default source. A later ADR
   adopts it if bench data shows a gain. Echo cancellation is lossy when both
   sides talk, so raw `mic` is always kept.
-
-### dictation
-
-- One control loop, kept in memory, because its steps depend on each other's
-  timing. Modules: `mute`, `delivery`.
-- Connects to the keys socket and gets `start`, `stop` and `cancel` with key
-  timestamps.
-- `mute`, on `start`: mutes every capture stream on the physical mic except
-  capture's own, with `pactl`. The meeting app hears nothing, and `capture`
-  still records the owner.
-  - Mutes only streams that were not muted already, and records them in
-    `run/muted.json` before it mutes.
-  - On `stop` or `cancel`: unmutes only those streams. A stream that ended
-    meanwhile is not an error.
-  - At start: unmutes every stream left in `run/muted.json` by a crash.
-  - Fails open: if muting fails, dictation goes on and the tray warns.
-  - Source: the stream-level mute design of
-    [Vibe Typer](../research/vibetyper.md), applied to capture streams
-    instead of playback.
-- On `stop`: appends a dictation utterance (from the `start` timestamp minus
-  pre-roll to the `stop` timestamp) and waits for its text in `state/text/`.
-- `delivery` pastes the text
-  ([OpenWhispr](../research/openwhispr.md), [Handy](../research/handy.md)):
-  - Saves the current clipboard.
-  - Writes the text to CLIPBOARD and PRIMARY with
-    `wl-copy --sensitive --type 'text/plain;charset=utf-8'`, so the KDE
-    clipboard history does not keep it.
-  - Sends `paste` to the keys socket. The keys daemon sends `Shift+Insert`,
-    which pastes in GUI apps and terminals, on every layout.
-  - After `pasted` and about 500 ms, restores the old clipboard, but only if
-    the clipboard still holds the dictated text.
-- Writes its mode (idle, dictating) to `run/status.json`.
-
-### tray
-
-- Shows the tray icon with PySide6 on the asyncio loop (`QtAsyncio`).
-- Shows the mode from `run/status.json` and health from the `health` module.
-- Pause and resume run `systemctl --user stop|start odsod-daemon-capture`.
-- No overlay window. A normal window steals focus on Wayland and catches the
-  pasted text ([YazSes](../research/yazses.md)).
-- Runs in the same daemon as `dictation`, because both need the graphical
-  session. They share no code or memory, so `tray` can move to its own unit
-  without code changes if it ever proves unstable.
-
-### shortcuts
-
-- Defined in [ADR-0008](0008-shortcuts-and-kwin-script.md).
 
 ### segmentation
 
@@ -220,17 +184,8 @@ Regenerate with
   ([WhisperX](../research/whisperx.md)).
 - VAD settings (threshold, minimum pause, padding) are config values per
   channel. Bench data tunes them.
-- Writes an interaction when silence passes the configured cutoff, the
-  meeting changes or the owner pins.
-- The silence cutoff is a config value, default 5 minutes. In a meeting that
-  stays open for hours, it is the main way to split the meeting into
-  interactions, so the owner tunes it.
-- **Meeting profiles** override behavior per meeting. Config lists profiles
-  matched by meeting URL (for Meet, the meeting code, such as
-  `abc-defg-hij`). A profile can set the silence cutoff and later other
-  settings. Example: a permanent pair-coding room gets a short cutoff, so each
-  topic becomes its own interaction. With no matching profile, the defaults
-  apply.
+- Knows nothing about meetings or interactions. It turns audio into
+  utterances and nothing else.
 
 ### transcription
 
@@ -268,6 +223,43 @@ Regenerate with
   numbers or names, cleanup writes the raw text instead
   ([YazSes](../research/yazses.md)).
 
+### dictation
+
+- One control loop, kept in memory, because its steps depend on each other's
+  timing. Modules: `mute`, `delivery`.
+- Connects to the keys socket and gets `start`, `stop` and `cancel` with key
+  timestamps.
+- `mute`, on `start`: mutes every capture stream on the physical mic except
+  capture's own, with `pactl`. The meeting app hears nothing, and `capture`
+  still records the owner.
+  - Mutes only streams that were not muted already, and records them in
+    `run/muted.json` before it mutes.
+  - On `stop` or `cancel`: unmutes only those streams. A stream that ended
+    meanwhile is not an error.
+  - At start: unmutes every stream left in `run/muted.json` by a crash.
+  - Fails open: if muting fails, dictation goes on and the tray warns.
+  - Source: the stream-level mute design of
+    [Vibe Typer](../research/vibetyper.md), applied to capture streams
+    instead of playback.
+- On `stop`: appends a dictation utterance (from the `start` timestamp minus
+  pre-roll to the `stop` timestamp) and waits for its text in `state/text/`.
+- `delivery` pastes the text
+  ([OpenWhispr](../research/openwhispr.md), [Handy](../research/handy.md)):
+  - Saves the current clipboard.
+  - Writes the text to CLIPBOARD and PRIMARY with
+    `wl-copy --sensitive --type 'text/plain;charset=utf-8'`, so the KDE
+    clipboard history does not keep it.
+  - Sends `paste` to the keys socket. The keys daemon sends `Shift+Insert`,
+    which pastes in GUI apps and terminals, on every layout.
+  - After `pasted` and about 500 ms, restores the old clipboard, but only if
+    the clipboard still holds the dictated text.
+- Writes its mode (idle, dictating) to `run/status.json`.
+
+### signals
+
+- Polls meeting tabs over the Chrome DevTools Protocol, detects the platform,
+  meeting changes, participants and the speaking indicator. Writes events.
+
 ### transcript
 
 - Merges cleaned text and events (notes, pins, meetings) into the daily
@@ -278,14 +270,23 @@ Regenerate with
   (echo). The component ADR defines the match and how long to wait for the
   `sys` text.
 
-### signals
+### interactions
 
-- Polls meeting tabs over the Chrome DevTools Protocol, detects the platform,
-  meeting changes, participants and the speaking indicator. Writes events.
-
-### reprocessing
-
-- For each finished interaction: runs `odsodctl diarize` as a subprocess
+- Owns the whole life of an interaction: it detects the end, then runs the
+  batch pass and writes the document.
+- **Boundaries.** Reads utterance times and events, never audio. Writes an
+  interaction when silence passes the configured cutoff, the meeting changes
+  or the owner pins. Silence is the gap between utterances on all channels.
+- The silence cutoff is a config value, default 5 minutes. In a meeting that
+  stays open for hours, it is the main way to split the meeting into
+  interactions, so the owner tunes it.
+- **Meeting profiles** override behavior per meeting. Config lists profiles
+  matched by meeting URL (for Meet, the meeting code, such as
+  `abc-defg-hij`). A profile can set the silence cutoff and later other
+  settings. Example: a permanent pair-coding room gets a short cutoff, so each
+  topic becomes its own interaction. With no matching profile, the defaults
+  apply.
+- **Batch pass.** For each finished interaction: runs `odsodctl diarize` as a subprocess
   on the audio slice, names the clusters by overlap with speaker events, and
   assigns a speaker to each pass 1 utterance by largest overlap with the turns
   ([WhisperX](../research/whisperx.md)).
@@ -301,20 +302,20 @@ Regenerate with
 - Starts it at idle priority: `nice 19` and the idle CPU and IO scheduling
   classes. It then uses only CPU that nothing else wants.
 
-### diarize
-
-- One-shot: audio slice in, speaker turns out (JSON). Runs pyannote
-  `speaker-diarization-community-1` on the CPU. Batch work has no deadline,
-  and this avoids ROCm.
-- Caps torch at a configured number of threads (default 4), so one run never
-  takes every core.
-- Runs offline (`HF_HUB_OFFLINE=1`). `odsodctl models fetch` downloads the
-  model once at install time ([ADR-0006](0006-installation.md)). Needs the
-  `diarize` extra.
-
 ### publish
 
 - Copies finished documents to targets and records each delivery.
+
+### tray
+
+- Shows the tray icon with PySide6 on the asyncio loop (`QtAsyncio`).
+- Shows the mode from `run/status.json` and health from the `health` module.
+- Pause and resume run `systemctl --user stop|start odsod-daemon-capture`.
+- No overlay window. A normal window steals focus on Wayland and catches the
+  pasted text ([YazSes](../research/yazses.md)).
+- Runs in the same daemon as `dictation`, because both need the graphical
+  session. They share no code or memory, so `tray` can move to its own unit
+  without code changes if it ever proves unstable.
 
 ### note, pin, status, install, models, version
 
@@ -326,6 +327,17 @@ Regenerate with
 - `models fetch` downloads the pyannote model with the owner's Hugging Face
   login. Silero ships in the package.
 - `version` prints the installed commit (ADR-0006).
+
+### diarize
+
+- One-shot: audio slice in, speaker turns out (JSON). Runs pyannote
+  `speaker-diarization-community-1` on the CPU. Batch work has no deadline,
+  and this avoids ROCm.
+- Caps torch at a configured number of threads (default 4), so one run never
+  takes every core.
+- Runs offline (`HF_HUB_OFFLINE=1`). `odsodctl models fetch` downloads the
+  model once at install time ([ADR-0006](0006-installation.md)). Needs the
+  `diarize` extra.
 
 ### bench
 
@@ -352,7 +364,7 @@ Regenerate with
 - Rejected: the ONNX model on `onnxruntime` does the same with far less
   memory.
 
-### Second ASR pass in reprocessing
+### Second ASR pass in the batch pass
 
 - Might fix pass 1 errors, but doubles GPU time on the shared host.
 - Deferred until bench data shows it helps.
@@ -381,6 +393,12 @@ Regenerate with
 
 - Cuts mid-sentence ([hyprwhspr](../research/hyprwhspr.md)).
 - Rejected.
+
+### Interaction boundaries in segmentation
+
+- Segmentation already sees the silence.
+- Rejected: boundaries are meeting rules that the owner tunes, not signal
+  processing. Utterance times give the same silence without audio.
 
 ### Echo cancellation as the only mic channel
 
