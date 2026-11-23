@@ -1,0 +1,39 @@
+#!/usr/bin/env python3
+"""A fake user manager. All files are under the test's temp root."""
+
+import json
+import os
+import sys
+from pathlib import Path
+
+root = Path(os.environ["ODSOD_DAEMON_ROOT"])
+root.mkdir(parents=True, exist_ok=True)
+args = sys.argv[1:]
+if args and args[0] == "--user":
+    args = args[1:]
+else:
+    sys.exit("fake systemctl accepts only --user")
+with (root / "systemctl.log").open("a") as log:
+    log.write(" ".join(args) + "\n")
+if os.environ.get("FAKE_SYSTEMCTL_FAIL") == " ".join(args):
+    sys.exit("injected failure")
+state_file = root / "systemctl.json"
+states = json.loads(state_file.read_text()) if state_file.exists() else {}
+command, *units = args
+if command == "is-active":
+    active = states.get(
+        units[0], "active" if units[0] == "graphical-session.target" else "inactive"
+    )
+    print(active)
+    sys.exit(0 if active == "active" else 3)
+if command in ("start", "restart", "stop", "try-restart"):
+    for unit in units:
+        if command == "stop":
+            states[unit] = "inactive"
+        elif command == "try-restart" and states.get(unit) != "active":
+            continue
+        elif unit == "odsod-daemon-capture.service" and (root / "run/paused").exists():
+            states[unit] = "inactive"
+        else:
+            states[unit] = "active"
+    state_file.write_text(json.dumps(states))

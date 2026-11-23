@@ -96,6 +96,10 @@ mise run build
   target and D-Bus activation. Two render tests pass; only capture and
   pipeline service units render in this build.
 
+- 2026-11-23: Step 4 complete. Seven-step user apply and CLI use a bounded
+  systemctl wrapper. Four fake-systemctl tests cover idempotence, dev
+  restarts, logged-out capture and retry after partial restart failure.
+
 ## Decisions to confirm
 
 - One-shot helpers use no automatic restart. `Restart=always` is invalid

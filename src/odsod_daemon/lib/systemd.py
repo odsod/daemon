@@ -149,3 +149,21 @@ def watchdog_interval() -> float | None:
     if usec <= 0:
         return None
     return usec / 1_000_000 / 2
+
+
+def control(*arguments: str, check: bool = True) -> bool:
+    """Run a bounded user-manager command, shared by install and control."""
+    import subprocess
+
+    result = subprocess.run(
+        ["systemctl", "--user", *arguments],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    if check and result.returncode:
+        raise RuntimeError(
+            f"systemctl {' '.join(arguments)}: "
+            f"{(result.stderr or result.stdout).strip()}"
+        )
+    return result.returncode == 0

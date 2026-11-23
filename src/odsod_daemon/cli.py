@@ -15,6 +15,7 @@ from types import ModuleType
 import typer
 from pydantic import BaseModel
 
+from odsod_daemon.components.install.cli import app as install_app
 from odsod_daemon.components.note.cli import app as note_app
 from odsod_daemon.components.pin.cli import app as pin_app
 from odsod_daemon.components.retention.cli import app as retention_app
@@ -62,8 +63,7 @@ app.add_typer(retention_app, name="retention")
 # app.add_typer(shortcuts_app, name="shortcuts")
 # from odsod_daemon.components.bench.cli import app as bench_app
 # app.add_typer(bench_app, name="bench")
-# from odsod_daemon.components.install.cli import app as install_app
-# app.add_typer(install_app, name="install")
+app.add_typer(install_app, name="install")
 
 app.add_typer(version_app, name="version")
 
