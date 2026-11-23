@@ -5,9 +5,9 @@ Usage: uv run docs/diagrams/high-level-architecture.py docs/diagrams/high-level-
 
 import sys
 
-from schematic import DASHED, HEAVY, THIN, Page
+from schematic import DASH_DOT, DASHED, HEAVY, THIN, Page
 
-W, H = 2400, 1680
+W, H = 2400, 1780
 p = Page(W, H)
 p.header("OD-ADR-0005", "COMPONENTS, FILES AND FLOWS")
 
@@ -22,6 +22,27 @@ def comp(n, x, y, w, name, ports=()):
 def mid(x, w):
     return x + w / 2
 
+
+# ------------------------------------------------------------------ odsod-daemon
+p.boundary(
+    [
+        (255, 180),
+        (1550, 180),
+        (1550, 345),
+        (2385, 345),
+        (2385, 990),
+        (2190, 990),
+        (2190, 1228),
+        (1460, 1228),
+        (1460, 1135),
+        (80, 1135),
+        (80, 985),
+        (255, 985),
+    ],
+    "ODSOD-DAEMON",
+    262,
+    172,
+)
 
 # ------------------------------------------------------------------ A keys, D session
 T = 200
@@ -57,10 +78,10 @@ p.ext(
 )
 p.flow([(400, T + 50), (400, 160), (1570, 160)], "REMAPPED KEYS, PASTE CHORD", at=1)
 
-p.flow([(740, T + 50), (740, 175)], width=THIN)
+p.flow([(740, T + 50), (740, 158)], width=THIN)
 p.open_end(740, 140, ["MUTE MEETING CAPTURE STREAMS (TO PIPEWIRE)"], size=11)
 
-p.flow([(1160, T + 50), (1160, 175)], width=THIN)
+p.flow([(1160, T + 50), (1160, 158)], width=THIN)
 p.open_end(1160, 140, ["TO KDE PLASMA (SYSTEM TRAY)"], size=11)
 
 p.flow([(1445, ky), (1570, ky)], "SHORTCUTS", width=THIN, both=True)
@@ -182,17 +203,17 @@ p.dot(1215, 1080)
 p.ext(1000, 1150, 430, 56, "INFERENCE HOST", ["WHISPER-SERVER, LLAMA-SERVER"], size=15)
 
 # ------------------------------------------------------------------ commands
-comp(13, 100, 990, 160, "NOTE, PIN")
-p.flow([(260, 1026), (600, 1026), (600, RB + 75)], width=THIN)
+comp(13, 100, 1020, 160, "NOTE, PIN")
+p.flow([(260, 1056), (600, 1056), (600, RB + 75)], width=THIN)
 
 comp(16, 1700, 1130, 170, "DIARIZE")
 p.flow([(1625, RB + BH), (1625, 1166), (1700, 1166)], width=THIN, dash=DASHED)
 
-comp(15, 2200, RA, 160, "BENCH")
-p.flow([(2280, 640), (2280, RA)], width=THIN)
-p.text(2290, 650, "AUDIO, ASR TEXT", 10, anchor="start")
-p.store(2200, 830, 160, 80, "bench/", ["CASES, REFERENCES"])
-p.flow([(2280, RA + BH), (2280, 830)], width=THIN)
+comp(15, 2170, RA, 160, "BENCH")
+p.flow([(2250, 640), (2250, RA)], width=THIN)
+p.text(2260, 650, "AUDIO, ASR TEXT", 10, anchor="start")
+p.store(2170, 830, 160, 80, "bench/", ["CASES, REFERENCES"])
+p.flow([(2250, RA + BH), (2250, 830)], width=THIN)
 
 # ------------------------------------------------------------------ keys
 
@@ -231,7 +252,7 @@ def comp_row(n, name, domain, d, job):
 
 
 cols = [(20, "middle"), (42, "start"), (200, "start"), (318, "middle"), (345, "start")]
-TY = 1230
+TY = 1260
 p.table(
     40,
     TY,
@@ -266,8 +287,19 @@ SYMBOLS = [
     ),
     (lambda x, y: p.dot(x, y), "JUNCTION"),
     (lambda x, y: p.merge(x, y, 9), "MERGE"),
-    (lambda x, y: p.callout(x, y, "A", 9), "SERVICE (FILLED LETTER)"),
+    (
+        lambda x, y: p.add(
+            f'<line x1="{x - 30}" y1="{y}" x2="{x + 30}" y2="{y}" stroke="#1b1b1b" '
+            f'stroke-width="1.8" stroke-dasharray="{DASH_DOT}"/>'
+        ),
+        "ODSOD-DAEMON: THE WHOLE SYSTEM (DASH-DOT)",
+    ),
+    (lambda x, y: p.callout(x, y, "A", 9), "SERVICE (DASHED FRAME, FILLED LETTER)"),
     (lambda x, y: p.number(x, y, 1, r=10), "COMPONENT (HOLLOW NUMBER)"),
+    (
+        lambda x, y: p.text(x, y + 4, "CMD", 12),
+        "COMMAND: COMPONENT OUTSIDE ANY SERVICE",
+    ),
     (
         lambda x, y: p.rect(x - 28, y - 9, 56, 18, width=1.4, dash="6 4"),
         "OUTSIDE SYSTEM (DASHED BOX)",

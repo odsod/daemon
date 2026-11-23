@@ -29,21 +29,21 @@ p.block(
 )
 p.callout(KX, KY, "A", 17)
 
-p.block(
-    SX,
-    SY,
-    SW,
-    SH,
-    "SESSION",
-    ports=[
-        ("l", 0.55, "SOCKET"),
-        ("r", 0.55, "D-BUS"),
-        ("b", 0.5, "FILES"),
-        ("t", 0.5, "DICTATION · TRAY · SHORTCUTS"),
-    ],
-    size=20,
+# ------------------------------------------------------------------ odsod-daemon
+p.boundary(
+    [(215, 165), (1060, 165), (1060, 775), (215, 775)], "ODSOD-DAEMON", 220, 158
 )
+
+p.rect(SX, SY, SW, SH, width=2.2)
 p.callout(SX, SY, "D", 17)
+p.text(SX + 26, SY + 26, "SESSION", 20, "bold", anchor="start")
+p.port(SX, SY, SW, SH, "b", 0.5, "FILES")
+sw, sg = 94, 17
+sx0 = SX + 22
+sy = KY + KH / 2 - 22  # centered on the keys socket line
+for i, name in enumerate(["DICTATION", "TRAY", "SHORTCUTS"]):
+    p.block(sx0 + i * (sw + sg), sy, sw, 44, name, width=1.4, size=12)
+sx_last = sx0 + 2 * (sw + sg) + sw
 
 p.block(
     CX, CY, CW, CH, "CAPTURE", ports=[("l", 0.5, "PCM"), ("r", 0.5, "AUDIO")], size=20
@@ -80,7 +80,7 @@ p.flow(
 
 # ------------------------------------------------------------------ flows between blocks
 p.flow(
-    [(KX + KW, KY + KH / 2), (SX, KY + KH / 2)],
+    [(KX + KW, KY + KH / 2), (sx0, KY + KH / 2)],
     "START, STOP,\nPASTE",
     width=HEAVY,
     both=True,
@@ -122,11 +122,11 @@ p.flow(
     width=THIN,
 )
 p.flow(
-    [(SX + SW, SY + SH * 0.55), (1110, SY + SH * 0.55)],
-    "SHORTCUTS,\nAPP LAUNCH",
+    [(sx_last, KY + KH / 2), (1110, KY + KH / 2)],
     width=THIN,
     both=True,
 )
+p.lines(972, KY + KH / 2 - 19, ["SHORTCUTS,", "APP LAUNCH"], 11, anchor="start", lead=12)
 
 p.ext(1110, 690, 250, 76, "TARGET DIRS", ["VAULT INBOX"], size=17)
 p.flow(
@@ -138,12 +138,12 @@ p.lines(975, yb + bh - 31, ["FINISHED", "DOCUMENTS"], 11, anchor="start", lead=1
 
 ix = PX + PW * 0.47
 p.ext(
-    ix - 230, 800, 460, 62, "INFERENCE HOST", ["WHISPER-SERVER · LLAMA-SERVER"], size=17
+    ix - 230, 815, 460, 52, "INFERENCE HOST", ["WHISPER-SERVER · LLAMA-SERVER"], size=17
 )
-p.flow([(ix, PY + PH), (ix, 800)], "AUDIO SLICES, TEXT", width=THIN, both=True)
+p.flow([(ix, PY + PH), (ix, 815)], "AUDIO SLICES, TEXT", width=THIN, both=True)
 
 # ------------------------------------------------------------------ key
-kx, ky, kw = 1060, 335, 300
+kx, ky, kw = 1100, 335, 260
 
 
 def letter(ch):
@@ -161,12 +161,13 @@ p.table(
         (letter("C"), "PIPELINE", "RESTARTS FREELY"),
         (letter("D"), "SESSION", "GRAPHICAL SESSION"),
     ],
-    [(22, "middle"), (44, "start"), (140, "start")],
+    [(22, "middle"), (44, "start"), (126, "start")],
     row_h=30,
 )
 p.text(kx, ky + 200, "HEAVY LINE: SPEECH PATH", 11, anchor="start", fill=GRAY)
 p.text(kx, ky + 216, "DASHED LINE: BATCH PASS", 11, anchor="start", fill=GRAY)
 p.text(kx, ky + 232, "DASHED BOX: OUTSIDE SYSTEM", 11, anchor="start", fill=GRAY)
+p.text(kx, ky + 248, "DASH-DOT LINE: ODSOD-DAEMON", 11, anchor="start", fill=GRAY)
 
 p.footer("OD-2-001", "Figure 1-1.  Service Configuration", "1-1")
 with open(sys.argv[1] if len(sys.argv) > 1 else "overview.svg", "w") as f:
