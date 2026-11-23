@@ -152,7 +152,8 @@ class Session:
             elif action == "append":
                 self.hold = DictationUtterance(
                     ts=clock.iso(),
-                    id="dic-" + stamp(self.loop.start),
+                    id="dic-"
+                    + stamp(self.loop.start).replace("-", "").replace(":", ""),
                     start=stamp(self.loop.start),
                     end=stamp(self.loop.end),
                     press=stamp(self.loop.press),

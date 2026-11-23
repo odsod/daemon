@@ -64,6 +64,7 @@ async def test_hold_order_and_cancel(session, monkeypatch):
     await session.actions("stop", now + 1)
     assert effects == ["mute", "dictating", "unmute", "cover", "append", "idle"]
     hold, timing, waiter = await session.queue.get()
+    assert hold.id == "dic-" + hold.start.replace("-", "").replace(":", "")
     assert hold.start == service.stamp(now - 0.3)
     assert hold.end == service.stamp(now + 1.15)
     assert (await waiter)["text"] == "hello"

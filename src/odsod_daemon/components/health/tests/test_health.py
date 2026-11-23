@@ -30,7 +30,7 @@ def state(name, active="active", age=10):
 def healthy():
     return Snapshot(
         now=NOW,
-        units={name: state(name) for name in ("capture", "pipeline", "tray")},
+        units={name: state(name) for name in units.SERVICES},
         newest_audio={"mic": clock.iso(NOW), "sys": clock.iso(NOW)},
     )
 
@@ -69,7 +69,7 @@ def test_state_precedence(faults, mode, paused, expected, exit_code):
     assert (report.state, report.exit_code) == (expected, exit_code)
 
 
-@pytest.mark.parametrize("missing", ["capture", "pipeline"])
+@pytest.mark.parametrize("missing", units.SERVICES)
 def test_partial_build_requires_shipped_units(missing):
     snapshot = healthy()
     report = evaluate(snapshot, ControlConfig())
@@ -77,7 +77,8 @@ def test_partial_build_requires_shipped_units(missing):
     assert all(
         not s.expected
         for s in report.services
-        if any(n in s.unit for n in ("session", "keys"))
+        if s.unit.removeprefix("odsod-daemon-").removesuffix(".service")
+        not in units.SERVICES
     )
     snapshot.units[missing] = None
     assert evaluate(snapshot, ControlConfig()).exit_code == 2
