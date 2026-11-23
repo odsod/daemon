@@ -1,0 +1,11 @@
+[Unit]
+Description=odsod daemon login
+OnFailure=odsod-daemon-notify@%n.service
+After=graphical-session.target
+
+[Service]
+Type=oneshot
+ExecStart={{odsodctl}} resume --by login
+
+[Install]
+WantedBy=graphical-session.target

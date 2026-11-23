@@ -92,4 +92,14 @@ mise run build
 - 2026-11-23: Step 2 complete. Added source parsing, template substitution,
   shipped-unit selection and file comparison. Four pure tests pass.
 
+- 2026-11-23: Step 3 complete. Added all user unit templates, timers,
+  target and D-Bus activation. Two render tests pass; only capture and
+  pipeline service units render in this build.
+
 ## Decisions to confirm
+
+- One-shot helpers use no automatic restart. `Restart=always` is invalid
+  for `Type=oneshot`. The notify unit has no `OnFailure` to itself, which
+  avoids recursive failure notifications.
+- ADR-0006 supplies the detailed target membership and pipeline enable
+  settings where ADR-0004 uses the broader `default.target` description.

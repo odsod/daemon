@@ -1,0 +1,7 @@
+[Unit]
+Description=odsod daemon retention
+OnFailure=odsod-daemon-notify@%n.service
+
+[Service]
+Type=oneshot
+ExecStart={{odsodctl}} retention

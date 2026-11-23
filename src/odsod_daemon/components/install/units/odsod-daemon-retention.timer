@@ -1,0 +1,11 @@
+[Unit]
+Description=odsod daemon retention timer
+OnFailure=odsod-daemon-notify@%n.service
+
+[Timer]
+OnCalendar=hourly
+OnStartupSec=1min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

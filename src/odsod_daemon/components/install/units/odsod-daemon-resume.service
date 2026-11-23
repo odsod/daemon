@@ -1,0 +1,7 @@
+[Unit]
+Description=odsod daemon resume
+OnFailure=odsod-daemon-notify@%n.service
+
+[Service]
+Type=oneshot
+ExecStart={{odsodctl}} resume --by timer

@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=io.github.odsod.daemon.session
+Exec={{odsodctl}} run session
+SystemdService=odsod-daemon-session.service

@@ -1,0 +1,15 @@
+[Unit]
+Description=odsod daemon pipeline
+OnFailure=odsod-daemon-notify@%n.service
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=notify
+WatchdogSec=120
+ExecStart={{odsodctl}} run pipeline
+Restart=always
+RestartSec=1
+
+[Install]
+WantedBy=odsod-daemon.target

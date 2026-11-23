@@ -1,0 +1,7 @@
+[Unit]
+Description=odsod daemon
+OnFailure=odsod-daemon-notify@%n.service
+Wants={{target_wants}}
+
+[Install]
+WantedBy=default.target

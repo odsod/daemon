@@ -1,0 +1,9 @@
+[Unit]
+Description=odsod daemon resume timer
+OnFailure=odsod-daemon-notify@%n.service
+
+[Timer]
+OnCalendar=*-*-* 00:00:00
+
+[Install]
+WantedBy=timers.target

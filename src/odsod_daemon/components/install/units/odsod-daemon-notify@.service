@@ -1,0 +1,6 @@
+[Unit]
+Description=odsod daemon notify@
+
+[Service]
+Type=oneshot
+ExecStart={{odsodctl}} notify-failed %i
