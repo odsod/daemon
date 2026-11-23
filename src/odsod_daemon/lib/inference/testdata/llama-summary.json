@@ -1,0 +1,130 @@
+{
+  "request": {
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "headers": {
+      "content-type": "application/json"
+    },
+    "body": {
+      "model": "default",
+      "messages": [
+        {
+          "role": "system",
+          "content": "Write in English, also for Swedish talk. Never translate the transcript. Use only what the transcript says; leave a point out when unsure. Write an overview of 1 to 3 sentences. Use points only under Decided, Insight, Problem, Context, Next; leave out labels with nothing to say. A Next point names its owner when the transcript names one. Notes are the owner's own context. Lines from Others may be several people; never guess who. Glossary terms keep their spelling. Glossary: Kubernetes, PostgreSQL, GitHub, PipeWire, Whisper, Silero."
+        },
+        {
+          "role": "user",
+          "content": "[10:00:00] Speaker A: We need to move the store to Postgres.\n[10:00:12] Speaker B: The partitions cause gaps.\n[10:03:40] Note: check the CDC lag numbers."
+        }
+      ],
+      "temperature": 0,
+      "max_tokens": 2048,
+      "chat_template_kwargs": {
+        "enable_thinking": false
+      },
+      "response_format": {
+        "type": "json_schema",
+        "json_schema": {
+          "name": "summary",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "skip",
+              "title",
+              "overview",
+              "points"
+            ],
+            "properties": {
+              "skip": {
+                "type": "boolean"
+              },
+              "title": {
+                "type": "string"
+              },
+              "overview": {
+                "type": "string"
+              },
+              "points": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "label",
+                    "text",
+                    "owner"
+                  ],
+                  "properties": {
+                    "label": {
+                      "type": "string",
+                      "enum": [
+                        "Decided",
+                        "Insight",
+                        "Problem",
+                        "Context",
+                        "Next"
+                      ]
+                    },
+                    "text": {
+                      "type": "string"
+                    },
+                    "owner": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "elapsed_ms": 4470.9,
+    "json": {
+      "choices": [
+        {
+          "finish_reason": "stop",
+          "index": 0,
+          "message": {
+            "role": "assistant",
+            "content": "{\n  \"skip\": true,\n  \"title\": \"Postgres Migration and CDC Lag\",\n  \"overview\": \"The team plans to migrate the store to PostgreSQL to address partition gaps, with a specific note to check CDC lag numbers.\",\n  \"points\": [\n    {\n      \"label\": \"Decided\",\n      \"text\": \"Move the store to Postgres.\",\n      \"owner\": \"Speaker A\"\n    },\n    {\n      \"label\": \"Problem\",\n      \"text\": \"The partitions cause gaps.\",\n      \"owner\": \"Speaker B\"\n    },\n    {\n      \"label\": \"Context\",\n      \"text\": \"Check the CDC lag numbers.\",\n      \"owner\": \"Note\"\n    }\n  ]\n}"
+          }
+        }
+      ],
+      "created": 1795462807,
+      "model": "/home/odsod/.local/share/odsod/machine/data/llama/Qwen3.5-9B-Q5_K_M.gguf",
+      "system_fingerprint": "b12359-unknown",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 171,
+        "prompt_tokens": 196,
+        "total_tokens": 367,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "id": "chatcmpl-bR0uv90cKnPcmQ0Sn2U9r5tpAtEQXd6G",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 196,
+        "prompt_ms": 230.547,
+        "prompt_per_token_ms": 1.1762602040816326,
+        "prompt_per_second": 850.1520297379711,
+        "predicted_n": 171,
+        "predicted_ms": 4216.177,
+        "predicted_per_token_ms": 24.801041176470587,
+        "predicted_per_second": 40.32088785646334
+      }
+    }
+  }
+}

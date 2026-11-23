@@ -277,11 +277,11 @@ of the pending window, 14 days).
 - Input text: `[HH:MM:SS] Name: text`, notes as `[HH:MM:SS] Note: text`.
 - `chunk_chars` must fit one llama-server slot. With `--parallel 2` and
   `--ctx-size 32768`, a slot holds 16,384 tokens for the prompt, the
-  chunk and the reply. 35,000 is the Go recorder's value and a
-  placeholder. A spike before implementation sends a 35,000-character
-  Swedish transcript with the real prompt to the server with
-  `--parallel 2`, reads `usage.prompt_tokens`, and sets the default so
-  that the prompt plus the reply use at most 75% of a slot.
+  chunk and the reply. A spike on 2026-11-23 sent 35,000 Swedish
+  characters with the summary prompt: `usage.prompt_tokens` was 9,680
+  (135 for the fixed prompt), or 0.273 tokens per character. With 2,048
+  output tokens, a 16,384-token slot fits 37,000 characters and a
+  32,768-token slot fits 82,000. The default is 37,000, safe for both.
 - Up to `chunk_chars` characters: one call with the
   `interactions-summarize` prompt.
 - Longer: split at line ends into chunks of at most `chunk_chars`,
@@ -396,7 +396,7 @@ Section `interactions`:
     "silence_cutoff_s": 300,
     "meeting_cutoffs": {},
     "model": "default",
-    "chunk_chars": 35000,
+    "chunk_chars": 37000,
     "request_timeout_s": 600,
     "max_attempts": 3,
     "skip_max_lines": 3,

@@ -1,0 +1,32 @@
+{
+  "request": {
+    "method": "POST",
+    "path": "/v1/audio/transcriptions",
+    "headers": {
+      "content-type": "multipart/form-data; boundary=5fa17bf692621dc5843a1f04fd71af73"
+    },
+    "body": {
+      "fields": {
+        "language": "auto",
+        "response_format": "json",
+        "temperature": "0"
+      },
+      "file": {
+        "filename": "silence.wav",
+        "content_type": "audio/wav",
+        "sha256": "262d1f34f300560a4c82ba8127ddea9e1d72946f187fdbd3e8f70ee096077aec",
+        "bytes": 160044
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json"
+    },
+    "elapsed_ms": 1450.2,
+    "json": {
+      "text": ""
+    }
+  }
+}

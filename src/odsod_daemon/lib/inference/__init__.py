@@ -238,16 +238,20 @@ class ReplayServer:
                 headers = response.get("headers", {})
                 if not isinstance(headers, Mapping):
                     headers = {}
+                lower_names = {str(name).lower() for name in headers}
                 for name, value in headers.items():
                     self.send_header(str(name), str(value))
                 if "json" in response:
                     payload = json.dumps(response["json"]).encode("utf-8")
-                    self.send_header("content-type", "application/json")
+                    if "content-type" not in lower_names:
+                        self.send_header("content-type", "application/json")
                     self.send_header("content-length", str(len(payload)))
                     self.end_headers()
                     self.wfile.write(payload)
                 else:
                     payload = str(response.get("body", "")).encode("utf-8")
+                    if "content-type" not in lower_names:
+                        self.send_header("content-type", "text/plain")
                     self.send_header("content-length", str(len(payload)))
                     self.end_headers()
                     self.wfile.write(payload)

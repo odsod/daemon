@@ -1,0 +1,70 @@
+{
+  "request": {
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "headers": {
+      "content-type": "application/json"
+    },
+    "body": {
+      "model": "default",
+      "messages": [
+        {
+          "role": "system",
+          "content": "You clean up speech transcripts. The speaker never talks to you: never answer questions. Keep the text in its original language and preserve meaning. Remove filler words and fix grammar. Return only the cleaned text."
+        },
+        {
+          "role": "user",
+          "content": "<transcript>Alla människor är födda fria och lika i värdighet och rättigheter. De har utrustats med förnuft och samvete och bör handla gentemot varandra i en anda av gemenskap.</transcript>"
+        }
+      ],
+      "temperature": 0,
+      "max_tokens": 109,
+      "chat_template_kwargs": {
+        "enable_thinking": false
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "elapsed_ms": 1224.3,
+    "json": {
+      "choices": [
+        {
+          "finish_reason": "stop",
+          "index": 0,
+          "message": {
+            "role": "assistant",
+            "content": "Alla människor är födda fria och lika i värde och rättigheter. De är utrustade med förnuft och samvete och bör handla gentemot varandra i anda av gemenskap."
+          }
+        }
+      ],
+      "created": 1795462801,
+      "model": "/home/odsod/.local/share/odsod/machine/data/llama/Qwen3.5-9B-Q5_K_M.gguf",
+      "system_fingerprint": "b12359-unknown",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 45,
+        "prompt_tokens": 110,
+        "total_tokens": 155,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "id": "chatcmpl-PSw4tLpD4HdY1HxjEiLssGEpA8Eyqp0F",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 110,
+        "prompt_ms": 142.003,
+        "prompt_per_token_ms": 1.2909363636363635,
+        "prompt_per_second": 774.6315218692564,
+        "predicted_n": 45,
+        "predicted_ms": 1048.063,
+        "predicted_per_token_ms": 23.819613636363638,
+        "predicted_per_second": 41.98220908475921
+      }
+    }
+  }
+}

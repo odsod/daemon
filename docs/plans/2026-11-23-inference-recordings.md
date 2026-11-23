@@ -58,4 +58,14 @@ uv run pytest src/odsod_daemon/lib/inference                # fake replays every
 
 ## Progress log
 
+- 2026-11-23: Converted `lib/inference.py` to `lib/inference/__init__.py`; added `**/testdata/**` to the wheel exclude; `conftest.py` loads the flat testdata directory for both fakes.
+- 2026-11-23: Recorded 9 pairs with `record.py`: 5 whisper, 4 llama. The whisper language field is a name (`swedish`, `english`), not a code.
+- 2026-11-23: Token measure: 35,000 Swedish characters gave 9,680 prompt tokens (135 for the fixed prompt), or 0.273 tokens per character. With 2,048 output tokens, 1 slot (32,768) fits 82,000 characters and 2 slots (16,384) fit 37,000. Set the ADR-0016 default to 37,000.
+- 2026-11-23: Done when passes: 9 JSON recordings; `uv run pytest src/odsod_daemon/lib/inference` (23 passed).
+
 ## Decisions to confirm
+
+- Recordings are flat in `testdata/*.json` to match this plan's Done when and the current `load_pairs`. This supersedes the scaffold decision that put them in `{whisper,llama}/`; both fakes now load the flat directory and filter by request path.
+- Whisper multipart bodies are stored as fields plus file metadata (name, content type, SHA-256, bytes), not as raw bytes. Llama bodies are the JSON request. This keeps the recordings small and readable.
+- The whisper 4xx pair is a missing file, which the server rejects with 400. Bad field values such as `response_format=bogus` return 200 or 500, not 4xx.
+- The chunk measure uses 2,048 output tokens (the client default). A larger summary reply budget needs a lower `chunk_chars`.

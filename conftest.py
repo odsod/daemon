@@ -35,8 +35,8 @@ class FakeInference:
 
 @pytest.fixture
 def fake_inference() -> Iterator[FakeInference]:
-    whisper = inference.replay_server(INFERENCE_TESTDATA / "whisper")
-    llama = inference.replay_server(INFERENCE_TESTDATA / "llama")
+    whisper = inference.replay_server(INFERENCE_TESTDATA)
+    llama = inference.replay_server(INFERENCE_TESTDATA)
     try:
         yield FakeInference(whisper, llama)
     finally:

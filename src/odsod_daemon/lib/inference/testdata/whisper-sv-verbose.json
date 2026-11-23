@@ -1,0 +1,514 @@
+{
+  "request": {
+    "method": "POST",
+    "path": "/v1/audio/transcriptions",
+    "headers": {
+      "content-type": "multipart/form-data; boundary=8a34cbdda0a58fbbd77b09f788a6f0ce"
+    },
+    "body": {
+      "fields": {
+        "language": "sv",
+        "prompt": "Kubernetes, PostgreSQL, GitHub, PipeWire, Whisper, Silero",
+        "response_format": "verbose_json",
+        "temperature": "0"
+      },
+      "file": {
+        "filename": "sv-udhr-article1.wav",
+        "content_type": "audio/wav",
+        "sha256": "a3547a716d70156aa53dad6acf25c95b8b71229afee7adac6478e2b1d0b6a309",
+        "bytes": 462350
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json"
+    },
+    "elapsed_ms": 2075.0,
+    "json": {
+      "task": "transcribe",
+      "language": "swedish",
+      "duration": 14.446000099182129,
+      "text": " Artikel 1. Alla människor är födda fria och lika i värde\n och rättigheter. Det har utrustats med förnuft och samvete\n och bör handla gentemot varandra i en anda av gemenskap.\n",
+      "segments": [
+        {
+          "id": 0,
+          "text": " Artikel 1. Alla människor är födda fria och lika i värde",
+          "start": 0.0,
+          "end": 4.8500000000000005,
+          "tokens": [
+            5735,
+            41486,
+            502,
+            13,
+            1057,
+            64,
+            48091,
+            3775,
+            25309,
+            67,
+            2675,
+            431,
+            654,
+            3795,
+            375,
+            2330,
+            741,
+            28187,
+            1479
+          ],
+          "words": [
+            {
+              "word": " Art",
+              "start": 0.34,
+              "end": 0.37,
+              "t_dtw": -1,
+              "probability": 0.9919662475585938
+            },
+            {
+              "word": "ikel",
+              "start": 0.37,
+              "end": 0.86,
+              "t_dtw": -1,
+              "probability": 0.9997768402099609
+            },
+            {
+              "word": " 1",
+              "start": 0.86,
+              "end": 0.97,
+              "t_dtw": -1,
+              "probability": 0.9966601133346558
+            },
+            {
+              "word": ".",
+              "start": 1.24,
+              "end": 1.45,
+              "t_dtw": -1,
+              "probability": 0.8084542155265808
+            },
+            {
+              "word": " All",
+              "start": 1.45,
+              "end": 1.78,
+              "t_dtw": -1,
+              "probability": 0.9894757270812988
+            },
+            {
+              "word": "a",
+              "start": 1.78,
+              "end": 1.87,
+              "t_dtw": -1,
+              "probability": 0.999969482421875
+            },
+            {
+              "word": " människor",
+              "start": 2.27,
+              "end": 2.69,
+              "t_dtw": -1,
+              "probability": 0.9999732971191406
+            },
+            {
+              "word": " är",
+              "start": 2.69,
+              "end": 2.74,
+              "t_dtw": -1,
+              "probability": 0.9999790191650391
+            },
+            {
+              "word": " fö",
+              "start": 2.88,
+              "end": 3.0500000000000003,
+              "t_dtw": -1,
+              "probability": 0.9999008178710938
+            },
+            {
+              "word": "d",
+              "start": 3.0500000000000003,
+              "end": 3.14,
+              "t_dtw": -1,
+              "probability": 0.9908997416496277
+            },
+            {
+              "word": "da",
+              "start": 3.14,
+              "end": 3.3200000000000003,
+              "t_dtw": -1,
+              "probability": 0.9999675750732422
+            },
+            {
+              "word": " fr",
+              "start": 3.3200000000000003,
+              "end": 3.5,
+              "t_dtw": -1,
+              "probability": 0.999403178691864
+            },
+            {
+              "word": "ia",
+              "start": 3.5,
+              "end": 3.5500000000000003,
+              "t_dtw": -1,
+              "probability": 0.9997444748878479
+            },
+            {
+              "word": " och",
+              "start": 3.69,
+              "end": 3.95,
+              "t_dtw": -1,
+              "probability": 0.9953188896179199
+            },
+            {
+              "word": " li",
+              "start": 3.95,
+              "end": 4.12,
+              "t_dtw": -1,
+              "probability": 0.999908447265625
+            },
+            {
+              "word": "ka",
+              "start": 4.13,
+              "end": 4.13,
+              "t_dtw": -1,
+              "probability": 0.9999961853027344
+            },
+            {
+              "word": " i",
+              "start": 4.36,
+              "end": 4.4,
+              "t_dtw": -1,
+              "probability": 0.9999942779541016
+            },
+            {
+              "word": " vär",
+              "start": 4.4,
+              "end": 4.63,
+              "t_dtw": -1,
+              "probability": 0.9999523162841797
+            },
+            {
+              "word": "de",
+              "start": 4.8100000000000005,
+              "end": 4.8500000000000005,
+              "t_dtw": -1,
+              "probability": 0.9999294281005859
+            }
+          ],
+          "temperature": 0.0,
+          "avg_logprob": -0.012498092837631702,
+          "no_speech_prob": 1.3754713279467978e-07
+        },
+        {
+          "id": 1,
+          "text": " och rättigheter. Det har utrustats med förnuft och samvete",
+          "start": 4.8500000000000005,
+          "end": 9.73,
+          "tokens": [
+            3795,
+            38494,
+            910,
+            2398,
+            13,
+            4237,
+            2233,
+            2839,
+            22326,
+            1720,
+            1205,
+            4816,
+            16241,
+            844,
+            3795,
+            3247,
+            85,
+            3498
+          ],
+          "words": [
+            {
+              "word": " och",
+              "start": 4.8500000000000005,
+              "end": 5.12,
+              "t_dtw": -1,
+              "probability": 0.9999027252197266
+            },
+            {
+              "word": " rätt",
+              "start": 5.12,
+              "end": 5.46,
+              "t_dtw": -1,
+              "probability": 0.9999504089355469
+            },
+            {
+              "word": "igh",
+              "start": 5.55,
+              "end": 5.75,
+              "t_dtw": -1,
+              "probability": 0.9999771118164062
+            },
+            {
+              "word": "eter",
+              "start": 5.75,
+              "end": 6.11,
+              "t_dtw": -1,
+              "probability": 0.9999904632568359
+            },
+            {
+              "word": ".",
+              "start": 6.11,
+              "end": 6.48,
+              "t_dtw": -1,
+              "probability": 0.9963616728782654
+            },
+            {
+              "word": " Det",
+              "start": 6.48,
+              "end": 6.5200000000000005,
+              "t_dtw": -1,
+              "probability": 0.47803401947021484
+            },
+            {
+              "word": " har",
+              "start": 6.76,
+              "end": 7.03,
+              "t_dtw": -1,
+              "probability": 0.9997825622558594
+            },
+            {
+              "word": " ut",
+              "start": 7.04,
+              "end": 7.23,
+              "t_dtw": -1,
+              "probability": 0.9998798370361328
+            },
+            {
+              "word": "rust",
+              "start": 7.38,
+              "end": 7.6000000000000005,
+              "t_dtw": -1,
+              "probability": 0.9998912811279297
+            },
+            {
+              "word": "ats",
+              "start": 7.6000000000000005,
+              "end": 7.88,
+              "t_dtw": -1,
+              "probability": 0.9998874664306641
+            },
+            {
+              "word": " med",
+              "start": 7.88,
+              "end": 8.16,
+              "t_dtw": -1,
+              "probability": 0.9999542236328125
+            },
+            {
+              "word": " för",
+              "start": 8.16,
+              "end": 8.42,
+              "t_dtw": -1,
+              "probability": 0.9962324500083923
+            },
+            {
+              "word": "nu",
+              "start": 8.43,
+              "end": 8.45,
+              "t_dtw": -1,
+              "probability": 0.9997882843017578
+            },
+            {
+              "word": "ft",
+              "start": 8.620000000000001,
+              "end": 8.790000000000001,
+              "t_dtw": -1,
+              "probability": 0.9999904632568359
+            },
+            {
+              "word": " och",
+              "start": 8.92,
+              "end": 9.08,
+              "t_dtw": -1,
+              "probability": 0.9999217987060547
+            },
+            {
+              "word": " sam",
+              "start": 9.08,
+              "end": 9.16,
+              "t_dtw": -1,
+              "probability": 0.9987248182296753
+            },
+            {
+              "word": "v",
+              "start": 9.39,
+              "end": 9.450000000000001,
+              "t_dtw": -1,
+              "probability": 0.9997844696044922
+            },
+            {
+              "word": "ete",
+              "start": 9.450000000000001,
+              "end": 9.73,
+              "t_dtw": -1,
+              "probability": 0.9999923706054688
+            }
+          ],
+          "temperature": 0.0,
+          "avg_logprob": -0.041559748351573944,
+          "no_speech_prob": 0.0
+        },
+        {
+          "id": 2,
+          "text": " och bör handla gentemot varandra i en anda av gemenskap.",
+          "start": 9.73,
+          "end": 14.44,
+          "tokens": [
+            3795,
+            21175,
+            1011,
+            875,
+            16108,
+            443,
+            310,
+            1374,
+            18401,
+            741,
+            465,
+            21851,
+            1305,
+            7173,
+            694,
+            34334,
+            13
+          ],
+          "words": [
+            {
+              "word": " och",
+              "start": 9.73,
+              "end": 10.01,
+              "t_dtw": -1,
+              "probability": 0.9971069097518921
+            },
+            {
+              "word": " bör",
+              "start": 10.01,
+              "end": 10.290000000000001,
+              "t_dtw": -1,
+              "probability": 0.9989229440689087
+            },
+            {
+              "word": " hand",
+              "start": 10.290000000000001,
+              "end": 10.33,
+              "t_dtw": -1,
+              "probability": 0.9994222521781921
+            },
+            {
+              "word": "la",
+              "start": 10.78,
+              "end": 10.84,
+              "t_dtw": -1,
+              "probability": 0.9997139573097229
+            },
+            {
+              "word": " gent",
+              "start": 10.84,
+              "end": 11.21,
+              "t_dtw": -1,
+              "probability": 0.9988619685173035
+            },
+            {
+              "word": "em",
+              "start": 11.21,
+              "end": 11.39,
+              "t_dtw": -1,
+              "probability": 0.9986581206321716
+            },
+            {
+              "word": "ot",
+              "start": 11.39,
+              "end": 11.57,
+              "t_dtw": -1,
+              "probability": 0.9999065399169922
+            },
+            {
+              "word": " var",
+              "start": 11.57,
+              "end": 11.84,
+              "t_dtw": -1,
+              "probability": 0.9999942779541016
+            },
+            {
+              "word": "andra",
+              "start": 11.950000000000001,
+              "end": 12.32,
+              "t_dtw": -1,
+              "probability": 0.9999618530273438
+            },
+            {
+              "word": " i",
+              "start": 12.32,
+              "end": 12.41,
+              "t_dtw": -1,
+              "probability": 0.9945124387741089
+            },
+            {
+              "word": " en",
+              "start": 12.41,
+              "end": 12.6,
+              "t_dtw": -1,
+              "probability": 0.9997692108154297
+            },
+            {
+              "word": " anda",
+              "start": 12.6,
+              "end": 12.94,
+              "t_dtw": -1,
+              "probability": 0.8837551474571228
+            },
+            {
+              "word": " av",
+              "start": 12.97,
+              "end": 13.13,
+              "t_dtw": -1,
+              "probability": 0.9999141693115234
+            },
+            {
+              "word": " gem",
+              "start": 13.27,
+              "end": 13.44,
+              "t_dtw": -1,
+              "probability": 0.9998893737792969
+            },
+            {
+              "word": "ens",
+              "start": 13.44,
+              "end": 13.72,
+              "t_dtw": -1,
+              "probability": 0.9999885559082031
+            },
+            {
+              "word": "kap",
+              "start": 13.72,
+              "end": 13.92,
+              "t_dtw": -1,
+              "probability": 0.9999275207519531
+            },
+            {
+              "word": ".",
+              "start": 14.0,
+              "end": 14.15,
+              "t_dtw": -1,
+              "probability": 0.9987857341766357
+            }
+          ],
+          "temperature": 0.0,
+          "avg_logprob": -0.007681210990995169,
+          "no_speech_prob": 0.0
+        }
+      ],
+      "detected_language": "swedish",
+      "detected_language_probability": 0.9998650550842285,
+      "language_probabilities": {
+        "sv": 0.9998650550842285
+      }
+    }
+  }
+}

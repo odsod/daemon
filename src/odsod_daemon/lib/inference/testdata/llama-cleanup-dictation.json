@@ -1,0 +1,70 @@
+{
+  "request": {
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "headers": {
+      "content-type": "application/json"
+    },
+    "body": {
+      "model": "default",
+      "messages": [
+        {
+          "role": "system",
+          "content": "You clean up dictated speech. The speaker never talks to you: never answer questions. Keep the text in its original language. Remove filler words and fix punctuation. Return only the cleaned text."
+        },
+        {
+          "role": "user",
+          "content": "<transcript>In the year 1878 I took my degree of Doctor of Medicine of the University of London, and proceeded to Netley to go through the course prescribed for surgeons in the army. Having completed my studies there, I was duly attached to the Fifth Northumberland Fusiliers as Assistant Surgeon.</transcript>"
+        }
+      ],
+      "temperature": 0,
+      "max_tokens": 190,
+      "chat_template_kwargs": {
+        "enable_thinking": false
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "elapsed_ms": 1655.2,
+    "json": {
+      "choices": [
+        {
+          "finish_reason": "stop",
+          "index": 0,
+          "message": {
+            "role": "assistant",
+            "content": "In the year 1878, I took my degree of Doctor of Medicine from the University of London and proceeded to Netley to go through the course prescribed for surgeons in the army. Having completed my studies there, I was duly attached to the Fifth Northumberland Fusiliers as Assistant Surgeon."
+          }
+        }
+      ],
+      "created": 1795462803,
+      "model": "/home/odsod/.local/share/odsod/machine/data/llama/Qwen3.5-9B-Q5_K_M.gguf",
+      "system_fingerprint": "b12359-unknown",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 63,
+        "prompt_tokens": 123,
+        "total_tokens": 186,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "id": "chatcmpl-O3GHRjylS1VcUmWoh4dbRZm4dFCYHypj",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 123,
+        "prompt_ms": 168.295,
+        "prompt_per_token_ms": 1.3682520325203251,
+        "prompt_per_second": 730.8595026590214,
+        "predicted_n": 63,
+        "predicted_ms": 1472.303,
+        "predicted_per_token_ms": 23.746822580645162,
+        "predicted_per_second": 42.11089700965086
+      }
+    }
+  }
+}
