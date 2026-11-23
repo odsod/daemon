@@ -1,6 +1,6 @@
 # Plan: transcript, note and pin
 
-- Status: Draft
+- Status: Done 2026-11-23
 - Depends on: [speech](2026-11-23-speech.md) (contracts only; the pure
   parts can start after [python-scaffold](2026-11-23-python-scaffold.md))
 - Design: [ADR-0015](../adr/0015-transcript.md),
