@@ -93,11 +93,11 @@ class TrayWorker:
         self._loop = asyncio.get_running_loop()
         try:
             await self._safe_evaluate()
-            tasks = [
+            tasks: list[asyncio.Task[Any]] = [
                 asyncio.create_task(self._tick()),
                 asyncio.create_task(self._follow()),
             ]
-            stopper = asyncio.create_task(self._stop.wait())
+            stopper: asyncio.Task[Any] = asyncio.create_task(self._stop.wait())
             try:
                 await asyncio.wait(
                     [*tasks, stopper], return_when=asyncio.FIRST_COMPLETED
@@ -172,9 +172,7 @@ class TrayWorker:
         directory = self.roots.run
         directory.mkdir(parents=True, exist_ok=True)
         self.following.set()
-        async for _ in watchfiles.awatch(
-            directory, debounce=self.debounce_ms, step=5
-        ):
+        async for _ in watchfiles.awatch(directory, debounce=self.debounce_ms, step=5):
             if self._stop.is_set():
                 return
             if self._apply_status(directory / "status.json"):
@@ -185,7 +183,7 @@ class TrayWorker:
             return False
         try:
             value: Any = documents.read_json(path)
-        except (OSError, ValueError):
+        except OSError, ValueError:
             return False
         if not isinstance(value, dict):
             return False

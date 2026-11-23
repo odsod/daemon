@@ -11,6 +11,8 @@ from odsod_daemon.components.health.contract import (
     Backlog,
     DictationState,
     Reason,
+    Severity,
+    State,
     StatusReport,
 )
 from odsod_daemon.components.tray.worker import TrayWorker
@@ -55,7 +57,9 @@ def worker(temp_root, reports, notifications):
     )
 
 
-def report(*reasons, state="running", paused_since=None):
+def report(
+    *reasons: Reason, state: State = "running", paused_since: str | None = None
+) -> StatusReport:
     return StatusReport(
         state=state,
         exit_code=0,
@@ -68,7 +72,11 @@ def report(*reasons, state="running", paused_since=None):
     )
 
 
-def error(code="capture-stalled", service="capture", severity="error"):
+def error(
+    code: str = "capture-stalled",
+    service: str = "capture",
+    severity: Severity = "error",
+) -> Reason:
     return Reason(
         code=code,
         severity=severity,
