@@ -98,4 +98,44 @@ ODSOD_DAEMON_ROOT=$t uv run odsodctl config check   # exit 0
 
 ## Progress log
 
+- 2026-11-23: Step 1 wheel check: `uv sync --extra bench` passes on
+  CPython 3.14.10. Every listed wheel exists, PySide6 and websockets
+  included, so nothing is left out.
+- 2026-11-23: Step 2: Go code moved to `legacy/` with `mv`. Deleted
+  `.golangci.yml`, `.goreleaser.yml` and the goreleaser release workflow.
+  Root `AGENTS.md` replaced with a short pointer; `CLAUDE.md` and
+  `GEMINI.md` are symlinks to it.
+- 2026-11-23: Steps 3 to 9: `pyproject.toml`, `.python-version`,
+  `uv.lock`, `mise.toml`, all 24 component folders with `SUBSYSTEM` and
+  `contract.py`, the 12 `lib/` mechanisms with tests, the service runner,
+  the four service files, the root `cli.py`, `conftest.py`, the
+  architecture test and the import-linter contract.
+- 2026-11-23: Step 5 timing: `streams.follow` p50 21.1 ms, p95 21.9 ms
+  over 1,000 appends (`mise run test:timing`).
+- 2026-11-23: Done when passes: `uv sync --extra bench`; `mise run build`
+  (117 passed, 1 deselected); `uv run pytest src/odsod_daemon/lib`
+  (104 passed); `mise run test:timing` (1 passed); `uv run odsodctl
+  --help`; `odsodctl config check` on a temp root exits 0.
+
 ## Decisions to confirm
+
+- `pytest-asyncio` joined the dev group. `looptime` needs it to run async
+  tests; ADR-0010 names only `looptime`.
+- ruff excludes `docs/` and `legacy/`. The research notes hold Python code
+  blocks and the diagram scripts predate the gate; formatting them would
+  change review documents outside this plan.
+- Deleted `.github/workflows/release.yaml` together with `.goreleaser.yml`.
+  It called the removed `mise run release`, so it was an orphan.
+- Component run convention: `__init__.py` may export `CONFIG_MODEL` and
+  exports `run(config, *, once=False)`. The root `run` command loads
+  `config.section(SUBSYSTEM, CONFIG_MODEL)` and passes `once`.
+- `config check` finds section models by importing every component and
+  reading its `CONFIG_MODEL`. A section with no model is not checked. This
+  avoids another shared list for component plans to edit.
+- The inference fake reads one recorded pair per JSON file in
+  `lib/inference/testdata/{whisper,llama}/`, with `request` and `response`
+  keys and an optional `delay_ms`. The recordings plan must write that
+  shape.
+- No `gcc` mise tool yet. This plan has no keys source to compile.
+- `README.md` still describes the Go recorder. The plan named only the
+  agent files for rewrite; a later plan should update the README.

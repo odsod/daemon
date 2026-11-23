@@ -1,62 +1,36 @@
 [tools]
-go = "1.26"
-golangci-lint = "2.12"
-goreleaser = "2"
+uv = "0.13.9"
 
 [tasks.build]
-description = "Full CI build (lint, test, tidy, check, diff)"
-run = "mise run lint && mise run test && mise run tidy && mise run check && mise run diff"
-
-[tasks.lint]
-description = "Lint Go code"
-run = "golangci-lint run --fix"
+description = "The CI gate: lint check, types, imports, tests"
+run = """
+uv run ruff check .
+uv run ruff format --check .
+uv run pyright
+uv run lint-imports
+uv run pytest -m 'not timing'
+"""
 
 [tasks.test]
-description = "Run Go tests"
-run = "go test -cover ./..."
+description = "Run all tests"
+run = "uv run pytest"
 
-[tasks.tidy]
-description = "Tidy Go modules"
-run = "go mod tidy"
+[tasks."test:timing"]
+description = "Run the real-time latency tests"
+run = "uv run pytest -m timing -s"
 
-[tasks.check]
-description = "Validate goreleaser config and snapshot build"
-run = "goreleaser check && goreleaser build --snapshot --clean && rm -rf dist"
-
-[tasks.diff]
-description = "Check for uncommitted diffs (CI gate)"
+[tasks.lint]
+description = "Fix lint and format"
 run = """
-if git rev-parse --is-inside-work-tree &>/dev/null && ! jj root &>/dev/null; then
-  git diff --exit-code
-fi
+uv run ruff check --fix .
+uv run ruff format .
 """
 
-[tasks.install]
-description = "Build and install recorder binary with calver"
-run = """
-version=$(git tag -l 'v*' | sort -V | tail -1)
-if [ -z "$version" ]; then version="dev"; fi
-go install -ldflags "-X main.version=$version" .
-"""
+[tasks.deploy]
+description = "Install the working copy as the live dev system"
+run = "uv tool install --force '.[bench]' && odsodctl install"
 
-[tasks.release]
-description = "Tag a new calver release and publish with goreleaser"
-run = """
-year=$(date +%Y)
-month=$(date +%-m)
-last=$(git tag -l "v${year}.${month}.*" | sort -V | tail -1)
-if [ -z "$last" ]; then
-  patch=0
-else
-  patch=$(( ${last##*.} + 1 ))
-fi
-tag="v${year}.${month}.${patch}"
-echo "Releasing $tag"
-sha=$(git rev-parse HEAD)
-gh api repos/${GITHUB_REPOSITORY:-odsod/recorder}/git/refs \
-  -f ref="refs/tags/$tag" \
-  -f sha="$sha"
-git fetch --tags
-goreleaser release --clean
-echo "Released recorder $tag"
-"""
+[tasks."deploy:system"]
+description = "Install the keys service as root"
+depends = ["deploy"]
+run = 'sudo "$(command -v odsodctl)" install --system'
