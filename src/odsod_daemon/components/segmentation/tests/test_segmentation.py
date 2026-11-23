@@ -216,6 +216,21 @@ def test_zero_hole_separates_speech(temp_root, monkeypatch):
     assert clock.parse_iso(rows[1]["start"]) >= start + timedelta(seconds=1.98)
 
 
+def test_short_digital_silence_does_not_cut_speech(temp_root, monkeypatch):
+    """ADR-0012 Frames: a zero frame gets probability 0; it is not a hole."""
+    start, _ = setup_audio(temp_root)
+    path = audio.hour_file(temp_root / "state", "sys", start)
+    speech = np.full(16000, 3000, dtype="<i2").tobytes()
+    path.write_bytes(speech + bytes(3200) + speech)
+    monkeypatch.setattr(Vad, "probability", lambda self, pcm: 0.9)
+    ChannelRunner("sys", Speech()).advance(once=True)
+    rows = streams.read_day(
+        streams.day_path(temp_root / "state/utterances/ambient", start.date())
+    )
+    assert len(rows) == 1
+    assert rows[0]["cut"] == "end-of-audio"
+
+
 def test_hour_of_zeros_skips_model(temp_root, monkeypatch):
     start, _ = setup_audio(temp_root, "silence")
     path = audio.hour_file(temp_root / "state", "sys", start)

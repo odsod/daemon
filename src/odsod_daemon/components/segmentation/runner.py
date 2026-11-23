@@ -9,6 +9,11 @@ from odsod_daemon.components.segmentation.mask import ranges, read_limit
 from odsod_daemon.components.segmentation.vad import FRAME, Vad
 from odsod_daemon.lib import audio, clock, config, documents, healthfile, paths, streams
 
+# Zeros this long are a capture hole: capture writes a gap from 1 s, and 0.9 s
+# leaves room for frame alignment. A shorter run is digital silence: it gets
+# probability 0, and the cutter decides (ADR-0012 Frames).
+HOLE_S = 0.9
+
 
 def records(directory, retention_days=None):
     if retention_days is None:
@@ -29,6 +34,7 @@ class ChannelRunner:
         self.vad = Vad(self.settings.energy_floor_dbfs)
         self.cursor: float | None = None
         self.cutter: Cutter | None = None
+        self.hole: bool | None = None  # Set at the first zero frame of a run.
         self.last_advance = clock.monotonic()
         self.last_covered = 0.0
         self.retention_days = config.load_common().retention_days
@@ -149,10 +155,16 @@ class ChannelRunner:
                 datetime.fromtimestamp(end, UTC),
             )
             if not any(pcm):
-                self.emit(self.cutter.boundary(self.cursor, "end-of-audio"))
-                self.cutter.floor = end
+                if self.hole is None:
+                    self.hole = self.zeros_until(self.cursor + HOLE_S, limit, once)
+                if self.hole:
+                    self.emit(self.cutter.boundary(self.cursor, "end-of-audio"))
+                    self.cutter.floor = end
+                else:
+                    self.emit(self.cutter.feed(self.cursor, end, 0.0))
                 self.vad.reset()
             else:
+                self.hole = None
                 self.emit(self.cutter.feed(self.cursor, end, self.vad.probability(pcm)))
             self.cursor = end
             advanced = True
@@ -164,6 +176,20 @@ class ChannelRunner:
         if once or idle:
             self.emit(self.cutter.boundary(self.cursor, "end-of-audio"))
             self.cover(self.cursor)
+
+
+    def zeros_until(self, horizon: float, limit: float, once: bool) -> bool:
+        """True when the audio stays zero up to horizon, or to the end in once."""
+        assert self.cursor is not None
+        if horizon > limit and not once:
+            return False
+        pcm = audio.cut(
+            self.roots.state,
+            self.channel,
+            datetime.fromtimestamp(self.cursor, UTC),
+            datetime.fromtimestamp(min(horizon, limit), UTC),
+        )
+        return not any(pcm)
 
 
 async def _channel(channel: str, speech: Speech, *, once: bool) -> None:
