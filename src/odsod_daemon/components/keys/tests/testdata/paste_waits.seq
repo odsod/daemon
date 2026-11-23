@@ -1,0 +1,12 @@
+# A paste waits for a held modifier, then sends when it goes up.
+0 in sock connect
+0 in key KEY_LEFTSHIFT down
+0 out key KEY_LEFTSHIFT down
+100 in sock paste
+500 in key KEY_LEFTSHIFT up
+500 out key KEY_LEFTSHIFT up
+500 out key KEY_LEFTSHIFT down
+500 out key KEY_INSERT down
+500 out key KEY_INSERT up
+500 out key KEY_LEFTSHIFT up
+500 out sock pasted

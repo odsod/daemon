@@ -1,0 +1,8 @@
+# A paste with no modifier held sends Shift+Insert at once. dictation AC-13.
+0 in sock connect
+0 in sock paste
+0 out key KEY_LEFTSHIFT down
+0 out key KEY_INSERT down
+0 out key KEY_INSERT up
+0 out key KEY_LEFTSHIFT up
+0 out sock pasted

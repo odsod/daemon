@@ -1,0 +1,9 @@
+# Left Alt with another key gives the Alt chord. AC-7.
+0 in key KEY_LEFTALT down
+100 in key KEY_TAB down
+100 out key KEY_LEFTALT down
+100 out key KEY_TAB down
+150 in key KEY_TAB up
+150 out key KEY_TAB up
+200 in key KEY_LEFTALT up
+200 out key KEY_LEFTALT up

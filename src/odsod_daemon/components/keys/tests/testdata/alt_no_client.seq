@@ -1,0 +1,5 @@
+# With no client, a long lone hold ends as an Alt tap. AC-11.
+0 in key KEY_LEFTALT down
+500 in key KEY_LEFTALT up
+500 out key KEY_LEFTALT down
+500 out key KEY_LEFTALT up

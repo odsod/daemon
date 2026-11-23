@@ -1,0 +1,10 @@
+# Right Alt is AltGr, never dictation, also after 1 s. AC-10.
+0 in sock connect
+0 in key KEY_RIGHTALT down
+0 out key KEY_RIGHTALT down
+100 in key KEY_E down
+100 out key KEY_E down
+150 in key KEY_E up
+150 out key KEY_E up
+1000 in key KEY_RIGHTALT up
+1000 out key KEY_RIGHTALT up

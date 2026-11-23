@@ -2,13 +2,25 @@
 uv = "0.13.9"
 
 [tasks.build]
-description = "The CI gate: lint check, types, imports, tests"
+description = "The CI gate: lint check, types, imports, C compile, tests"
 run = """
 uv run ruff check .
 uv run ruff format --check .
 uv run pyright
 uv run lint-imports
+mise run keys:compile
 uv run pytest -m 'not timing'
+"""
+
+[tasks."keys:compile"]
+description = "Compile the keys service and the replay driver"
+run = """
+set -eu
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+c=src/odsod_daemon/components/keys/c
+gcc -O2 -Wall -Wextra -Werror -o "$tmp/odsod-daemon-keys" "$c/io.c" "$c/state.c"
+gcc -O2 -Wall -Wextra -Werror -o "$tmp/replay" "$c/replay.c" "$c/state.c"
 """
 
 [tasks.test]

@@ -1,0 +1,7 @@
+# Left Alt held past 350 ms starts dictation at the press time. AC-8,
+# dictation AC-2.
+0 in sock connect
+0 in key KEY_LEFTALT down
+500 in key KEY_LEFTALT up
+350 out sock start 0
+500 out sock stop 500

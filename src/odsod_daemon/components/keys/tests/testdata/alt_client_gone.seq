@@ -1,0 +1,6 @@
+# A client that leaves during dictation swallows the Alt up. AC-14.
+0 in sock connect
+0 in key KEY_LEFTALT down
+400 in sock disconnect
+500 in key KEY_LEFTALT up
+350 out sock start 0

@@ -1,0 +1,5 @@
+# Left Alt tapped alone gives an Alt tap, with no client. AC-7, AC-11.
+0 in key KEY_LEFTALT down
+100 in key KEY_LEFTALT up
+100 out key KEY_LEFTALT down
+100 out key KEY_LEFTALT up

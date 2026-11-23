@@ -1,0 +1,8 @@
+# A modifier held for 1.5 s fails the paste and sends nothing. dictation AC-13.
+0 in sock connect
+0 in key KEY_LEFTSHIFT down
+0 out key KEY_LEFTSHIFT down
+0 in sock paste
+2000 in key KEY_LEFTSHIFT up
+1500 out sock paste-failed modifier-held
+2000 out key KEY_LEFTSHIFT up

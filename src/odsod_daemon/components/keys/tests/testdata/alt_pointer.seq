@@ -1,0 +1,9 @@
+# Alt with a click and a wheel gives Alt, and never starts dictation. AC-16.
+0 in sock connect
+0 in key KEY_LEFTALT down
+300 in btn BTN_LEFT down
+300 out key KEY_LEFTALT down
+400 in btn BTN_LEFT up
+500 in rel REL_WHEEL 1
+1000 in key KEY_LEFTALT up
+1000 out key KEY_LEFTALT up

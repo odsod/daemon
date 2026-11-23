@@ -3,11 +3,11 @@
 #include <string.h>
 
 /*
- * Today's remaps, ported from keys/odsod-keys.c in the machine repo:
+ * The keys state machine. Today's remaps come from keys/odsod-keys.c in the
+ * machine repo. The Left Alt machine, the pointer handling, the escape chord
+ * and the paste wait come from ADR-0007.
  *
- * - Esc gives Caps Lock.
- * - Caps Lock and Left Ctrl give Ctrl, or Esc on a tap within 350 ms.
- * - Space gives a Space tap, or a Meta layer when another key follows.
+ * No I/O and no clock reads: each input carries its monotonic time in ms.
  */
 
 static void out_key(struct ks_state *state, struct ks_outputs *out, long t_ms,
@@ -28,6 +28,20 @@ static void out_key(struct ks_state *state, struct ks_outputs *out, long t_ms,
 	state->out_down[code] = value == 0 ? 0 : 1;
 }
 
+static void out_sock(struct ks_outputs *out, enum ks_output_kind kind,
+		     long t_ms, long msg_ms, const char *reason)
+{
+	if (out->count >= KS_MAX_OUTPUTS)
+		return;
+	struct ks_output *item = &out->items[out->count++];
+	item->kind = kind;
+	item->t_ms = t_ms;
+	item->code = 0;
+	item->value = 0;
+	item->msg_ms = msg_ms;
+	item->reason = reason;
+}
+
 static void emit_meta_chord(struct ks_state *state, struct ks_outputs *out,
 			    long t_ms, int code, int value)
 {
@@ -40,6 +54,62 @@ static void emit_meta_chord(struct ks_state *state, struct ks_outputs *out,
 	} else if (value == 2) {
 		out_key(state, out, t_ms, code, 2);
 	}
+}
+
+static int is_modifier(int code)
+{
+	switch (code) {
+	case KEY_LEFTCTRL:
+	case KEY_RIGHTCTRL:
+	case KEY_LEFTSHIFT:
+	case KEY_RIGHTSHIFT:
+	case KEY_LEFTALT:
+	case KEY_RIGHTALT:
+	case KEY_LEFTMETA:
+	case KEY_RIGHTMETA:
+		return 1;
+	default:
+		return 0;
+	}
+}
+
+static int other_key_held(const struct ks_state *state, int except)
+{
+	for (int code = 0; code <= KEY_MAX; code++) {
+		if (code == except)
+			continue;
+		if (state->keys_down[code])
+			return 1;
+	}
+	return 0;
+}
+
+static int modifier_held(const struct ks_state *state)
+{
+	for (int code = 0; code <= KEY_MAX; code++) {
+		if (state->keys_down[code] && is_modifier(code))
+			return 1;
+	}
+	return 0;
+}
+
+static void queue_event(struct ks_state *state, int code, int value)
+{
+	if (state->space.queued_count >= KS_MAX_QUEUE)
+		return;
+	struct ks_queued *item =
+		&state->space.queue[state->space.queued_count++];
+	item->code = code;
+	item->value = value;
+}
+
+static int was_queued(const struct ks_state *state, int code)
+{
+	for (int i = 0; i < state->space.queued_count; i++) {
+		if (state->space.queue[i].code == code)
+			return 1;
+	}
+	return 0;
 }
 
 static void flush_as_tap(struct ks_state *state, struct ks_outputs *out,
@@ -60,25 +130,6 @@ static void flush_as_meta(struct ks_state *state, struct ks_outputs *out,
 		emit_meta_chord(state, out, t_ms, state->space.queue[i].code,
 				state->space.queue[i].value);
 	state->space.queued_count = 0;
-}
-
-static void queue_event(struct ks_state *state, int code, int value)
-{
-	if (state->space.queued_count >= KS_MAX_QUEUE)
-		return;
-	struct ks_queued *item =
-		&state->space.queue[state->space.queued_count++];
-	item->code = code;
-	item->value = value;
-}
-
-static int was_queued(const struct ks_state *state, int code)
-{
-	for (int i = 0; i < state->space.queued_count; i++) {
-		if (state->space.queue[i].code == code)
-			return 1;
-	}
-	return 0;
 }
 
 static int handle_ctrl_overload(struct ks_state *state,
@@ -163,6 +214,7 @@ static int handle_space(struct ks_state *state, struct ks_outputs *out,
 	return 0;
 }
 
+/* Today's remap chain: Esc, Caps Lock, Left Ctrl and the Space layer. */
 static void process_key(struct ks_state *state, struct ks_outputs *out,
 			long t_ms, int code, int value)
 {
@@ -187,16 +239,298 @@ static void process_key(struct ks_state *state, struct ks_outputs *out,
 	out_key(state, out, t_ms, code, value);
 }
 
+static void send_paste(struct ks_state *state, struct ks_outputs *out,
+		       long t_ms)
+{
+	out_key(state, out, t_ms, KEY_LEFTSHIFT, 1);
+	out_key(state, out, t_ms, KEY_INSERT, 1);
+	out_key(state, out, t_ms, KEY_INSERT, 0);
+	out_key(state, out, t_ms, KEY_LEFTSHIFT, 0);
+	out_sock(out, KS_OUT_SOCK_PASTED, t_ms, 0, NULL);
+}
+
+static void maybe_paste(struct ks_state *state, long t_ms,
+			struct ks_outputs *out)
+{
+	if (!state->paste_pending)
+		return;
+	if (!state->client) {
+		state->paste_pending = 0;
+		state->paste_deadline = -1;
+		return;
+	}
+	if (modifier_held(state))
+		return;
+	state->paste_pending = 0;
+	state->paste_deadline = -1;
+	send_paste(state, out, t_ms);
+}
+
+static void arm_chord(struct ks_state *state, long t_ms)
+{
+	if (!state->keys_down[KEY_LEFTSHIFT] ||
+	    !state->keys_down[KEY_RIGHTSHIFT] || !state->keys_down[KEY_ESC]) {
+		state->chord_deadline = -1;
+		return;
+	}
+	if (state->chord_deadline < 0)
+		state->chord_deadline = t_ms + KS_ESCAPE_MS;
+}
+
+static void release_all(struct ks_state *state, long t_ms,
+			struct ks_outputs *out)
+{
+	for (int code = 0; code <= KEY_MAX; code++) {
+		if (state->out_down[code])
+			out_key(state, out, t_ms, code, 0);
+	}
+	out_sock(out, KS_OUT_GRAB_RELEASE, t_ms, 0, NULL);
+	state->space.queued_count = 0;
+}
+
+static void fire_chord(struct ks_state *state, long t_ms,
+		       struct ks_outputs *out)
+{
+	release_all(state, t_ms, out);
+	state->exit = 1;
+	state->alt_deadline = -1;
+	state->chord_deadline = -1;
+	state->paste_pending = 0;
+	state->paste_deadline = -1;
+}
+
+static void advance(struct ks_state *state, long t_ms, struct ks_outputs *out)
+{
+	for (;;) {
+		enum { FIRE_NONE, FIRE_ALT, FIRE_CHORD, FIRE_PASTE } fire =
+			FIRE_NONE;
+		long best = 0;
+
+		if (state->chord_deadline >= 0 &&
+		    state->chord_deadline <= t_ms) {
+			best = state->chord_deadline;
+			fire = FIRE_CHORD;
+		}
+		if (state->alt.state == KS_ALT_PENDING &&
+		    state->alt_deadline >= 0 &&
+		    state->alt_deadline <= t_ms &&
+		    (fire == FIRE_NONE || state->alt_deadline < best)) {
+			best = state->alt_deadline;
+			fire = FIRE_ALT;
+		}
+		if (state->paste_pending && state->paste_deadline >= 0 &&
+		    state->paste_deadline <= t_ms &&
+		    (fire == FIRE_NONE || state->paste_deadline < best)) {
+			best = state->paste_deadline;
+			fire = FIRE_PASTE;
+		}
+
+		if (fire == FIRE_NONE)
+			return;
+		if (fire == FIRE_CHORD) {
+			fire_chord(state, best, out);
+			return;
+		}
+		if (fire == FIRE_ALT) {
+			if (state->client) {
+				out_sock(out, KS_OUT_SOCK_START, best,
+					 state->alt.pressed_ms, NULL);
+				state->alt.state = KS_ALT_DICTATE;
+			}
+			state->alt_deadline = -1;
+			continue;
+		}
+		state->paste_pending = 0;
+		state->paste_deadline = -1;
+		out_sock(out, KS_OUT_SOCK_PASTE_FAILED, best, 0,
+			 "modifier-held");
+	}
+}
+
+static void handle_left_alt(struct ks_state *state, struct ks_outputs *out,
+			    long t_ms, int value)
+{
+	if (value == 1) {
+		if (state->alt.state != KS_ALT_IDLE)
+			return;
+		if (other_key_held(state, KEY_LEFTALT)) {
+			out_key(state, out, t_ms, KEY_LEFTALT, 1);
+			state->alt.state = KS_ALT_CHORD;
+		} else {
+			state->alt.state = KS_ALT_PENDING;
+			state->alt.pressed_ms = t_ms;
+			state->alt_deadline = t_ms + KS_ALT_MS;
+		}
+		return;
+	}
+	if (value == 2) {
+		if (state->alt.state == KS_ALT_CHORD)
+			out_key(state, out, t_ms, KEY_LEFTALT, 2);
+		return;
+	}
+	if (value != 0)
+		return;
+
+	switch (state->alt.state) {
+	case KS_ALT_PENDING:
+		out_key(state, out, t_ms, KEY_LEFTALT, 1);
+		out_key(state, out, t_ms, KEY_LEFTALT, 0);
+		break;
+	case KS_ALT_DICTATE:
+		out_sock(out, KS_OUT_SOCK_STOP, t_ms, t_ms, NULL);
+		break;
+	case KS_ALT_CHORD:
+		out_key(state, out, t_ms, KEY_LEFTALT, 0);
+		break;
+	case KS_ALT_SWALLOW:
+	case KS_ALT_IDLE:
+		break;
+	}
+	state->alt.state = KS_ALT_IDLE;
+	state->alt_deadline = -1;
+}
+
+static void resolve_alt_for_pointer(struct ks_state *state, long t_ms,
+				    struct ks_outputs *out)
+{
+	if (state->alt.state == KS_ALT_PENDING) {
+		out_key(state, out, t_ms, KEY_LEFTALT, 1);
+		state->alt.state = KS_ALT_CHORD;
+		state->alt_deadline = -1;
+	} else if (state->alt.state == KS_ALT_DICTATE) {
+		out_sock(out, KS_OUT_SOCK_CANCEL, t_ms, t_ms, NULL);
+		out_key(state, out, t_ms, KEY_LEFTALT, 1);
+		state->alt.state = KS_ALT_CHORD;
+	}
+}
+
+static void handle_key(struct ks_state *state, const struct ks_input *in,
+		       struct ks_outputs *out)
+{
+	long t_ms = in->t_ms;
+	int code = in->code;
+	int value = in->value;
+
+	if (code < 0 || code > KEY_MAX)
+		return;
+	if (value == 0)
+		state->keys_down[code] = 0;
+	else
+		state->keys_down[code] = 1;
+	arm_chord(state, t_ms);
+
+	if (code == KEY_LEFTALT) {
+		handle_left_alt(state, out, t_ms, value);
+		return;
+	}
+
+	/* A press resolves a held-back Alt. A release alone does not. */
+	if (value == 1) {
+		if (state->alt.state == KS_ALT_PENDING) {
+			out_key(state, out, t_ms, KEY_LEFTALT, 1);
+			state->alt.state = KS_ALT_CHORD;
+			state->alt_deadline = -1;
+		} else if (state->alt.state == KS_ALT_DICTATE) {
+			out_sock(out, KS_OUT_SOCK_CANCEL, t_ms, t_ms, NULL);
+			out_key(state, out, t_ms, KEY_LEFTALT, 1);
+			state->alt.state = KS_ALT_CHORD;
+		}
+	}
+	process_key(state, out, t_ms, code, value);
+}
+
+static void handle_pointer(struct ks_state *state, const struct ks_input *in,
+			   struct ks_outputs *out)
+{
+	resolve_alt_for_pointer(state, in->t_ms, out);
+}
+
+static void handle_connect(struct ks_state *state)
+{
+	if (state->client && state->alt.state == KS_ALT_DICTATE)
+		state->alt.state = KS_ALT_SWALLOW;
+	state->client = 1;
+}
+
+static void handle_disconnect(struct ks_state *state)
+{
+	state->client = 0;
+	if (state->alt.state == KS_ALT_DICTATE)
+		state->alt.state = KS_ALT_SWALLOW;
+	state->paste_pending = 0;
+	state->paste_deadline = -1;
+}
+
+static void handle_paste(struct ks_state *state, long t_ms,
+			 struct ks_outputs *out)
+{
+	if (!state->client || state->paste_pending)
+		return;
+	state->paste_pending = 1;
+	state->paste_deadline = t_ms + KS_PASTE_WAIT_MS;
+	maybe_paste(state, t_ms, out);
+}
+
 void ks_init(struct ks_state *state)
 {
 	memset(state, 0, sizeof(*state));
+	state->alt_deadline = -1;
+	state->chord_deadline = -1;
+	state->paste_deadline = -1;
 }
 
 void ks_handle(struct ks_state *state, const struct ks_input *in,
 	       struct ks_outputs *out)
 {
 	out->count = 0;
-	if (in->kind != KS_IN_KEY)
+	if (state->exit)
 		return;
-	process_key(state, out, in->t_ms, in->code, in->value);
+	advance(state, in->t_ms, out);
+	if (state->exit)
+		return;
+
+	switch (in->kind) {
+	case KS_IN_KEY:
+		handle_key(state, in, out);
+		if (in->value == 0)
+			maybe_paste(state, in->t_ms, out);
+		break;
+	case KS_IN_BTN:
+	case KS_IN_REL:
+		handle_pointer(state, in, out);
+		break;
+	case KS_IN_SOCK_CONNECT:
+		handle_connect(state);
+		break;
+	case KS_IN_SOCK_DISCONNECT:
+		handle_disconnect(state);
+		break;
+	case KS_IN_SOCK_PASTE:
+		handle_paste(state, in->t_ms, out);
+		break;
+	case KS_IN_TICK:
+		break;
+	}
+}
+
+int ks_deadline(const struct ks_state *state, long *t_ms)
+{
+	long best = -1;
+	if (state->alt.state == KS_ALT_PENDING && state->alt_deadline >= 0)
+		best = state->alt_deadline;
+	if (state->chord_deadline >= 0 &&
+	    (best < 0 || state->chord_deadline < best))
+		best = state->chord_deadline;
+	if (state->paste_pending && state->paste_deadline >= 0 &&
+	    (best < 0 || state->paste_deadline < best))
+		best = state->paste_deadline;
+	if (best < 0)
+		return 0;
+	*t_ms = best;
+	return 1;
+}
+
+void ks_release_all(struct ks_state *state, long t_ms, struct ks_outputs *out)
+{
+	release_all(state, t_ms, out);
 }

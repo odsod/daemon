@@ -1,3 +1,4 @@
+#include "keynames.h"
 #include "state.h"
 
 #include <stdio.h>
@@ -9,57 +10,6 @@
  * prints its outputs as out lines. Timers fire on the next input, so a
  * sequence that waits for a timer puts another input after it.
  */
-
-struct key_name {
-	const char *name;
-	int code;
-};
-
-static const struct key_name key_names[] = {
-	{"KEY_ESC", KEY_ESC},
-	{"KEY_CAPSLOCK", KEY_CAPSLOCK},
-	{"KEY_LEFTCTRL", KEY_LEFTCTRL},
-	{"KEY_RIGHTCTRL", KEY_RIGHTCTRL},
-	{"KEY_LEFTSHIFT", KEY_LEFTSHIFT},
-	{"KEY_RIGHTSHIFT", KEY_RIGHTSHIFT},
-	{"KEY_LEFTALT", KEY_LEFTALT},
-	{"KEY_RIGHTALT", KEY_RIGHTALT},
-	{"KEY_LEFTMETA", KEY_LEFTMETA},
-	{"KEY_RIGHTMETA", KEY_RIGHTMETA},
-	{"KEY_SPACE", KEY_SPACE},
-	{"KEY_TAB", KEY_TAB},
-	{"KEY_INSERT", KEY_INSERT},
-	{"KEY_1", KEY_1},
-	{"KEY_A", KEY_A},
-	{"KEY_B", KEY_B},
-	{"KEY_C", KEY_C},
-	{"KEY_D", KEY_D},
-	{"KEY_E", KEY_E},
-	{"KEY_F", KEY_F},
-	{"BTN_LEFT", BTN_LEFT},
-	{"BTN_RIGHT", BTN_RIGHT},
-	{"REL_WHEEL", REL_WHEEL},
-	{"REL_HWHEEL", REL_HWHEEL},
-	{NULL, 0},
-};
-
-static int code_of(const char *name)
-{
-	for (int i = 0; key_names[i].name != NULL; i++) {
-		if (strcmp(key_names[i].name, name) == 0)
-			return key_names[i].code;
-	}
-	return -1;
-}
-
-static const char *name_of(int code)
-{
-	for (int i = 0; key_names[i].name != NULL; i++) {
-		if (key_names[i].code == code)
-			return key_names[i].name;
-	}
-	return "KEY_UNKNOWN";
-}
 
 static int value_of(const char *name)
 {
@@ -89,10 +39,13 @@ static const char *value_name(int value)
 static void print_output(const struct ks_output *item)
 {
 	switch (item->kind) {
-	case KS_OUT_KEY:
-		printf("%ld out key %s %s\n", item->t_ms, name_of(item->code),
+	case KS_OUT_KEY: {
+		const char *name = key_name_of(item->code);
+		printf("%ld out key %s %s\n", item->t_ms,
+		       name == NULL ? "KEY_UNKNOWN" : name,
 		       value_name(item->value));
 		break;
+	}
 	case KS_OUT_SOCK_START:
 		printf("%ld out sock start %ld\n", item->t_ms, item->msg_ms);
 		break;
@@ -177,7 +130,7 @@ int main(int argc, char **argv)
 				status = fail(path, line_no, "bad key line");
 				break;
 			}
-			in.code = code_of(arg1);
+			in.code = key_code_of(arg1);
 			in.value = value_of(arg2);
 			if (in.code < 0 || in.value < 0) {
 				status = fail(path, line_no, "bad code or value");
@@ -191,7 +144,7 @@ int main(int argc, char **argv)
 				break;
 			}
 			in.kind = KS_IN_REL;
-			in.code = code_of(arg1);
+			in.code = key_code_of(arg1);
 			in.value = atoi(arg2);
 			if (in.code < 0) {
 				status = fail(path, line_no, "bad rel code");

@@ -59,6 +59,13 @@ struct ks_outputs {
 
 enum ks_ctrl_state { KS_CTRL_IDLE, KS_CTRL_PENDING };
 enum ks_space_state { KS_SPACE_IDLE, KS_SPACE_PENDING, KS_SPACE_HELD };
+enum ks_alt_state {
+	KS_ALT_IDLE,
+	KS_ALT_PENDING,
+	KS_ALT_DICTATE,
+	KS_ALT_SWALLOW,
+	KS_ALT_CHORD,
+};
 
 struct ks_queued {
 	int code;
@@ -72,6 +79,9 @@ struct ks_ctrl {
 };
 
 struct ks_state {
+	int client;
+	int exit;
+
 	unsigned char keys_down[KEY_MAX + 1];
 	unsigned char out_down[KEY_MAX + 1];
 
@@ -83,10 +93,23 @@ struct ks_state {
 		int queued_count;
 		struct ks_queued queue[KS_MAX_QUEUE];
 	} space;
+
+	struct {
+		enum ks_alt_state state;
+		long pressed_ms;
+	} alt;
+	long alt_deadline;
+
+	long chord_deadline;
+
+	int paste_pending;
+	long paste_deadline;
 };
 
 void ks_init(struct ks_state *state);
 void ks_handle(struct ks_state *state, const struct ks_input *in,
 	       struct ks_outputs *out);
+int ks_deadline(const struct ks_state *state, long *t_ms);
+void ks_release_all(struct ks_state *state, long t_ms, struct ks_outputs *out);
 
 #endif
