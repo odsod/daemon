@@ -112,9 +112,17 @@ class Session:
             documents.write_json(self.roots.run / "status.json", value)
             self.previous_status = change
 
+    async def unmute(self) -> None:
+        """Fail open: a failed unmute must not stop the hold or the service."""
+        try:
+            await self.mute.stop()
+        except OSError, TimeoutError, ValueError:
+            LOG.exception("unmute failed")
+            self.fault("mute-failed", True)
+
     async def startup(self) -> None:
         stale = bool(mute.read(self.mute.path).streams)
-        await self.mute.stop()
+        await self.unmute()
         self.fault("stale-mutes-cleared", stale)
         if stale:
             self.stale_until = clock.monotonic() + 600
@@ -130,7 +138,7 @@ class Session:
             elif action == "dictating":
                 self.status()
             elif action == "unmute":
-                await self.mute.stop()
+                await self.unmute()
             elif action == "cover":
                 try:
                     await audio.wait_until(
@@ -163,7 +171,7 @@ class Session:
                 streams.append(
                     streams.day_path(
                         self.roots.state / "utterances/dictation",
-                        moment(self.loop.start).date(),
+                        clock.utc_now().date(),
                     ),
                     self.hold.model_dump(),
                 )
@@ -275,7 +283,10 @@ class Session:
                     )
                     exists = Path(self.socket_path).exists()
                     if not exists:
-                        self.fault("keys-socket-missing", True)
+                        missing_at = now if missing_at is None else missing_at
+                    elif reason != "connected" and missing_at is not None:
+                        missing_at = None
+                        self.fault("keys-socket-missing", False)
                     if gate.may_disconnect(self.loop.state):
                         if self.client is not None and (
                             reason != "connected" or not exists

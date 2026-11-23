@@ -5,19 +5,24 @@ import json
 from dataclasses import dataclass
 
 
-async def command(*args: str, data: bytes | None = None, timeout_s: float = 2) -> bytes:
+async def command(
+    *args: str, data: bytes | None = None, timeout_s: float = 2, output: bool = True
+) -> bytes:
+    """Without output, pipes stay closed: wl-copy forks a child that keeps them."""
+    pipe = asyncio.subprocess.PIPE if output else asyncio.subprocess.DEVNULL
     process = await asyncio.create_subprocess_exec(
         *args,
         stdin=asyncio.subprocess.PIPE if data is not None else None,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
+        stdout=pipe,
+        stderr=pipe,
     )
     try:
         async with asyncio.timeout(timeout_s):
             out, err = await process.communicate(data)
         if process.returncode:
-            raise OSError(err.decode(errors="replace").strip() or args[0])
-        return out
+            message = err.decode(errors="replace").strip() if err else ""
+            raise OSError(message or args[0])
+        return out or b""
     finally:
         if process.returncode is None:
             process.kill()

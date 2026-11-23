@@ -37,7 +37,7 @@ async def save(primary: bool) -> Selection | None:
 async def copy(primary: bool, selection: Selection) -> None:
     flags = ["--primary"] if primary else []
     if not selection.data:
-        await command("wl-copy", *flags, "--clear")
+        await command("wl-copy", *flags, "--clear", output=False)
     else:
         await command(
             "wl-copy",
@@ -46,6 +46,7 @@ async def copy(primary: bool, selection: Selection) -> None:
             "--type",
             selection.mime,
             data=selection.data,
+            output=False,
         )
 
 

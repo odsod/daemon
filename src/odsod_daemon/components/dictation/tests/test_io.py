@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 
 import pytest
 
@@ -165,3 +166,15 @@ async def test_empty_selection_exit_is_not_a_clipboard_failure(monkeypatch):
 
     monkeypatch.setattr(delivery, "command", empty)
     assert await delivery.save(False) == delivery.Selection(delivery.TEXT, b"")
+
+
+@pytest.mark.looptime(False)
+async def test_copy_returns_while_a_forked_child_holds_the_pipes(tmp_path, monkeypatch):
+    # Real wl-copy forks a child that serves the selection and keeps its fds.
+    script = tmp_path / "wl-copy"
+    script.write_text("#!/bin/sh\ncat >/dev/null\nsleep 3 &\nexit 0\n")
+    script.chmod(0o755)
+    monkeypatch.setenv("PATH", f"{tmp_path}:{os.environ['PATH']}")
+    async with asyncio.timeout(1):
+        await delivery.copy(False, delivery.Selection(delivery.TEXT, b"hello"))
+        await delivery.copy(True, delivery.Selection(delivery.TEXT, b""))

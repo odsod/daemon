@@ -1,6 +1,7 @@
 import asyncio
 import json
 import subprocess
+from datetime import timedelta
 
 import pytest
 from typer.testing import CliRunner
@@ -76,6 +77,47 @@ async def test_hold_order_and_cancel(session, monkeypatch):
     assert session.queue.empty()
     health = documents.read_json(session.roots.run / "health/session.json")
     assert "mute-failed" in {fault["code"] for fault in health["faults"]}
+
+
+async def test_failed_unmute_finishes_the_hold(session, monkeypatch):
+    session, effects = session
+
+    async def mute_stop():
+        effects.append("unmute")
+        raise TimeoutError
+
+    monkeypatch.setattr(session.mute, "stop", mute_stop)
+    await session.startup()
+    session.loop.event("connected")
+    now = clock.wall()
+    await session.actions("start", now)
+    await session.actions("stop", now + 1)
+    hold, _timing, _waiter = await session.queue.get()
+    assert hold.muted == 0
+    assert session.idle.is_set()
+    state = documents.read_json(session.roots.run / "status.json")
+    assert state["mode"] == "idle"
+    health = documents.read_json(session.roots.run / "health/session.json")
+    assert "mute-failed" in {fault["code"] for fault in health["faults"]}
+
+
+async def test_utterance_goes_in_the_day_file_of_its_write(session, monkeypatch):
+    session, _ = session
+    midnight = clock.parse_iso("2026-11-24T00:00:00.000Z")
+    monkeypatch.setattr(
+        service.clock, "utc_now", lambda: midnight + timedelta(seconds=1)
+    )
+    session.loop.event("connected")
+    at = midnight.timestamp()
+    await session.actions("start", at - 0.5)
+    await session.actions("stop", at + 0.5)
+    hold, _timing, _waiter = await session.queue.get()
+    assert hold.start.startswith("2026-11-23")
+    folder = session.roots.state / "utterances/dictation"
+    path = streams.day_path(folder, midnight.date())
+    assert [r["id"] for r in streams.read_day(path)] == [hold.id]
+    yesterday = streams.day_path(folder, (midnight - timedelta(days=1)).date())
+    assert not yesterday.exists()
 
 
 async def test_delivery_waits_for_new_hold(session, monkeypatch):
@@ -238,6 +280,60 @@ async def test_gate_and_missing_socket(
         assert ("keys-socket-missing" in {f["code"] for f in health["faults"]}) == (
             expected == "no-socket"
         )
+    finally:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+
+
+@pytest.mark.parametrize("capture,reachable", [(False, True), (True, False)])
+async def test_missing_socket_while_gated_waits_and_clears(
+    temp_root, monkeypatch, capture, reachable
+):
+    documents.write_json(
+        temp_root / "config/config.json",
+        {
+            "common": {
+                "inference": {
+                    "whisper_url": "http://127.0.0.1:1/asr",
+                    "llama_url": "http://127.0.0.1:1/chat",
+                }
+            }
+        },
+    )
+    units = service.systemd.FakeUnitStates()
+    units.set(
+        service.systemd.UnitState(
+            "odsod-daemon-capture.service",
+            "user",
+            "active" if capture else "inactive",
+            "",
+            "",
+            0,
+        )
+    )
+    path = temp_root / "keys.sock"
+    session = service.Session(DictationConfig(), units=units, socket_path=str(path))
+
+    async def probe(*args, **kwargs):
+        return reachable
+
+    monkeypatch.setattr(service.inference, "reachable", probe)
+    monkeypatch.setattr(service.power, "on_mains", lambda: True)
+
+    def faults():
+        health = documents.read_json(temp_root / "run/health/session.json")
+        return {f["code"] for f in health["faults"]}
+
+    task = asyncio.create_task(session.connections())
+    try:
+        await clock.sleep(9)
+        assert "keys-socket-missing" not in faults()
+        await clock.sleep(1.5)
+        assert "keys-socket-missing" in faults()
+        path.touch()
+        await clock.sleep(2.5)
+        assert "keys-socket-missing" not in faults()
+        assert not task.done()
     finally:
         task.cancel()
         await asyncio.gather(task, return_exceptions=True)
