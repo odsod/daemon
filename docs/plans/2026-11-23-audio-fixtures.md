@@ -52,4 +52,14 @@ for f in tests/testdata/audio/*.wav; do rg -q "$(basename "$f")" tests/testdata/
 
 ## Progress log
 
+- 2026-11-23: Downloaded the four report audio URLs into a temp dir under `/tmp`. No downloaded file was run.
+- 2026-11-23: Cut four speech clips at 16 kHz mono s16le; made 5 s silence and two noise files with `sox`. No `.pcm` because no test needs raw.
+- 2026-11-23: Swedish+English clip: not found (per research report).
+- 2026-11-23: Swedish clip 2: the first 3 min end at the start of the preamble. A 4 min whisper pass located the paragraph; cut 218.75-238.55 s and took the reference text from the 1940s official Swedish translation, matched to the whisper words.
+- 2026-11-23: Wrote `PROVENANCE.md` and four `.txt` reference files. Done when: 2,516,446 bytes total; all WAVs 16000 Hz mono; provenance loop prints nothing.
+
 ## Decisions to confirm
+
+- File names use `<lang>-<work>.wav`; rename them if the speech tests expect other names.
+- Synthetic noise levels are RMS about -60 and -45 dBFS; `sox vol` was calibrated to RMS, not peak.
+- Swedish clip 2 uses the third preamble paragraph (1940s official translation). The first 3 min only reach the start of the preamble.
