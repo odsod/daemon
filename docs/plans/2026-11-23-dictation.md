@@ -48,7 +48,12 @@ mise run build
 
 ## Progress log
 
-## Decisions to confirm
-
 - 2026-11-23: Step 1 passed: 21 virtual-time core and gate cases cover
   ordered actions, cancel, disconnect, coverage failure and the hold limit.
+- 2026-11-23: Step 2 passed: 28 component checks, desktop command fakes,
+  socket codec, selection restore, mute identity and late text reads.
+
+## Decisions to confirm
+
+- Desktop subprocess tests use real time because the fake executables need
+  OS scheduling. Hold timers and the clipboard restore delay use virtual time.

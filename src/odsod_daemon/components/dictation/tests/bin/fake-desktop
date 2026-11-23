@@ -1,0 +1,43 @@
+#!/usr/bin/env python3
+"""Desktop command fakes. Every write stays in the test root."""
+import base64
+import json
+import os
+import sys
+from pathlib import Path
+
+root = Path(os.environ["ODSOD_DAEMON_ROOT"]) / "desktop"
+root.mkdir(exist_ok=True)
+name = Path(sys.argv[0]).name
+args = sys.argv[1:]
+with (root / "calls.jsonl").open("a") as out:
+    out.write(json.dumps([name, *args]) + "\n")
+if (root / (name + ".fail")).exists():
+    sys.exit(1)
+if name == "pactl":
+    if args[:2] == ["--format=json", "list"]:
+        path = root / (args[2] + ".json")
+        print(path.read_text() if path.exists() else "[]")
+    else:
+        path = root / "source-outputs.json"
+        items = json.loads(path.read_text())
+        for item in items:
+            if str(item["index"]) == args[1]:
+                item["mute"] = args[2] == "1"
+        path.write_text(json.dumps(items))
+elif name in {"wl-copy", "wl-paste"}:
+    path = root / ("primary.json" if "--primary" in args else "clipboard.json")
+    value = json.loads(path.read_text()) if path.exists() else {"mime": "", "data": ""}
+    if name == "wl-copy":
+        value = {"mime": "", "data": ""} if "--clear" in args else {
+            "mime": args[args.index("--type") + 1],
+            "data": base64.b64encode(sys.stdin.buffer.read()).decode(),
+        }
+        path.write_text(json.dumps(value))
+    elif "--list-types" in args:
+        if value["mime"]:
+            print(value["mime"])
+    elif value["mime"] == args[args.index("--type") + 1]:
+        sys.stdout.buffer.write(base64.b64decode(value["data"]))
+    else:
+        sys.exit(1)
