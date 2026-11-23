@@ -85,7 +85,7 @@ dictation socket ([ADR-0007](0007-keys-service.md)).
 
 - Path: `state/audio/<channel>/<YYYYMMDDTHH>Z.pcm`, channels `mic` and `sys`.
 - Config can add an extra channel for a bench experiment, such as `mic-ec`
-  (echo-cancelled mic, [ADR-0005](0005-components-and-implementation.md)).
+  (echo-cancelled mic, [ADR-0011](0011-capture.md)).
   Utterances use only `mic` and `sys`.
 - Format: raw signed 16-bit little-endian, 16 kHz, mono. 32,000 bytes per
   second.
@@ -95,33 +95,36 @@ dictation socket ([ADR-0007](0007-keys-service.md)).
   that reads as silence and uses no disk.
 - Capture never writes backward. If the wall clock goes back, capture waits
   until the expected offset passes the end of the file
-  ([ADR-0005](0005-components-and-implementation.md)).
+  ([ADR-0011](0011-capture.md)).
 - File size tells readers how far the audio goes. A reader that needs a time
   range waits until the file covers its end.
 - Audio is kept for the retention period: 14 days, about 77 GB per host.
 
 ### Paths
 
-| Path                                                               | Kind                  | Writer                                 | Readers                               |
-| ------------------------------------------------------------------ | --------------------- | -------------------------------------- | ------------------------------------- |
-| `state/audio/<channel>/<hour>Z.pcm`                                | Audio                 | capture                                | segmentation, transcription, bench    |
-| `state/events/<source>/<day>.jsonl`                                | Stream                | one each: `signals`, `user`, `capture` | transcript, interactions              |
-| `state/utterances/ambient/<day>.jsonl`                             | Stream                | segmentation                           | transcription, interactions           |
-| `state/utterances/dictation/<day>.jsonl`                           | Stream                | dictation                              | transcription, segmentation           |
-| `state/asr/<backend>/<day>.jsonl`                                  | Stream                | transcription worker for that backend  | cleanup, bench                        |
-| `state/text/<day>.jsonl`                                           | Stream                | cleanup                                | transcript, dictation, interactions   |
-| `state/interactions/<day>.jsonl`                                   | Stream                | interactions                           | interactions                          |
-| `state/bench/<case-id>/`                                           | Documents             | bench                                  | bench                                 |
-| `run/status.json`                                                  | Document              | dictation                              | tray, `odsodctl status`               |
-| `run/health/<service>.json`                                        | Document              | that service                           | tray, `odsodctl status`               |
-| `run/paused`                                                       | Document              | `odsodctl pause`, `odsodctl resume`    | capture unit, tray, `odsodctl status` |
-| `state/install/previous-commit`                                    | Document              | `odsodctl install`                     | `odsodctl status`                     |
-| `run/muted.json`                                                   | Document              | dictation                              | `odsodctl unmute-stale`, dictation    |
-| `config/config.json`, glossary, prompts                            | Documents             | owner                                  | all                                   |
-| `state/documents/transcripts/<local-day>-<host>.md`                | Markdown, append-only | transcript                             | publish                               |
-| `state/documents/interactions/<local-day>-<HHMM>-<host>-<slug>.md` | Document              | interactions                           | publish                               |
-| `state/published/<target>/<day>.jsonl`                             | Stream                | publish                                | publish                               |
-| `<target dir>/<document name>`                                     | Document copy         | publish                                | third parties                         |
+| Path                                                               | Kind                  | Writer                                 | Readers                                                                                    |
+| ------------------------------------------------------------------ | --------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `state/audio/<channel>/<hour>Z.pcm`                                | Audio                 | capture                                | segmentation, transcription, bench; dictation and control (size only); retention (deletes) |
+| `state/events/<source>/<day>.jsonl`                                | Stream                | one each: `signals`, `user`, `capture` | transcript, interactions                                                                   |
+| `state/utterances/ambient/<day>.jsonl`                             | Stream                | segmentation                           | transcription, transcript, interactions, control                                           |
+| `state/utterances/dictation/<day>.jsonl`                           | Stream                | dictation                              | transcription, segmentation, transcript, interactions, control                             |
+| `state/coverage/<day>.jsonl`                                       | Stream                | segmentation                           | segmentation, transcript, interactions, control                                            |
+| `state/asr/<backend>/<day>.jsonl`                                  | Stream                | transcription worker for that backend  | cleanup, bench                                                                             |
+| `state/text/<day>.jsonl`                                           | Stream                | cleanup                                | transcript, dictation, interactions, control, bench                                        |
+| `state/interactions/<day>.jsonl`                                   | Stream                | interactions                           | interactions, bench                                                                        |
+| `state/finished/<source>/<day>.jsonl`                              | Stream                | one each: `transcript`, `interactions` | publish                                                                                    |
+| `state/bench/<case-id>/`                                           | Documents             | bench                                  | bench                                                                                      |
+| `run/status.json`                                                  | Document              | dictation                              | tray, `odsodctl status`, segmentation                                                      |
+| `run/health/<service>.json`                                        | Document              | that service                           | tray, `odsodctl status`                                                                    |
+| `run/paused`                                                       | Document              | `odsodctl pause`, `odsodctl resume`    | capture unit, tray, `odsodctl status`                                                      |
+| `state/install/current`                                            | Document              | `odsodctl install`                     | `odsodctl version`, `odsodctl status`, bench                                               |
+| `state/install/previous-commit`                                    | Document              | `odsodctl install`                     | `odsodctl status`                                                                          |
+| `run/muted.json`                                                   | Document              | dictation                              | `odsodctl unmute-stale`, dictation                                                         |
+| `config/config.json`, glossary, prompts                            | Documents             | owner                                  | all                                                                                        |
+| `state/documents/transcripts/<local-day>-<host>.md`                | Markdown, append-only | transcript                             | publish                                                                                    |
+| `state/documents/interactions/<local-day>-<HHMM>-<host>-<slug>.md` | Document              | interactions                           | publish, bench                                                                             |
+| `state/published/<target>/<day>.jsonl`                             | Stream                | publish                                | publish                                                                                    |
+| `<target dir>/<document name>`                                     | Document copy         | publish                                | third parties                                                                              |
 
 - `events/user/` takes appends from several CLI calls. Each call appends one
   short line with `O_APPEND`, which is atomic on a local filesystem. Notes,
@@ -130,16 +133,24 @@ dictation socket ([ADR-0007](0007-keys-service.md)).
   pause intents in `events/user/`, `transcript` gives each recording gap its
   cause.
 - `run/health/<service>.json` holds the active faults of one service, each
-  with its `since` time. The service is its sole writer. `lib/health` merges
-  these files with the systemd unit states, so the tray and a one-shot
+  with its `since` time. The service is its sole writer. The `health`
+  component of control merges these files with the systemd unit states, so the tray and a one-shot
   `odsodctl status` show the same state. `run/status.json` holds only the
   dictation mode.
 - `run/paused` exists while the owner has paused recording. The capture unit
   does not start while it exists. Resume, logout and the daily resume timer
   remove it ([ADR-0004](0004-orchestration-with-systemd.md)).
-- `state/install/previous-commit` holds the commit that ran before the last
-  upgrade, so a failed upgrade names the rollback command
-  ([ADR-0006](0006-installation.md)).
+- `state/install/current` holds what runs now, as JSON: `source` (`git` or
+  `dev`), `commit`, `workspace`, `dirty` and `installed_at`. A dev install
+  has no commit in the package metadata, so `install` records it here.
+- `state/install/previous-commit` holds the install that ran before the last
+  upgrade, as JSON (`commit`, `source`, `replaced_at`), so a failed upgrade
+  names the rollback command ([ADR-0006](0006-installation.md)).
+- `state/coverage/` holds `covered` records: segmentation has cut all audio
+  of a channel before `end`. Readers tell silence from backlog with it.
+  segmentation also restarts from it, so it needs no checkpoint file.
+- `state/finished/<source>/` holds a `finished` record for each finished
+  document. publish finds its work only there.
 - `state/interactions/` holds one record per finished interaction: its range
   and outcome (`ok` with the document name, or `skipped` for greetings and
   noise).
@@ -150,7 +161,8 @@ dictation socket ([ADR-0007](0007-keys-service.md)).
   reboot, when the streams are gone too.
 - Utterance records hold the ID, channel, start and end. Readers cut the audio
   themselves.
-- Component ADRs define the fields of each stream.
+- [ADR-0010](0010-contracts-and-runtime.md) fixes the seam fields of each
+  stream. Subsystem ADRs add the rest.
 
 ### Output targets
 
@@ -162,15 +174,19 @@ dictation socket ([ADR-0007](0007-keys-service.md)).
   written to a temporary name, renamed into place, then never touched again.
   The consumer can move, edit or delete the copy.
 - The daemon never reads from a target. `state/published/<target>/` records
-  what it delivered. Pending = finished documents with no delivery record.
+  what it delivered. Pending = `finished` records with no delivery record.
 - The rename is the commit point. `publish` writes the delivery record right
   after it. A crash between the two delivers that copy once more after the
   restart. This is accepted: the vault's ingest agent merges duplicates.
-- An interaction document is finished when `interactions` writes it.
+- A document is finished when its `finished` record exists
+  ([ADR-0010](0010-contracts-and-runtime.md)). `interactions` writes it
+  right after the document rename.
 - A daily transcript is finished when its local day has ended and none of
   that day's utterances is pending. At the latest, it is finished 48 h after
   the day ended. Then `transcript` writes an `untranscribed: <range>` gap
   line for each utterance still pending, and the transcript is final.
+  `transcript` then writes its `finished` record and never appends to that
+  day file again.
 - Document names include the host, so targets that sync across hosts get no
   name clashes.
 

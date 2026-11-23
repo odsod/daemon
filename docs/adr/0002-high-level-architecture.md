@@ -186,14 +186,21 @@ benchmark: reads stored audio and results
 - [ADR-0003](0003-filesystem-interface.md): files, paths and formats.
 - [ADR-0004](0004-orchestration-with-systemd.md): services, units and
   supervision.
-- [ADR-0005](0005-components-and-implementation.md): components, languages
-  and tools, with the architecture diagram.
-- [ADR-0006](0006-installation.md): installation and upgrade.
+- [ADR-0005](0005-components-and-implementation.md): the index of
+  components, languages and tools, with the architecture diagram.
+- [ADR-0006](0006-installation.md): install and operations.
 - [ADR-0007](0007-keys-service.md): the keys service and the dictation socket.
 - [ADR-0008](0008-shortcuts-and-kwin-script.md): the shortcuts component and
   the KWin script.
-- [ADR-0009](0009-taxonomy-and-code-organization.md): terms and code
-  organization.
+- [ADR-0009](0009-taxonomy-and-code-organization.md): terms, subsystems and
+  code organization.
+- [ADR-0010](0010-contracts-and-runtime.md): contracts and runtime.
+- Subsystem ADRs: [0011 capture](0011-capture.md),
+  [0012 speech](0012-speech.md), [0013 dictation](0013-dictation.md),
+  [0014 signals](0014-signals.md), [0015 transcript](0015-transcript.md),
+  [0016 interactions](0016-interactions.md),
+  [0017 publishing](0017-publishing.md), [0018 control](0018-control.md),
+  [0019 bench](0019-bench.md).
 
 ## Alternatives considered
 

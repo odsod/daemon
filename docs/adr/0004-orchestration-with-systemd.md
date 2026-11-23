@@ -25,17 +25,18 @@ Proposed
 
 ### systemd units supervise every service
 
-| Unit                            | Scope  | Runs                                              | Wanted by                  | Watchdog               |
-| ------------------------------- | ------ | ------------------------------------------------- | -------------------------- | ---------------------- |
-| `odsod-daemon-keys.service`     | system | `odsod-daemon-keys` (C)                           | `multi-user.target`        | No                     |
-| `odsod-daemon-capture.service`  | user   | `odsodctl run capture`                            | `default.target`           | Yes, on audio progress |
-| `odsod-daemon-pipeline.service` | user   | `odsodctl run pipeline`                           | `default.target`           | Yes, on main loop      |
-| `odsod-daemon-session.service`  | user   | `odsodctl run session` (`dictation`, `shortcuts`) | `graphical-session.target` | No                     |
-| `odsod-daemon-tray.service`     | user   | `odsodctl run tray`                               | `graphical-session.target` | No                     |
-| `odsod-daemon-resume.timer`     | user   | Starts capture at 00:00 local time                | `timers.target`            |                        |
-| `odsod-daemon-retention.timer`  | user   | `odsodctl retention`, hourly and at login         | `timers.target`            |                        |
-| `odsod-daemon-notify@.service`  | user   | `odsodctl notify-failed %i`, one-shot             | `OnFailure=` of each unit  |                        |
-| `odsod-daemon.target`           | user   | Groups the user units above                       | `default.target`           |                        |
+| Unit                                  | Scope  | Runs                                               | Wanted by                      | Watchdog                            |
+| ------------------------------------- | ------ | -------------------------------------------------- | ------------------------------ | ----------------------------------- |
+| `odsod-daemon-keys.service`           | system | `odsod-daemon-keys` (C)                            | `multi-user.target`            | No                                  |
+| `odsod-daemon-capture.service`        | user   | `odsodctl run capture`                             | `default.target`               | `WatchdogSec=30`, on audio progress |
+| `odsod-daemon-pipeline.service`       | user   | `odsodctl run pipeline`                            | `default.target`               | Yes, on main loop                   |
+| `odsod-daemon-session.service`        | user   | `odsodctl run session` (`dictation`, `shortcuts`)  | `graphical-session.target`     | No                                  |
+| `odsod-daemon-tray.service`           | user   | `odsodctl run tray`                                | `graphical-session.target`     | No                                  |
+| `odsod-daemon-resume.timer`           | user   | `odsodctl resume --by timer` at 00:00 local time   | `timers.target`                |                                     |
+| `odsod-daemon-retention.timer`        | user   | `odsodctl retention`, hourly and at login          | `timers.target`                |                                     |
+| `odsod-daemon-notify@.service`        | user   | `odsodctl notify-failed %i`, one-shot              | `OnFailure=` of each user unit |                                     |
+| `odsod-daemon-notify-system@.service` | system | `odsodctl notify-failed %i` as the owner, one-shot | `OnFailure=` of the keys unit  |                                     |
+| `odsod-daemon.target`                 | user   | Groups the user units above                        | `default.target`               |                                     |
 
 - All services use `Restart=always`, a short `RestartSec`, and a start limit
   to stop crash loops.
@@ -53,9 +54,15 @@ Proposed
   `OnFailure=odsod-daemon-notify@%n.service`. When a unit fails or hits its
   start limit, the one-shot sends a desktop notification with `notify-send`
   that names the unit and the command that restarts it. It loads no Qt and
-  does not depend on the session or tray services. For the system keys
-  unit, `install --system` adds a drop-in that runs the same notification
-  as the owner.
+  does not depend on the session or tray services. A system unit cannot
+  start a user unit, so the keys unit uses the system twin
+  `odsod-daemon-notify-system@.service`. It runs the same command with
+  `User=` set to the owner and the owner's session bus address.
+  `install --system` writes it. `notify-send` comes from `libnotify`, which
+  `daemon:setup` installs.
+- Capture pings the watchdog only while every channel wrote audio in the
+  last 5 s. With `WatchdogSec=30`, a hung capture restarts within about
+  30 s (`ambient-recording` AC-13).
 - A system unit cannot join a user target, so `odsod-daemon.target` groups only
   the user units.
 - Logs go to stdout and end up in journald:
@@ -105,9 +112,9 @@ systemd does not tell the owner when a unit gives up. The tray and the
 notify unit do.
 
 - Each service writes its own active faults, with the time each one
-  started, to `run/health/<service>.json`. `lib/health` merges these files
+  started, to `run/health/<service>.json`. the `health` component of control merges these files
   with the systemd unit states. The tray and `odsodctl status` use
-  `lib/health`, so they always agree.
+  the `health` component, so they always agree.
 
 | State     | Condition                                                                                                                                                                                                                                                           | Exit code |
 | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
@@ -130,7 +137,7 @@ notify unit do.
   (Warning).
 - Desktop notifications only for events that need the owner now: a failed
   dictation, a failed paste
-  ([ADR-0005](0005-components-and-implementation.md)), a new Error, once
+  ([ADR-0013](0013-dictation.md)), a new Error, once
   per cause, and a failed unit (from the notify unit). They go through the
   freedesktop notification service on D-Bus.
 
@@ -161,8 +168,8 @@ notify unit do.
 - A pause has no timer. It ends at resume, logout, reboot or the start of
   the next local day. `run/` is on tmpfs, so logout and reboot clear the
   flag.
-- `odsod-daemon-resume.timer` removes the flag and starts capture at 00:00
-  local time each day. Starting a running unit does nothing, so the timer
+- `odsod-daemon-resume.timer` runs `odsodctl resume --by timer` at 00:00
+  local time each day. It removes the flag and starts capture. Starting a running unit does nothing, so the timer
   only ends pauses.
 - Pause does not touch the keys service. It turns dictation off: dictation
   cuts its audio from capture's buffer, so session disconnects from the

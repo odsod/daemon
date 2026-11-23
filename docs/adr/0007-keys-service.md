@@ -33,57 +33,169 @@ Proposed
 
 ## Decision
 
-### The keys service owns all keyboard I/O
+### Purpose
 
+- Own all keyboard I/O: remap keys for every app from boot, detect the
+  dictation key, and send the paste chord.
+- PRD: [`keyboard`](../prd/keyboard.md) (all ACs). Supports
+  [`dictation`](../prd/dictation.md) AC-2, AC-9, AC-13, AC-14 and
+  [`global-shortcuts`](../prd/global-shortcuts.md) (Space as Meta).
 - `odsod-keys` moves into this repo as `odsod-daemon-keys`. It keeps all its
-  current remapping.
-- It adds two jobs: the **dictation key** and **paste injection**.
-- It also reads pointer devices (mice, touchpads), without a grab. Pointer
-  events still reach the apps directly. The service only needs to know when
-  a button or wheel event happens.
+  current remapping and adds two jobs: the dictation key and paste
+  injection.
 - No other process reads `/dev/input` or writes `/dev/uinput`.
 
-### Dictation key: Left Alt held alone
+### Components
+
+| Component | Runs in                                           | Job                                                      |
+| --------- | ------------------------------------------------- | -------------------------------------------------------- |
+| `keys`    | `odsod-daemon-keys.service`, system unit, as root | Remap keys; dictation key; paste chord; dictation socket |
+
+- `SUBSYSTEM = "keys"`. The service is its own C binary,
+  `odsod-daemon-keys`, not `odsodctl run`.
+- `odsodctl install --system` builds and installs it
+  ([ADR-0006](0006-installation.md)). The component owns its system unit
+  template.
+
+### Writes
+
+| Target                         | What                                                        |
+| ------------------------------ | ----------------------------------------------------------- |
+| `/dev/uinput` virtual keyboard | All remapped key events and the paste chord                 |
+| Dictation socket               | `start`, `stop`, `cancel`, `pasted`, `paste-failed` (below) |
+| `/run/odsod-daemon-keys/`      | The socket file only (`RuntimeDirectory=`)                  |
+| stdout (journald)              | Device changes, client connects, key latency on request     |
+
+- The keys service keeps no files and writes no health file (ADR-0003). The
+  session service reports `keys-socket-missing`
+  ([ADR-0013](0013-dictation.md)), and control reports the unit state
+  ([ADR-0018](0018-control.md)).
+
+### Reads
+
+| Source                   | What                                                             |
+| ------------------------ | ---------------------------------------------------------------- |
+| `/dev/input/event*`      | Keyboards, grabbed. Pointer devices, read without a grab         |
+| inotify on `/dev/input/` | Hotplug                                                          |
+| Dictation socket         | `paste` from the session service; the peer's UID (`SO_PEERCRED`) |
+
+- It reads no config file. All values are constants in the code.
+
+### Outside dependencies
+
+- Linux evdev and uinput ioctls, inotify, Unix sockets. libc only.
+- systemd: the system unit, `RuntimeDirectory=odsod-daemon-keys`,
+  `Nice=-20`, `Restart=always`, `OnFailure=` drop-in (ADR-0004).
+- `gcc` at install time (`-Wall -Wextra -Werror`), from the host.
+
+### Internal design
+
+#### Module layout
+
+```
+components/keys/
+├── __init__.py            SUBSYSTEM = "keys"
+├── contract.py            Python models of every socket message; parse and format
+├── c/
+│   ├── state.h, state.c   pure state machine: events and times in, outputs out
+│   ├── io.c               main: evdev, uinput, inotify, socket, clocks
+│   └── replay.c           test driver: runs state.c on a sequence file
+├── odsod-daemon-keys.service   system unit template
+└── tests/
+    ├── test_sequences.py  builds replay.c, runs every sequence, compares output
+    ├── test_contract.py   message round trips
+    └── testdata/*.seq     recorded and written key sequences with expected output
+```
+
+- `state.c` holds no I/O and reads no clock. Each input carries its own
+  monotonic time, and timers are inputs too ("now is t"). So every case
+  replays the same way.
+- `io.c` is thin: it reads devices with `poll`, gives events to the state
+  machine, writes its outputs, and owns the socket.
+
+#### Remaps (unchanged)
+
+| Key       | Tapped (released within 350 ms, alone) | Held or with another key                        |
+| --------- | -------------------------------------- | ----------------------------------------------- |
+| Caps Lock | Esc                                    | Ctrl                                            |
+| Left Ctrl | Esc                                    | Ctrl                                            |
+| Esc       | Caps Lock                              | Caps Lock                                       |
+| Space     | Space                                  | Meta layer, once another key comes after 150 ms |
+| Left Alt  | Alt tap                                | Alt chord, or dictation (below)                 |
+| Right Alt | AltGr, always                          | AltGr; never dictation (Swedish symbols)        |
+
+- Space held alone and released late gives nothing. Keys pressed while
+  Space is pending are queued and come after the Space tap, in order
+  (`keyboard` AC-4, AC-6).
+- The Meta layer never sends a bare Meta press, so the KDE launcher never
+  opens by mistake (`keyboard` AC-5).
+- The Left Alt stage runs before the other remaps, so a held-back Alt goes
+  out before the remap of the next key.
+
+#### Dictation key: Left Alt held alone
 
 - Left Alt down: the service holds the press back.
-- Another key before the hold threshold: the service sends Alt and the key, as
+- Another key before the threshold: the service sends Alt and the key, as
   a normal chord (`Alt+Tab` works).
+- Left Alt pressed while another key is already down: Alt goes out at once,
+  as a chord. No dictation.
 - A pointer button or wheel event while Left Alt is held counts as another
   key: the service sends Alt at once, and no dictation starts. Alt+click,
   Alt+drag and Alt+scroll work. During dictation, it cancels the dictation
-  and sends Alt.
-- Released before the threshold: the service sends an Alt tap, as today.
+  and sends Alt (`keyboard` AC-16).
+- Released before the threshold: the service sends an Alt tap, as today
+  (`keyboard` AC-7).
 - Held alone past the threshold, with a client connected: dictation starts.
-  The Alt press never reaches an application, so no menu bar opens.
+  The Alt press never reaches an application, so no menu bar opens
+  (`keyboard` AC-8).
 - Release during dictation: dictation stops.
-- Another key during dictation: dictation is cancelled, and the service sends
-  Alt and the key as a late chord.
+- Another key during dictation: dictation is cancelled, and the service
+  sends Alt and the key as a late chord (`keyboard` AC-9).
 - No client connected: Left Alt behaves as a plain Alt. The keyboard never
-  depends on the session service. The session service disconnects on
-  purpose while recording is paused or no inference host is reachable
-  ([ADR-0004](0004-orchestration-with-systemd.md)).
-- Right Alt (AltGr) is never a dictation key, because Swedish symbols need it.
-- The threshold is a constant in the code: 350 ms, the same as the
-  remapper's tap window. The owner tunes it from use.
+  depends on the session service (`keyboard` AC-11). The session service
+  disconnects on purpose while recording is paused or no inference host is
+  reachable ([ADR-0004](0004-orchestration-with-systemd.md)).
+- The threshold is a constant: 350 ms, the same as the tap window. The
+  owner tunes it from use.
 
-### Paste: `Shift+Insert` from the virtual keyboard
+| State         | Event                       | Output                                   | Next          |
+| ------------- | --------------------------- | ---------------------------------------- | ------------- |
+| `alt-idle`    | Left Alt down, nothing held | nothing                                  | `alt-pending` |
+| `alt-idle`    | Left Alt down, a key held   | Alt down                                 | `alt-chord`   |
+| `alt-pending` | key or pointer event        | Alt down, the event                      | `alt-chord`   |
+| `alt-pending` | Left Alt up                 | Alt down, Alt up                         | `alt-idle`    |
+| `alt-pending` | 350 ms, client connected    | `start <press time>`                     | `alt-dictate` |
+| `alt-pending` | 350 ms, no client           | nothing (still a tap or chord candidate) | `alt-pending` |
+| `alt-dictate` | Left Alt up                 | `stop <time>`                            | `alt-idle`    |
+| `alt-dictate` | key or pointer event        | `cancel <time>`, Alt down, the event     | `alt-chord`   |
+| `alt-dictate` | client gone                 | nothing (both sides end the dictation)   | `alt-swallow` |
+| `alt-swallow` | Left Alt up                 | nothing                                  | `alt-idle`    |
+| `alt-chord`   | Left Alt up                 | Alt up                                   | `alt-idle`    |
 
-- On a `paste` request, the service waits until no physical modifier is down
-  (at most 1.5 s), then sends `Shift+Insert` on its virtual keyboard.
-- The service tracks the physical key state itself, so no other process polls
-  it.
-- `Shift+Insert` pastes in GUI apps and in terminals such as Konsole, on every
-  layout ([OpenWhispr](../research/openwhispr.md),
-  [Handy](../research/handy.md)). No per-app key choice, so no lookup of the
-  active window.
+- With no client, a long lone hold of Left Alt ends as an Alt tap at the
+  release, as a plain Alt would.
 
-### The dictation socket
+#### Paste: `Shift+Insert` from the virtual keyboard
+
+- On a `paste` request, the service waits until no physical modifier is
+  down (at most 1.5 s), then sends `Shift+Insert` on its virtual keyboard
+  and replies `pasted`. After 1.5 s it replies
+  `paste-failed modifier-held` and sends nothing (`dictation` AC-13).
+- The service tracks the physical key state itself, so no other process
+  polls it.
+- `Shift+Insert` pastes in GUI apps and in terminals such as Konsole, on
+  every layout ([OpenWhispr](../research/openwhispr.md),
+  [Handy](../research/handy.md)). No per-app key choice, so no lookup of
+  the active window.
+
+#### The dictation socket
 
 - Path: `/run/odsod-daemon-keys/dictation.sock`, a Unix stream socket, mode
-  `0600`, owned by the owner. `install --system` sets the owner. The service
-  also checks the peer's user ID (`SO_PEERCRED`).
-- One client at a time: the session service. A new connection replaces the old
-  one.
+  `0600`, owned by the owner. `install --system` sets the owner. The
+  service also checks the peer's user ID (`SO_PEERCRED`) and closes any
+  other peer.
+- One client at a time: the session service. A new connection replaces the
+  old one.
 - Messages are text lines that end in `\n`. Timestamps are the wall-clock
   time of the key event, UTC, RFC 3339 with milliseconds.
 
@@ -97,32 +209,110 @@ Proposed
 | keys to session | `paste-failed <reason>` | Chord not sent, for example a modifier held past the timeout |
 
 - `start` carries the press time, not the threshold time. Dictation cuts the
-  utterance from the audio buffer, so no words are lost to the threshold.
-- A disconnect during dictation ends the dictation on both sides. Neither side
-  keeps state across a reconnect.
-- A new message type, or a change to one, needs an ADR. `components/keys/contract.py`
-  holds the Python model of each message.
+  utterance from the audio buffer, so no words are lost to the threshold
+  (`dictation` AC-2).
+- **Clocks:** `io.c` sets each device to the monotonic clock
+  (`EVIOCSCLOCKID`) for the state machine, and converts an event's time to
+  wall time with the offset `CLOCK_REALTIME − CLOCK_MONOTONIC` read at the
+  event. A clock step then never breaks the tap timing.
+- **Never block on the socket.** The socket is non-blocking. If a write
+  would block, the service drops the client, as if it disconnected. Key
+  handling never waits for the session service.
+- A disconnect during dictation ends the dictation on both sides. Neither
+  side keeps state across a reconnect.
+- A new message type, or a change to one, needs an ADR.
+  `components/keys/contract.py` holds the Python model of each message.
 
-### Code shape and tests
-
-- The C code has two parts:
-  - a pure state machine: input events and socket messages in, output
-    events and socket messages out, with times as input. No I/O, no clock.
-  - a thin I/O layer: evdev, uinput, inotify, the socket and the clock.
-- `mise run build` compiles the service and runs the state machine on
-  recorded event sequences: chords, taps, holds, Alt with a click,
-  dictation, cancel, paste with a held modifier, the escape chord. CI needs
-  no `/dev/uinput`.
-- Key latency is measured in the process, from the read of an event to the
-  write of its output. The service logs it on request. No bench is needed.
-
-### Escape chord
+#### Escape chord
 
 - Both Shift keys and Esc held together for 3 s: the service releases every
-  grab and exits. This chord is hard-coded and handled before any remap.
+  grab and exits. The chord is checked on the physical codes, before any
+  remap (Esc is Caps Lock after the remap).
 - It is the way out of a bug that swallows keys or holds a modifier without
   a crash. systemd restarts the service after `RestartSec`, and
-  `systemctl stop` keeps it off.
+  `systemctl stop` keeps it off (`keyboard` AC-17).
+
+#### Devices
+
+- A keyboard is a device with `EV_KEY` and letter keys. The service grabs
+  it. Its own virtual device is skipped by name.
+- A pointer is a device with `BTN_LEFT` or `REL_WHEEL`. The service reads
+  it without a grab, so pointer events still reach the apps directly.
+- inotify on `/dev/input/` adds new devices within 2 s (`keyboard` AC-12).
+  A device that fails a read is closed and dropped.
+
+#### Latency
+
+- Key latency is measured in the process, from the read of an event to the
+  write of its output. The service logs a summary on `SIGUSR1`. No bench is
+  needed (`keyboard` AC-15).
+
+### Failure modes
+
+| Fault                                  | What the service does                                                     | Signal to the owner                         |
+| -------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------- |
+| Crash                                  | The kernel releases the grabs; the plain keyboard works; systemd restarts | `OnFailure=` notification after start limit |
+| Keys lost or stuck, no crash           | Escape chord releases the grabs and exits                                 | systemd restarts it                         |
+| `/dev/uinput` cannot be opened         | Exits non-zero before any grab                                            | unit failed → Error                         |
+| Device removed or read error           | Drops the device                                                          | none                                        |
+| Client slow (write would block)        | Drops the client                                                          | session reconnects                          |
+| Peer with another UID                  | Closes the connection                                                     | log line                                    |
+| `paste` while a modifier is held 1.5 s | `paste-failed modifier-held`                                              | dictation notifies                          |
+| No client                              | Left Alt is plain Alt                                                     | session's `keys` reason                     |
+
+- On `SIGTERM` the service releases every grab and sends key-up for every
+  key it holds down, so no key stays down (`keyboard` AC-14).
+
+### Config
+
+- None. The keys service reads no file. Constants in `state.h`:
+
+| Constant            | Value  |
+| ------------------- | ------ |
+| Tap window          | 350 ms |
+| Space hold (Meta)   | 150 ms |
+| Dictation threshold | 350 ms |
+| Paste modifier wait | 1.5 s  |
+| Escape chord hold   | 3 s    |
+
+- A change needs a rebuild and `install --system`. Per-app remaps and a
+  configurable key are left out (`keyboard` PRD, Not planned).
+
+### Tests
+
+- `mise run build` compiles the service and `replay.c`, then runs every
+  sequence in `testdata/`. CI needs no `/dev/uinput`.
+- A sequence file lists timed inputs (key, pointer, socket message,
+  client connect and disconnect) and the expected outputs.
+
+| Sequences                                                 | Checks                 |
+| --------------------------------------------------------- | ---------------------- |
+| Caps Lock and Left Ctrl tap, hold, chord                  | `keyboard` AC-1, AC-2  |
+| Esc gives Caps Lock                                       | AC-3                   |
+| Space tap with keys during the tap; Space hold chords     | AC-4, AC-5             |
+| Recorded fast typing with rollover                        | AC-6                   |
+| Left Alt tap, chord, hold with and without a client       | AC-7, AC-8, AC-11      |
+| Key during dictation: `cancel`, Alt and the key           | AC-9; `dictation` AC-9 |
+| Right Alt held 1 s: no `start`; AltGr chords pass         | AC-10                  |
+| Alt with click, drag and scroll, also past 350 ms         | AC-16                  |
+| Escape chord: grabs released, key-ups for held keys       | AC-17, AC-14           |
+| `start` carries the press time                            | `dictation` AC-2       |
+| `paste` with Alt held 1 s, then 2 s                       | `dictation` AC-13      |
+| Client gone during dictation: Alt swallowed, no stuck key | AC-14                  |
+
+- `test_contract.py` checks that every message parses and formats both
+  ways, and that the Python models match the table above.
+- The latency counter is checked in a system test on a host with
+  `/dev/uinput` (AC-15).
+
+### Build without hardware
+
+- An agent builds the C code and runs every sequence with no input
+  device, no root and no uinput. The session side uses the fake keys socket
+  ([ADR-0013](0013-dictation.md)).
+- The owner checks on a real host: hotplug (`keyboard` AC-12), remaps at
+  the login screen (AC-13), restart time after a crash (AC-14), the latency
+  log (AC-15), and AltGr symbols on the Swedish layout (AC-10).
 
 ## Alternatives considered
 
