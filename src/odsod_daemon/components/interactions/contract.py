@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Literal
 
+import yaml
 from pydantic import BaseModel, ConfigDict
 
 Outcome = Literal["ok", "skipped", "failed"]
@@ -68,9 +69,11 @@ DocumentMeta = InteractionDocument
 
 
 def parse_front_matter(text: str) -> InteractionDocument:
-    """Read the JSON form of YAML front matter written by interactions."""
-    import json
-
+    """Read the YAML front matter written by interactions."""
     if not text.startswith("---\n"):
         raise ValueError("missing front matter")
-    return InteractionDocument.model_validate(json.loads(text.split("\n---", 1)[0][4:]))
+    try:
+        value = yaml.safe_load(text[4:].split("\n---\n", 1)[0])
+    except yaml.YAMLError as error:
+        raise ValueError(f"bad front matter: {error}") from error
+    return InteractionDocument.model_validate(value)

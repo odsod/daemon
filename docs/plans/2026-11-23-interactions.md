@@ -90,8 +90,9 @@ mise run build
 
 ## Decisions to confirm
 
-- Front matter uses JSON syntax, which is valid YAML. The public
-  `parse_front_matter()` reads that form without a new YAML dependency.
+- Front matter is plain YAML (PyYAML `safe_dump` and `safe_load`), as in
+  the ADR-0016 example. Owner decision, 2026-11-23: add the YAML library
+  instead of writing JSON. Times are quoted, so loaders keep them strings.
 - A single transcript line longer than `chunk_chars` fails the attempt.
   Splitting that line would violate the required line-end chunk boundary.
 

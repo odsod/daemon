@@ -227,3 +227,37 @@ def test_capture_coverage_is_per_channel():
     cov = [dict(channel="mic", end=stamp(400)), dict(channel="sys", end=stamp(20))]
     capture = [event("stop", 20, channel="mic")]
     assert not detect([utterance()], [], cov, capture, NOW + timedelta(seconds=1000), C)
+
+
+def test_front_matter_is_plain_yaml():
+    """ADR-0016: front matter as in the ADR example, readable in Obsidian."""
+    from datetime import UTC
+
+    from odsod_daemon.components.interactions.contract import (
+        InteractionDocument,
+        parse_front_matter,
+    )
+    from odsod_daemon.components.interactions.render import render
+    from odsod_daemon.components.interactions.summarize import Summary
+
+    meta = InteractionDocument.model_validate(
+        dict(
+            type="interaction",
+            id="20261122T140000.000Z",
+            host="work-laptop",
+            start="2026-11-22T15:00:00.000+01:00",
+            end="2026-11-22T15:42:10.500+01:00",
+            timezone="Europe/Stockholm",
+            meeting=None,
+            participants=["Owner Name", "Åsa Exempel"],
+            title="API: migration plan",
+        )
+    )
+    text = render(
+        meta, Summary(skip=False, title="t", overview="o", points=[]), [], UTC
+    )
+    head = text.split("\n---\n", 1)[0]
+    assert "{" not in head and '"id"' not in head
+    assert "title: 'API: migration plan'" in head
+    assert "- Åsa Exempel" in head
+    assert parse_front_matter(text) == meta

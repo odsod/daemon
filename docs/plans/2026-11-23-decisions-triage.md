@@ -30,7 +30,7 @@
   - Why it matters: If you pause or log out before midnight and stay off past 00:01, the day finishes without the pre-midnight gap line, and the morning restart cannot append to the finished file.
   - Recommendation: Close and write the pre-midnight segment at finish time so the daily transcript records the gap.
 
-- **`interactions`: write interaction document front matter as JSON inside `---`.**
+- **`interactions`: write interaction document front matter as JSON inside `---`.** Resolved 2026-11-23: plain YAML with PyYAML.
   - Why it matters: JSON is valid YAML, but Obsidian and humans see braced JSON instead of clean YAML keys in every interaction note.
   - Recommendation: Accept for now if your vault ingest agent parses it; switch to plain YAML only if Obsidian Properties rejects it.
 

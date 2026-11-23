@@ -1,9 +1,10 @@
 """Render immutable interaction documents and their file names."""
 
-import json
 import re
 import unicodedata
 from datetime import tzinfo
+
+import yaml
 
 from odsod_daemon.components.interactions.boundaries import Boundary, Record, at, key
 from odsod_daemon.components.interactions.config import InteractionsConfig
@@ -66,8 +67,10 @@ def render(
     )
     return (
         "---\n"
-        + json.dumps(meta.model_dump(mode="json"), ensure_ascii=False, indent=2)
-        + f"\n---\n\n# {meta.title}\n\n## Summary\n\n{summary.overview}\n\n{points}"
+        + yaml.safe_dump(
+            meta.model_dump(mode="json"), allow_unicode=True, sort_keys=False
+        )
+        + f"---\n\n# {meta.title}\n\n## Summary\n\n{summary.overview}\n\n{points}"
         + "\n\n## Transcript\n\n"
         + transcript(lines, zone, True)
         + "\n"
