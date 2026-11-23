@@ -6,7 +6,7 @@ from collections.abc import Awaitable, Callable
 
 import httpx
 
-from odsod_daemon.lib import clock, healthfile, paths
+from odsod_daemon.lib import clock, healthfile, inference, paths
 
 
 class InputFailed(Exception):
@@ -28,7 +28,7 @@ def fingerprint(value: object) -> str:
 def fault_kind(error: Exception) -> str:
     if isinstance(error, httpx.HTTPStatusError):
         status = error.response.status_code
-        if status in {429, 502, 503, 504}:
+        if status in inference.HOST_STATUSES:
             return "host"
         return "input" if status >= 500 else "reject"
     if isinstance(

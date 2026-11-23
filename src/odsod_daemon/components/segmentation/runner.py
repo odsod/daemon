@@ -177,7 +177,6 @@ class ChannelRunner:
             self.emit(self.cutter.boundary(self.cursor, "end-of-audio"))
             self.cover(self.cursor)
 
-
     def zeros_until(self, horizon: float, limit: float, once: bool) -> bool:
         """True when the audio stays zero up to horizon, or to the end in once."""
         assert self.cursor is not None

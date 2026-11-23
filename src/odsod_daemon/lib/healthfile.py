@@ -45,9 +45,7 @@ class HealthFile:
         self._faults = {}
         if self.path.exists():
             try:
-                document = HealthDocument.model_validate(
-                    documents.read_json(self.path)
-                )
+                document = HealthDocument.model_validate(documents.read_json(self.path))
             except ValueError, OSError:
                 document = None
             for fault in document.faults if document else []:

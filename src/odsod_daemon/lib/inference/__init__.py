@@ -22,6 +22,8 @@ from pydantic import BaseModel, ConfigDict
 
 WHISPER_PATH = "/v1/audio/transcriptions"
 LLAMA_PATH = "/v1/chat/completions"
+# HTTP statuses that mean the host, not the input, failed (ADR-0012).
+HOST_STATUSES = frozenset({429, 502, 503, 504})
 
 _TAILNET_V4 = ipaddress.ip_network("100.64.0.0/10")
 _TAILNET_V6 = ipaddress.ip_network("fd7a:115c:a1e0::/48")

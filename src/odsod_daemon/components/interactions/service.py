@@ -138,7 +138,11 @@ class Worker:
         now = clock.utc_now()
         if self.view.dirty or any(e["kind"] == "stop" for e in data["events/capture"]):
             done = data["interactions"]
-            newest = max((clock.parse_iso(r["end"]) for r in done), default=None)
+            # Start at the newest done interaction's start, not its end: it is
+            # found again (same ID, skipped as done), and an utterance that
+            # overlaps its end after a split is kept for the next one.
+            latest = max(done, key=lambda r: r["end"], default=None)
+            newest = clock.parse_iso(latest["start"]) if latest else None
             first = now - timedelta(days=self.common.retention_days)
             utterances = [
                 u
@@ -219,30 +223,40 @@ class Worker:
         except httpx.TransportError, TimeoutError:
             self.host_at = clock.monotonic() + 60
             return False
-        except (httpx.HTTPStatusError, ValueError, IndexError) as error:
-            count = self.attempts.get(boundary.id, 0) + 1
-            self.attempts[boundary.id] = count
-            if count < self.config.max_attempts:
-                self.retry_at[boundary.id] = clock.monotonic() + (
-                    60 if count == 1 else 300
-                )
+        except httpx.HTTPStatusError as error:
+            if error.response.status_code in inference.HOST_STATUSES:
+                self.host_at = clock.monotonic() + 60
                 return False
-            batch.append(
-                self.roots.state / "interactions",
-                Interaction(
-                    ts=clock.iso(),
-                    id=boundary.id,
-                    start=clock.iso(boundary.start),
-                    end=clock.iso(boundary.end),
-                    outcome="failed",
-                    end_cause=boundary.end_cause,
-                    meeting=None
-                    if boundary.meeting is None
-                    else MeetingRef.model_validate(boundary.meeting),
-                    error=" ".join(str(error).splitlines()),
-                ).model_dump(mode="json"),
-            )
+            return self.attempt_failed(boundary, error)
+        except (ValueError, IndexError) as error:
+            return self.attempt_failed(boundary, error)
         # Include our writes now, without waiting for a follower wakeup.
+        for record in batch.records(self.roots.state / "interactions"):
+            self.view.insert("interactions", record)
+        self.waiting(self.pending())
+        return True
+
+    def attempt_failed(self, boundary: Boundary, error: Exception) -> bool:
+        count = self.attempts.get(boundary.id, 0) + 1
+        self.attempts[boundary.id] = count
+        if count < self.config.max_attempts:
+            self.retry_at[boundary.id] = clock.monotonic() + (60 if count == 1 else 300)
+            return False
+        batch.append(
+            self.roots.state / "interactions",
+            Interaction(
+                ts=clock.iso(),
+                id=boundary.id,
+                start=clock.iso(boundary.start),
+                end=clock.iso(boundary.end),
+                outcome="failed",
+                end_cause=boundary.end_cause,
+                meeting=None
+                if boundary.meeting is None
+                else MeetingRef.model_validate(boundary.meeting),
+                error=" ".join(str(error).splitlines()),
+            ).model_dump(mode="json"),
+        )
         for record in batch.records(self.roots.state / "interactions"):
             self.view.insert("interactions", record)
         self.waiting(self.pending())

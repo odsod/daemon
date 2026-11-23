@@ -132,6 +132,57 @@ async def test_retries_and_failure(worker, monkeypatch):
     assert not list((worker.roots.state / "documents/interactions").glob("*.md"))
 
 
+async def test_host_status_does_not_count_an_attempt(worker, monkeypatch):
+    """ADR-0016: a host fault waits and retries; the attempt does not count."""
+    import httpx
+
+    async def loading(self, text):
+        request = httpx.Request("POST", "http://localhost:8179")
+        response = httpx.Response(503, request=request)
+        raise httpx.HTTPStatusError("503", request=request, response=response)
+
+    monkeypatch.setattr(service.Summarizer, "__call__", loading)
+    for _ in range(5):
+        assert not await worker.step()
+        await clock.sleep(60)
+    assert not worker.attempts
+    assert not records(worker.roots.state / "interactions")
+
+
+def test_overlap_after_a_split_is_kept(worker):
+    """ADR-0016: a pin splits by utterance start and drops no utterance."""
+    one = worker.view.data["utterances/ambient"][0]
+    start = clock.parse_iso(one["start"])
+    worker.view.insert(
+        "events/user", dict(ts=clock.iso(start + timedelta(seconds=5)), kind="pin")
+    )
+    worker.view.insert(
+        "utterances/ambient",
+        dict(
+            ts=clock.iso(start),
+            kind="utterance",
+            id="two",
+            channel="mic",
+            start=clock.iso(start + timedelta(seconds=7)),
+            end=clock.iso(start + timedelta(seconds=20)),
+        ),
+    )
+    first = worker.pending()[0]
+    assert first.inputs == ["one"]
+    worker.view.insert(
+        "interactions",
+        dict(
+            ts=clock.iso(),
+            kind="interaction",
+            id=first.id,
+            start=clock.iso(first.start),
+            end=clock.iso(first.end),
+            outcome="ok",
+        ),
+    )
+    assert [b.inputs for b in worker.pending()] == [["two"]]
+
+
 def test_non_boundary_records_do_not_recompute(worker, monkeypatch):
     assert worker.pending()
 

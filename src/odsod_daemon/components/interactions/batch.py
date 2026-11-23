@@ -41,9 +41,7 @@ def records(directory: Path) -> list[Record]:
 
 
 def append(directory: Path, record: Record) -> None:
-    streams.append(
-        streams.day_path(directory, clock.utc_now().astimezone().date()), record
-    )
+    streams.append(streams.day_path(directory, clock.utc_now().date()), record)
 
 
 async def process(

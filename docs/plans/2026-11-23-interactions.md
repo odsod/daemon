@@ -98,3 +98,8 @@ mise run build
 
 - Per the workspace task, the system test seeds signals and transcript
   records directly. It does not run a CDP collector or the transcript worker.
+- Cross-plan review fix: boundary detection restarts at the newest done
+  interaction's start, not its end (ADR-0016 Boundaries says end). The same
+  interaction is found again and skipped, and an utterance that overlaps
+  its end after a pin or meeting split is no longer dropped. Confirm, then
+  amend the ADR wording.
