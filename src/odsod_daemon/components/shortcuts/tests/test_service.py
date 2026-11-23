@@ -192,3 +192,30 @@ async def test_dbus_kglobalaccel_client_signatures(buses):
     assert await real.action(1) == ["kwin", "[odsod] a", "KWin", ""]
     await real.unregister("kwin", "[odsod] old")
     assert ("kwin", "[odsod] old", "KWin", "") not in fake.bindings
+
+
+@pytest.mark.looptime(False)
+async def test_run_once_serves_on_the_session_bus_and_installs(
+    private_bus, monkeypatch, caplog
+):
+    from odsod_daemon.components import shortcuts as component
+    from odsod_daemon.components.shortcuts import kwin_install
+
+    client = await MessageBus(bus_address=private_bus).connect()
+    replies: list[MessageType] = []
+
+    async def ensure(*, reload) -> bool:
+        # The interface is up before the script loads and calls it.
+        reply = await call(client, "Log", "s", ['["script up"]'])
+        assert reply is not None
+        replies.append(reply.message_type)
+        return True
+
+    monkeypatch.setenv("DBUS_SESSION_BUS_ADDRESS", private_bus)
+    monkeypatch.setattr(kwin_install, "ensure", ensure)
+    with caplog.at_level(logging.INFO):
+        await component.run(None, once=True)
+    client.disconnect()
+
+    assert replies == [MessageType.METHOD_RETURN]
+    assert "script: script up" in caplog.text

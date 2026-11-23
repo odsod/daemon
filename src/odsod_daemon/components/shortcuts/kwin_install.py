@@ -16,6 +16,9 @@ import tempfile
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from pathlib import Path
 
+from dbus_fast import Message, MessageType
+from dbus_fast.aio import MessageBus
+
 from odsod_daemon.components.shortcuts.contract import LIST_PATH
 from odsod_daemon.lib import clock
 
@@ -132,3 +135,17 @@ async def ensure(
             return True
         LOG.warning("kwin script: install failed after %d tries: %s", TRIES, error)
         return False
+
+
+async def reconfigure(bus: MessageBus) -> None:
+    """Ask KWin to reload its config and plugins."""
+    reply = await bus.call(
+        Message(
+            destination="org.kde.KWin",
+            path="/KWin",
+            interface="org.kde.KWin",
+            member="reconfigure",
+        )
+    )
+    if reply is not None and reply.message_type == MessageType.ERROR:
+        raise RuntimeError(f"reconfigure: {reply.error_name}: {reply.body}")

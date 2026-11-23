@@ -24,6 +24,7 @@ from odsod_daemon.components.pause.cli import app as pause_app
 from odsod_daemon.components.pin.cli import app as pin_app
 from odsod_daemon.components.resume.cli import app as resume_app
 from odsod_daemon.components.retention.cli import app as retention_app
+from odsod_daemon.components.shortcuts.cli import app as shortcuts_app
 from odsod_daemon.components.status.cli import app as status_app
 from odsod_daemon.components.transcript.cli import app as transcript_app
 from odsod_daemon.components.unmute_stale.cli import app as unmute_stale_app
@@ -63,8 +64,7 @@ app.add_typer(dictation_app, name="dictation")
 
 app.add_typer(unmute_stale_app, name="unmute-stale")
 app.add_typer(retention_app, name="retention")
-# from odsod_daemon.components.shortcuts.cli import app as shortcuts_app
-# app.add_typer(shortcuts_app, name="shortcuts")
+app.add_typer(shortcuts_app, name="shortcuts")
 app.add_typer(bench_app, name="bench")
 app.add_typer(install_app, name="install")
 
