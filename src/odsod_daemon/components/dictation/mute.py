@@ -19,19 +19,7 @@ def read(path: Path) -> MutedDocument:
 
 
 async def restore(record: MutedDocument) -> None:
-    if not record.streams:
-        return
-    live = {s.id: s.app for s in await pactl.outputs()}
-    results = await asyncio.gather(
-        *(
-            pactl.set_mute(s.id, False)
-            for s in record.streams
-            if live.get(s.id) == s.app
-        ),
-        return_exceptions=True,
-    )
-    if any(isinstance(result, BaseException) for result in results):
-        raise OSError("could not restore meeting streams")
+    await pactl.unmute([(s.id, s.app) for s in record.streams])
 
 
 class Mute:

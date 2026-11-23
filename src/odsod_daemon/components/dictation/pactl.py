@@ -57,3 +57,19 @@ async def outputs() -> list[Stream]:
 
 async def set_mute(stream_id: str, muted: bool) -> None:
     await command("pactl", "set-source-output-mute", stream_id, "1" if muted else "0")
+
+
+async def unmute(streams: list[tuple[str, str]]) -> None:
+    if not streams:
+        return
+    live = {s.id: s.app for s in await outputs()}
+    results = await asyncio.gather(
+        *(
+            set_mute(stream_id, False)
+            for stream_id, app in streams
+            if live.get(stream_id) == app
+        ),
+        return_exceptions=True,
+    )
+    if any(isinstance(result, BaseException) for result in results):
+        raise OSError("could not restore meeting streams")

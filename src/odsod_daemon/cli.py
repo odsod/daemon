@@ -16,6 +16,7 @@ import typer
 from pydantic import BaseModel
 
 from odsod_daemon.components.bench.cli import app as bench_app
+from odsod_daemon.components.dictation.cli import app as dictation_app
 from odsod_daemon.components.install.cli import app as install_app
 from odsod_daemon.components.note.cli import app as note_app
 from odsod_daemon.components.notify_failed.cli import app as notify_failed_app
@@ -25,6 +26,7 @@ from odsod_daemon.components.resume.cli import app as resume_app
 from odsod_daemon.components.retention.cli import app as retention_app
 from odsod_daemon.components.status.cli import app as status_app
 from odsod_daemon.components.transcript.cli import app as transcript_app
+from odsod_daemon.components.unmute_stale.cli import app as unmute_stale_app
 from odsod_daemon.components.version.cli import app as version_app
 from odsod_daemon.lib import cli as output
 from odsod_daemon.lib import config
@@ -56,10 +58,10 @@ app.add_typer(notify_failed_app, name="notify-failed")
 app.add_typer(pause_app, name="pause")
 app.add_typer(resume_app, name="resume")
 app.add_typer(status_app, name="status")
-# from odsod_daemon.components.dictation.cli import app as dictation_app
-# app.add_typer(dictation_app, name="dictation")
-# from odsod_daemon.components.unmute_stale.cli import app as unmute_stale_app
-# app.add_typer(unmute_stale_app, name="unmute-stale")
+
+app.add_typer(dictation_app, name="dictation")
+
+app.add_typer(unmute_stale_app, name="unmute-stale")
 app.add_typer(retention_app, name="retention")
 # from odsod_daemon.components.shortcuts.cli import app as shortcuts_app
 # app.add_typer(shortcuts_app, name="shortcuts")

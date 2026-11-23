@@ -8,7 +8,7 @@ from odsod_daemon.services.runner import ServiceSpec
 NAME = "session"
 
 COMPONENTS = [
-    # dictation,
+    dictation,
     # shortcuts,
 ]
 

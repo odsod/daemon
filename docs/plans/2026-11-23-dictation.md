@@ -53,7 +53,12 @@ mise run build
 - 2026-11-23: Step 2 passed: 28 component checks, desktop command fakes,
   socket codec, selection restore, mute identity and late text reads.
 
+- 2026-11-23: Step 3 passed: session composition, both CLI commands,
+  ordered delivery, gate reasons and crash cleanup. 41 component checks pass.
+
 ## Decisions to confirm
 
 - Desktop subprocess tests use real time because the fake executables need
   OS scheduling. Hold timers and the clipboard restore delay use virtual time.
+- Each completed hold starts its text wait at once. Clipboard delivery stays
+  in hold order, so a later result can meet its deadline behind an older paste.
