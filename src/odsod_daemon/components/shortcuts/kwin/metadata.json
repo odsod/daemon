@@ -1,0 +1,14 @@
+{
+  "KPlugin": {
+    "Name": "odsod-daemon",
+    "Description": "Global shortcuts of the odsod daemon",
+    "Icon": "window-duplicate",
+    "Authors": [{ "Name": "odsod" }],
+    "Id": "odsod-daemon",
+    "Version": "1.0",
+    "License": "MIT"
+  },
+  "X-Plasma-API": "javascript",
+  "X-Plasma-MainScript": "code/main.js",
+  "KPackageStructure": "KWin/Script"
+}
