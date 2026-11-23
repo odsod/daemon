@@ -8,10 +8,11 @@ Usage: uv run docs/diagrams/high-level-architecture.py docs/diagrams/high-level-
 """
 
 import sys
+import textwrap
 
 from schematic import DASH_DOT, HEAVY, LETTER, MONO, PAPER, THIN, Page
 
-W, H = 2720, 1640
+W, H = 2720, 1690
 p = Page(W, H)
 p.header("OD-ADR-0005", "SUBSYSTEMS ON THE FILESYSTEM BACKPLANE")
 
@@ -58,7 +59,23 @@ WRITES = {
     ],
     "publishing": ["published/<target>/"],
     "bench": ["bench/<case-id>/"],
-    "operations": ["install/current, previous-commit"],
+    "install": ["install/current, previous-commit"],
+}
+
+# One sentence per subsystem: what it does (from the Purpose of its ADR).
+SUMMARY = {
+    "keys": "REMAPS KEYS FROM BOOT, DETECTS THE DICTATION KEY AND SENDS THE PASTE CHORD.",
+    "dictation": "RECORDS WHILE THE KEY IS HELD AND PASTES THE CLEANED TEXT.",
+    "capture": "RECORDS MIC AND SYSTEM AUDIO TO DISK, ALL DAY.",
+    "signals": "TURNS MEETING TABS INTO MEETING AND SPEAKER EVENTS.",
+    "speech": "CUTS AUDIO INTO UTTERANCES, THEN TRANSCRIBES AND CLEANS EACH ONE ON THE INFERENCE HOST.",
+    "shortcuts": "ONE CHORD PER APP: FRONT, START OR MINIMIZE, ON EVERY HOST.",
+    "control": "SHOWS IF THE DAEMON RECORDS AND WHAT IS WRONG; PAUSE AND RESUME.",
+    "transcript": "WRITES THE DAILY TRANSCRIPT OF ALL SPEECH, NOTES AND EVENTS.",
+    "interactions": "FINDS EACH MEETING OR TALK AND WRITES ONE DOCUMENT WITH A SUMMARY.",
+    "publishing": "COPIES FINISHED DOCUMENTS TO THE TARGET FOLDERS.",
+    "bench": "SCORES MODELS AND PROMPTS ON TEST CASES CUT FROM REAL AUDIO.",
+    "install": "INSTALLS, UPGRADES AND ROLLS BACK A HOST; TELLS WHICH COMMIT RUNS.",
 }
 
 # Folders each subsystem reads, at folder level. Not listed: config/ (all
@@ -84,8 +101,8 @@ X0, CW = 520, 160  # band left edge, column width
 FW = 140  # folder width
 BT, BB = 560, 700  # band top, bottom
 FY, FH = 594, 100  # folder top, height
-UF = (310, 450)  # upper frames: top, bottom
-LF = (870, 1050)  # lower frames: top, bottom
+UF = (290, 478)  # upper frames: top, bottom
+LF = (862, 1080)  # lower frames: top, bottom
 LANE = 18
 
 col = {name: i for i, (name, _) in enumerate(FOLDERS)}
@@ -136,7 +153,7 @@ FRAMES = {
     "interactions": (900, 460, "down", "ADR-0016", [("C", "INTERACTIONS")]),
     "publishing": (1400, 300, "down", "ADR-0017", [("C", "PUBLISH")]),
     "bench": (1740, 320, "down", "ADR-0019", [("CMD", "BENCH")]),
-    "operations": (
+    "install": (
         2100,
         340,
         "down",
@@ -163,7 +180,9 @@ def frame(name, x, y, w, h, adr, comps):
     label = name.upper()
     p.text(x + 10, y + 21, label, 14, "bold", anchor="start")
     p.text(x + 20 + len(label) * 11, y + 21, adr, 10, anchor="start")
-    cx, cy = x + 14, y + 46
+    rows = textwrap.wrap(SUMMARY[name], int((w - 28) / 6.6))
+    p.lines(x + 14, y + 40, rows, 10, anchor="start", lead=13)
+    cx, cy = x + 14, y + 40 + len(rows) * 13 + 14
     for svc, cname in comps:
         cw = len(cname) * 8.2 + (52 if svc == "CMD" else 42)
         if cx + cw > x + w and cx > x + 14:
@@ -180,7 +199,7 @@ def frame(name, x, y, w, h, adr, comps):
 # ------------------------------------------------------------------ boundary and band
 
 p.boundary(
-    [(215, 280), (2460, 280), (2460, 1098), (215, 1098)],
+    [(215, 280), (2460, 280), (2460, 1128), (215, 1128)],
     "ODSOD-DAEMON",
     222,
     272,
@@ -191,10 +210,10 @@ for name, rows in FOLDERS:
     sub = any(r.endswith("/") or r.startswith("<") or r.islower() for r in rows)
     p.store(fx(name), FY, FW, FH, name + "/", rows, family=MONO if sub else LETTER)
 
-p.text(240, 478, "state/ →", 18, "bold", "'Courier New', Courier, monospace", anchor="start")
+p.text(240, 502, "state/ →", 18, "bold", "'Courier New', Courier, monospace", anchor="start")
 p.lines(
     240,
-    500,
+    520,
     ["FILESYSTEM BACKPLANE (ADR-0003)", "state/<kind>/<writer>/:", "ONE WRITER PER SUBFOLDER,", "ANY NUMBER OF READERS.", "ALL SUBSYSTEMS READ config/;", "OWN-OUTPUT READS NOT SHOWN"],
     11,
     "bold",
@@ -208,7 +227,7 @@ for sub, (x, w, side, adr, comps) in FRAMES.items():
     top, bottom = UF if side == "up" else LF
     frame(sub, x, top, w, bottom - top, adr, comps)
 
-frame("shortcuts", 230, 590, 250, 100, "ADR-0008", [("D", "SHORTCUTS")])
+frame("shortcuts", 230, 604, 250, 112, "ADR-0008", [("D", "SHORTCUTS")])
 
 # ------------------------------------------------------------------ outside systems
 
@@ -264,16 +283,16 @@ p.flow(
     anchor="middle",
 )
 p.flow(
-    [(1330, LF[1]), (1330, 1078), (2590, 1078), (2590, 1020)],
+    [(1330, LF[1]), (1330, 1106), (2590, 1106), (2590, 1020)],
     "TEXT (HTTP)",
     at=1,
     width=THIN,
 )
-p.flow([(2590, 1078), (2590, 1020)], width=THIN, both=True)
+p.flow([(2590, 1106), (2590, 1020)], width=THIN, both=True)
 
 # publishing to the target dirs
-p.flow([(1550, LF[1]), (1550, 1170)], "COPY", width=THIN)
-p.ext(1440, 1170, 220, 60, "TARGET DIRS", ["VAULT INBOX"])
+p.flow([(1550, LF[1]), (1550, 1200)], "COPY", width=THIN)
+p.ext(1440, 1200, 220, 60, "TARGET DIRS", ["VAULT INBOX"])
 
 # run/ and config/: listed, not drawn
 RX, RY, RWD, RH = 520, 755, 157, 62
@@ -306,35 +325,14 @@ for i, (path, _) in enumerate(RUNCFG):
     )
     p.lines(RX + i * (RWD + 5) + RWD / 2, RY + 39, RUNROWS[path], 10, lead=13)
 
-MX, MY = 40, 1270
+MX, MY = 40, 1300
 
 
 # ------------------------------------------------------------------ services and symbols
 
 
-def service(ch):
-    return lambda x, y: p.callout(x, y, ch, 9)
-
-
 SX = MX
 SWD = 900
-SERVICES = [
-    (service("A"), "KEYS", "SYSTEM UNIT, ROOT"),
-    (service("B"), "CAPTURE", "LOGIN SESSION"),
-    (service("C"), "PIPELINE", "RESTARTS FREELY"),
-    (service("D"), "SESSION", "GRAPHICAL SESSION"),
-    (service("E"), "TRAY", "GRAPHICAL SESSION"),
-    ("CMD", "COMMAND", "ODSODCTL, NO SERVICE"),
-]
-sh = p.table(
-    SX,
-    MY,
-    SWD,
-    "SERVICES",
-    SERVICES,
-    [(24, "middle"), (46, "start"), (150, "start")],
-    row_h=26,
-)
 
 
 SYMBOLS = [
@@ -342,7 +340,18 @@ SYMBOLS = [
         lambda x, y: p.rect(x - 30, y - 10, 60, 20, width=1.5, dash="9 5"),
         "SUBSYSTEM, ONE ADR",
     ),
-    (lambda x, y: p.callout(x, y, "A", 9), "SERVICE OF A COMPONENT"),
+    (
+        lambda x, y: p.callout(x, y, "A", 9),
+        "SERVICE (SYSTEMD UNIT) THAT RUNS THE COMPONENT: A KEYS (SYSTEM, ROOT), B CAPTURE (LOGIN SESSION),",
+    ),
+    (
+        lambda x, y: None,
+        "C PIPELINE (RESTARTS FREELY), D SESSION AND E TRAY (GRAPHICAL SESSION)",
+    ),
+    (
+        lambda x, y: p.text(x, y + 4, "CMD", 9, "bold"),
+        "ODSODCTL COMMAND, NO SERVICE",
+    ),
     (
         lambda x, y: p.rect(x - 28, y - 9, 56, 18, width=1.4, dash="6 4"),
         "OUTSIDE SYSTEM",
@@ -355,8 +364,8 @@ SYMBOLS = [
         "ODSOD-DAEMON",
     ),
 ]
-p.table(
-    SX + SWD + 40, MY, SWD, "SYMBOLS", SYMBOLS, [(46, "middle"), (90, "start")], row_h=26
+sh = p.table(
+    SX, MY, 1300, "SYMBOLS", SYMBOLS, [(46, "middle"), (90, "start")], row_h=26
 )
 
 p.text(
