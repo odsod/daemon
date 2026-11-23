@@ -202,3 +202,47 @@ def test_hour_backlog_after_outage(transcript_root):
     assert output[-1].time == (NOW + timedelta(seconds=3599)).astimezone(ZONE)
     Writer(TranscriptConfig()).flush(NOW + timedelta(hours=2))
     assert len(read(writer)) == 3600
+
+
+def test_crash_after_last_line_before_finish(transcript_root, monkeypatch):
+    from odsod_daemon.components.transcript.days import bounds
+
+    day = NOW.astimezone(ZONE).date()
+    _, end = bounds(day, ZONE)
+    monkeypatch.setattr(clock, "utc_now", lambda: end + timedelta(seconds=61))
+    append(transcript_root, "text", RECORDS[0])
+    for channel in ("mic", "sys"):
+        append(
+            transcript_root,
+            "coverage",
+            {
+                "kind": "covered",
+                "channel": channel,
+                "ts": clock.iso(end),
+                "end": clock.iso(end),
+            },
+        )
+    original_append = streams.append
+
+    def crash(path, record):
+        if "finished" in path.parts:
+            raise RuntimeError("kill before finish")
+        original_append(path, record)
+
+    monkeypatch.setattr(streams, "append", crash)
+    with pytest.raises(RuntimeError, match="kill"):
+        Writer(TranscriptConfig()).flush()
+    monkeypatch.setattr(streams, "append", original_append)
+    writer = Writer(TranscriptConfig())
+    writer.flush()
+    assert len(read(writer)) == 1
+    assert (
+        len(
+            streams.read_day(
+                streams.day_path(
+                    transcript_root / "state/finished/transcript", end.date()
+                )
+            )
+        )
+        == 1
+    )

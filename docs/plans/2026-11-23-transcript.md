@@ -60,6 +60,20 @@ mise run build
   until coverage or the hold limit permits them. All 54 component checks,
   ruff, and pyright pass.
 
+- 2026-11-23: Four process-kill system tests pass: fixture audio through
+  speech and transcript, restart at each output stage, exactly one line
+  per text record, one dictation line, no duplicate mic line, and no
+  signals stream required. A failing cap-range precision check now passes
+  after comparing timestamp instants instead of timestamp strings.
+- 2026-11-23: Isolated smoke passed with fake inference and the English
+  audio fixture: the three speech drains followed by `uv run odsodctl run
+  transcript --once` produced one day file, 2 text records, and 2 matching
+  lines. JSON reading also passed. The temp `ODSOD_DAEMON_ROOT` was deleted.
+- 2026-11-23: Final Done when gates pass: 56 component tests, 4 transcript
+  system tests, and `mise run build` (ruff, formatting, pyright, import
+  rules, keys compile, and 437 tests; one timing test deselected). All
+  five work steps have local commits. No deployment or remote writes.
+
 ## Decisions to confirm
 
 - Mic text shorter than three normalized tokens is never dropped. This
@@ -76,3 +90,6 @@ mise run build
 - Parsed times use the header time zone. In a repeated DST hour, the
   file format has no offset or fold marker; parsing uses the first
   occurrence of that wall-clock time.
+
+- Publishing remains outside this plan. The tests check the finished
+  stream as the delivery seam, without starting publishing.

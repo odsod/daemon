@@ -227,3 +227,21 @@ def test_pending_and_cap_merge():
     capped = days.capped_lines(pending, ZONE)
     assert len(capped) == 1 and capped[0].key == "untx:mic-0"
     assert "13:00:00\u201313:00:02 (finish-cap)" in capped[0].text
+
+
+def test_cap_only_merges_adjacent_instants():
+    pending = [
+        {
+            "id": "first",
+            "channel": "sys",
+            "start": "2026-11-23T12:00:00Z",
+            "end": "2026-11-23T12:00:01Z",
+        },
+        {
+            "id": "second",
+            "channel": "sys",
+            "start": "2026-11-23T12:00:01.500Z",
+            "end": "2026-11-23T12:00:02Z",
+        },
+    ]
+    assert len(days.capped_lines(pending, ZONE)) == 2

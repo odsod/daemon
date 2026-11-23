@@ -66,13 +66,17 @@ def capped_lines(pending: list[dict], zone: ZoneInfo):
     from odsod_daemon.components.transcript.lines import untranscribed
 
     merged: list[dict] = []
-    for record in sorted(pending, key=lambda r: (r["channel"], r["start"], r["id"])):
+    for record in sorted(
+        pending, key=lambda r: (r["channel"], clock.parse_iso(r["start"]), r["id"])
+    ):
         if (
             merged
             and record["channel"] == merged[-1]["channel"]
-            and record["start"] <= merged[-1]["end"]
+            and clock.parse_iso(record["start"]) <= clock.parse_iso(merged[-1]["end"])
         ):
-            merged[-1]["end"] = max(record["end"], merged[-1]["end"])
+            merged[-1]["end"] = max(
+                record["end"], merged[-1]["end"], key=clock.parse_iso
+            )
         else:
             merged.append(dict(record))
     return [untranscribed(r, zone, "finish-cap") for r in merged]

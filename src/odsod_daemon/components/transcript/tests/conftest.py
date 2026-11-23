@@ -24,6 +24,9 @@ def transcript_root(temp_root, monkeypatch):
     monkeypatch.setattr(
         "odsod_daemon.components.transcript.writer.local_zone", lambda: ZONE
     )
+    monkeypatch.setattr(
+        "odsod_daemon.components.transcript.cli.local_zone", lambda: ZONE
+    )
     return temp_root
 
 
