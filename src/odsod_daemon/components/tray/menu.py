@@ -44,8 +44,10 @@ def local_time(value: str) -> str:
 
 
 def icon_path(report: StatusReport) -> Path:
+    """Unknown means the service states are unreadable: show Error."""
+    state = "error" if report.state == "unknown" else report.state
     suffix = "-dev" if report.dev else ""
-    return ICONS / f"{report.state}{suffix}.svg"
+    return ICONS / f"{state}{suffix}.svg"
 
 
 def tooltip(report: StatusReport) -> str:

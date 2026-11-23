@@ -14,6 +14,7 @@ from odsod_daemon.components.health.contract import (
     Reason,
     StatusReport,
 )
+from odsod_daemon.components.tray import app
 from odsod_daemon.components.tray.app import Bridge, TrayApp
 from odsod_daemon.components.tray.worker import TrayWorker
 from odsod_daemon.lib import audio, clock, documents, paths, systemd
@@ -96,6 +97,25 @@ def test_menu_and_pause_command(qt_app):
     pause.trigger()
     assert calls[-1] == ["pause", "--by", "tray"]
     assert not tray.icon.icon().isNull()
+
+
+def test_unchanged_report_keeps_the_open_menu(qt_app):
+    tray = TrayApp(start=lambda _args: True)
+    tray.apply(report(state="running", paused_since=None))
+    before = tray.menu.actions()
+    tray.apply(report(state="running", paused_since=None, ts=clock.iso()))
+    assert tray.menu.actions() == before
+    tray.apply(report(state="paused", paused_since=clock.iso()))
+    assert tray.menu.actions()[-1].text() == "Resume"
+
+
+def test_odsodctl_resolves_next_to_the_interpreter(tmp_path, monkeypatch):
+    python = tmp_path / "bin" / "python"
+    python.parent.mkdir()
+    monkeypatch.setattr(app.sys, "executable", str(python))
+    assert app.odsodctl() == "odsodctl"
+    (tmp_path / "bin" / "odsodctl").touch()
+    assert app.odsodctl() == str(tmp_path / "bin" / "odsodctl")
 
 
 def test_dev_mark_selects_the_dev_icon(qt_app):

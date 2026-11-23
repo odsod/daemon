@@ -80,4 +80,10 @@ def test_every_state_and_dev_mark_has_an_icon():
         for dev in (False, True):
             path = menu.icon_path(report(state=state, dev=dev))
             assert path.is_file(), path
-            assert path.name == f"{state}{'-dev' if dev else ''}.svg"
+            shown = "error" if state == "unknown" else state
+            assert path.name == f"{shown}{'-dev' if dev else ''}.svg"
+
+
+def test_unreadable_service_states_show_the_error_icon():
+    assert menu.icon_path(report(state="unknown")).name == "error.svg"
+    assert menu.icon_path(report(state="unknown", dev=True)).name == "error-dev.svg"

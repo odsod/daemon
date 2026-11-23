@@ -6,6 +6,7 @@ import asyncio
 import sys
 import threading
 from collections.abc import Callable
+from pathlib import Path
 
 from PySide6.QtCore import QObject, QProcess, Qt, Signal, Slot
 from PySide6.QtGui import QIcon
@@ -21,8 +22,14 @@ class Bridge(QObject):
     report = Signal(object)
 
 
+def odsodctl() -> str:
+    """The odsodctl next to this interpreter; the unit PATH may lack it."""
+    command = Path(sys.executable).with_name("odsodctl")
+    return str(command) if command.is_file() else "odsodctl"
+
+
 def _start(args: list[str]) -> bool:
-    started, _pid = QProcess.startDetached("odsodctl", args)
+    started, _pid = QProcess.startDetached(odsodctl(), args)
     return started
 
 
@@ -32,6 +39,7 @@ class TrayApp(QObject):
         self._start = start
         self.state = ""
         self.tooltip = ""
+        self.model: menu.Model | None = None
         self.icon = QSystemTrayIcon()
         self.menu = QMenu()
         self.icon.setContextMenu(self.menu)
@@ -45,8 +53,11 @@ class TrayApp(QObject):
         self.tooltip = menu.tooltip(report)
         self.icon.setToolTip(self.tooltip)
         self.icon.setIcon(QIcon(str(menu.icon_path(report))))
-        self.menu.clear()
         model = menu.build(report)
+        if model == self.model:
+            return
+        self.model = model
+        self.menu.clear()
         for line in model.lines:
             action = self.menu.addAction(line.text)
             action.setEnabled(False)
