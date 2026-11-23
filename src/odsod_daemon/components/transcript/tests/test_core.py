@@ -172,8 +172,7 @@ def test_midnight_gap_and_open_logout():
     ]
     off = gaps.ranges(capture_records, now)
     output = gaps.lines(off, [], capture_records, CONFIG, ZONE)
-    assert len(output) == 1 and output[0].time.date() == date(2026, 11, 23)
-    assert "23:55:00\u201300:00:00" in output[0].text
+    assert output == []
     assert (
         days.finish(
             date(2026, 11, 23),
@@ -187,8 +186,45 @@ def test_midnight_gap_and_open_logout():
         )
         == "ready"
     )
-    closed = gaps.ranges([capture(start, now)], now)
-    assert len(gaps.lines(closed, [], [], CONFIG, ZONE)) == 2
+    prev_end = start - timedelta(milliseconds=500)
+    closed = gaps.ranges(
+        capture_records + [capture(prev_end, now, ch) for ch in ("mic", "sys")], now
+    )
+    output += gaps.lines(closed, [], capture_records, CONFIG, ZONE)
+    assert len(output) == 2
+    assert len({line.time.date() for line in output}) == 2
+    assert output[0].key == f"gap:{clock.iso(prev_end)}"
+    assert "23:54:59\u201300:00:00" in output[0].text
+
+
+@pytest.mark.parametrize(
+    "delay,closed,expected",
+    [
+        (0.5, False, "ready"),
+        (5, False, "ready"),
+        (5.001, False, None),
+        (0.5, True, None),
+    ],
+)
+def test_finish_stop_after_last_sample(delay, closed, expected):
+    day = date(2026, 11, 23)
+    _, end = days.bounds(day, ZONE)
+    covered = end - timedelta(hours=1)
+    now = end + timedelta(seconds=61)
+    off = [
+        gaps.OffRange(
+            covered + timedelta(seconds=delay),
+            now,
+            frozenset(["mic", "sys"]),
+            closed=closed,
+        )
+    ]
+    assert (
+        days.finish(
+            day, ZONE, now, {"mic": covered, "sys": covered}, off, [], False, CONFIG
+        )
+        == expected
+    )
 
 
 @pytest.mark.parametrize("blocked", ["pending", "held", "coverage", "settle", "none"])

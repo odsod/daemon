@@ -110,9 +110,7 @@ def segments(item: OffRange, zone: ZoneInfo) -> list[OffRange]:
         )
         midnight = midnight.astimezone(cursor.tzinfo)
         end = min(item.end, midnight)
-        parts.append(
-            replace(item, start=cursor, end=end, closed=item.closed or end == midnight)
-        )
+        parts.append(replace(item, start=cursor, end=end))
         cursor = end
     return parts
 

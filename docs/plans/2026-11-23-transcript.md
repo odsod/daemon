@@ -78,8 +78,8 @@ mise run build
 
 - Mic text shorter than three normalized tokens is never dropped. This
   guard stays in transcript; the shared overlap helper stays unchanged.
-- An open capture gap has a closed segment at each completed local
-  midnight. This lets logout gaps appear before the day is finished.
+- An open capture gap stays open across local midnight. Gap lines are
+  written only when capture restarts, with one segment per local day.
 - Echo hold age uses the text record timestamp, so restart does not reset
   the hold limit. Missing sys coverage holds mic text up to that limit.
 

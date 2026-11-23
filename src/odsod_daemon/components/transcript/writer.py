@@ -37,7 +37,9 @@ class Writer:
         self.zone = local_zone()
         self.directory = self.roots.state / "documents/transcripts"
         self.closed = {
-            r["document"] for r in self.read("finished/transcript", clock.utc_now())
+            record["document"]
+            for file in (self.roots.state / "finished/transcript").glob("*.jsonl")
+            for record in streams.read_day(file)
         }
         self.keys: dict[date, set[str]] = {}
         self.logged: set[str] = set()

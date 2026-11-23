@@ -54,7 +54,9 @@ def finish(
                 return None
             cursor = start
         for item in ranges:
-            if item.start <= cursor < item.end:
+            # Capture writes stop after the last audio sample.
+            tolerance = timedelta(seconds=5 if not item.closed else 0)
+            if item.start <= cursor + tolerance and cursor < item.end:
                 cursor = item.end
         if cursor < end:
             return None

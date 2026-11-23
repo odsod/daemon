@@ -1,5 +1,6 @@
 import asyncio
 from datetime import timedelta
+from pathlib import Path
 
 import pytest
 
@@ -39,6 +40,40 @@ def test_restart_and_partial_line(transcript_root):
     restarted.flush(NOW)
     assert read(restarted) == before
     assert path.read_bytes().endswith(b"\n")
+
+
+def test_restart_skips_old_finished_transcript(transcript_root, monkeypatch):
+    monkeypatch.setattr(clock, "utc_now", lambda: NOW)
+    writer = Writer(TranscriptConfig())
+    old_day = NOW.date() - timedelta(days=writer.retention + 2)
+    path = writer.path(old_day)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    original = b"finished transcript without a final newline"
+    path.write_bytes(original)
+    append(
+        transcript_root,
+        "finished/transcript",
+        {
+            "kind": "finished",
+            "ts": clock.iso(NOW - timedelta(days=writer.retention + 2)),
+            "document": path.name,
+            "type": "transcripts",
+            "day": old_day.isoformat(),
+            "capped": False,
+        },
+    )
+    read_bytes = Path.read_bytes
+
+    def guard_read(file):
+        assert file != path, "recovery must not read a finished transcript"
+        return read_bytes(file)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(Path, "read_bytes", guard_read)
+        restarted = Writer(TranscriptConfig())
+    assert path.name in restarted.closed
+    assert old_day not in restarted.keys
+    assert path.read_bytes() == original
 
 
 def test_silence_has_no_file(transcript_root):
