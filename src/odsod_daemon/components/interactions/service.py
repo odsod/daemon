@@ -160,7 +160,18 @@ class Worker:
             )
             self.view.dirty = False
         done_ids = {r["id"] for r in data["interactions"]}
-        return [b for b in self.boundaries if b.id not in done_ids]
+        spans = [
+            (clock.parse_iso(r["start"]), clock.parse_iso(r["end"]))
+            for r in data["interactions"]
+        ]
+        # A done interaction that straddles the retention start is found again
+        # without its first utterances, under a new ID: skip it by its span.
+        return [
+            b
+            for b in self.boundaries
+            if b.id not in done_ids
+            and not any(s <= b.start and b.end <= e for s, e in spans)
+        ]
 
     def waiting(self, todo: list[Boundary]) -> None:
         health = healthfile.HealthFile(

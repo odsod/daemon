@@ -157,6 +157,8 @@ class ChannelRunner:
             if not any(pcm):
                 if self.hole is None:
                     self.hole = self.zeros_until(self.cursor + HOLE_S, limit, once)
+                if self.hole is None:
+                    break  # Wait until the audio shows if this is a hole.
                 if self.hole:
                     self.emit(self.cutter.boundary(self.cursor, "end-of-audio"))
                     self.cutter.floor = end
@@ -177,11 +179,14 @@ class ChannelRunner:
             self.emit(self.cutter.boundary(self.cursor, "end-of-audio"))
             self.cover(self.cursor)
 
-    def zeros_until(self, horizon: float, limit: float, once: bool) -> bool:
-        """True when the audio stays zero up to horizon, or to the end in once."""
+    def zeros_until(self, horizon: float, limit: float, once: bool) -> bool | None:
+        """True when the audio stays zero up to horizon, or to the end in once.
+
+        None when live audio does not reach horizon yet: decide on a later pass.
+        """
         assert self.cursor is not None
         if horizon > limit and not once:
-            return False
+            return None
         pcm = audio.cut(
             self.roots.state,
             self.channel,

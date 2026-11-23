@@ -361,3 +361,22 @@ def test_masks_only_reload_for_new_audio_and_changes(temp_root, monkeypatch):
         handle.write(bytes(32000))
     runner.advance(once=True)
     assert len(reads) == 2
+
+
+def test_hole_after_live_zeros_is_still_cut(temp_root, monkeypatch):
+    """A zero run not yet long enough live must be decided again later."""
+    start, _ = setup_audio(temp_root)
+    path = audio.hour_file(temp_root / "state", "sys", start)
+    speech = np.full(16000, 3000, dtype="<i2").tobytes()
+    path.write_bytes(speech + bytes(3200))  # 1 s speech, 0.1 s zeros so far
+    monkeypatch.setattr(Vad, "probability", lambda self, pcm: 0.9)
+    runner = ChannelRunner("sys", Speech())
+    runner.advance(once=False, mono=0.0)
+    assert runner.hole is None
+    path.write_bytes(speech + bytes(32000 * 3) + speech)  # 3 s hole, more speech
+    runner.advance(once=True)
+    rows = streams.read_day(
+        streams.day_path(temp_root / "state/utterances/ambient", start.date())
+    )
+    assert len(rows) == 2
+    assert rows[0]["cut"] == "end-of-audio"

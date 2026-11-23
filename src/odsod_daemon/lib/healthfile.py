@@ -80,8 +80,10 @@ class HealthFile:
 
     def clear(self, code: str, *, key: str | None = None) -> bool:
         self._refresh()
+        if self._faults.pop((code, key), None) is None:
+            return False
         self._changes[(code, key)] = None
-        return self._faults.pop((code, key), None) is not None
+        return True
 
     @property
     def faults(self) -> list[Fault]:

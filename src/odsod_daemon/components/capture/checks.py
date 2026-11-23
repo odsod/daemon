@@ -65,8 +65,11 @@ class MicCheck:
 
 
 # A previous run that wrote audio this recently and left no stop was killed
-# (crash or watchdog), not paused or logged out.
-RESTART_WINDOW_S = 120.0
+# (crash or watchdog), not paused or logged out. It matches the capture unit's
+# StartLimitIntervalSec: a watchdog loop that outlasts it fails the unit.
+RESTART_WINDOW_S = 300.0
+# A healthy start gives its first block in about 1 s (ADR-0011 "Start").
+START_GRACE_S = 3.0
 
 
 def stall_floor(

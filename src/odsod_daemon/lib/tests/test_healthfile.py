@@ -77,3 +77,16 @@ def test_two_writers_keep_each_others_faults(tmp_path):
     cached.rewrite()
     codes = {(f["code"], f["key"]) for f in documents.read_json(path)["faults"]}
     assert codes == {("inference-unreachable", "whisper"), ("target-missing", "nas")}
+
+
+def test_clear_of_an_absent_fault_leaves_no_tombstone(tmp_path):
+    path = tmp_path / "pipeline.json"
+    a = healthfile.HealthFile(path, "pipeline")
+    b = healthfile.HealthFile(path, "pipeline")
+    assert not a.clear("code", key="k")
+    b.set("code", "set by b", key="k")
+    b.rewrite()
+    a.set("other", "set by a")
+    a.rewrite()
+    codes = {f["code"] for f in documents.read_json(path)["faults"]}
+    assert codes == {"code", "other"}

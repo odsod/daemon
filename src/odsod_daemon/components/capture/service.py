@@ -165,7 +165,10 @@ async def run(
         while not stopping.is_set():
             now = clock.wall()
             faults: list[Active] = []
+            starting = floor is None and now - service_start < checks.START_GRACE_S
             for name, loop in loops.items():
+                if starting:
+                    break  # No block yet is normal; a stall from before waits.
                 start = checks.stall_start(loop.audio_end, service_start, floor=floor)
                 if checks.is_stalled(start, now, config.stall_error_s):
                     faults.append(Active(checks.CAPTURE_STALLED, start, key=name))

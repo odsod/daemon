@@ -1,7 +1,7 @@
 [Unit]
 Description=odsod daemon capture
 OnFailure=odsod-daemon-notify@%n.service
-StartLimitIntervalSec=60
+StartLimitIntervalSec=300
 StartLimitBurst=5
 After=pipewire.service wireplumber.service graphical-session.target
 PartOf=graphical-session.target

@@ -194,3 +194,20 @@ def test_non_boundary_records_do_not_recompute(worker, monkeypatch):
         source = "text" if kind == "text" else "events/signals"
         worker.view.insert(source, dict(kind=kind, ts=clock.iso()))
         assert worker.pending()
+
+
+def test_done_interaction_across_retention_start_is_not_found_again(worker):
+    one = worker.view.data["utterances/ambient"][0]
+    start = clock.parse_iso(one["start"])
+    worker.view.insert(
+        "interactions",
+        dict(
+            ts=clock.iso(),
+            kind="interaction",
+            id="older-start",
+            start=clock.iso(start - timedelta(minutes=5)),
+            end=clock.iso(start + timedelta(seconds=10)),
+            outcome="ok",
+        ),
+    )
+    assert worker.pending() == []
