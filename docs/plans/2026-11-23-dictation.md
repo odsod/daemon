@@ -1,6 +1,6 @@
 # Plan: dictation and the session service (stretch, for a dictation trial)
 
-- Status: Draft
+- Status: Done 2026-11-23
 - Depends on: [speech](2026-11-23-speech.md) (with its dictation parts),
   [keys](2026-11-23-keys.md) (socket contract),
   [install-and-control](2026-11-23-install-and-control.md)
