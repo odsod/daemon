@@ -31,10 +31,24 @@ SPEAKING = json.dumps(
         {"name": "Bob Jones", "speaking": False},
     ]
 )
+ALONE = json.dumps([{"name": "Alice Smith", "speaking": False}])
+BOTH = json.dumps(
+    [
+        {"name": "Alice Smith", "speaking": False},
+        {"name": "Bob Jones", "speaking": False},
+    ]
+)
 
 
 def health(temp_root: Path) -> dict[str, Any]:
     return documents.read_json(temp_root / "run" / "health" / "pipeline.json")
+
+
+def faults(temp_root: Path) -> list[dict[str, Any]]:
+    path = temp_root / "run" / "health" / "pipeline.json"
+    if not path.exists():
+        return []
+    return list(documents.read_json(path)["faults"])
 
 
 def collector(fake: Any) -> Collector:
@@ -85,6 +99,26 @@ async def test_a_confirmed_speaker_clears_the_fault(
     await signals.speaking_tick(start + 304.25)
     await signals.speaking_tick(start + 304.5)
     assert health(temp_root)["faults"] == []
+
+
+async def test_waiting_alone_then_a_join_gives_no_immediate_fault(
+    fake_cdp: Any, temp_root: Path
+) -> None:
+    fake_cdp.add_tab("Meet \u2013 Standup", MEET_URL)
+    fake_cdp.script(snapshots=[TWO, WITH_X, TWO])
+    signals = collector(fake_cdp)
+    start = clock.wall()
+    await signals.start(start)
+    for offset in (0, 2, 4):
+        await signals.tab_tick(start + offset)
+    assert faults(temp_root) == []
+
+    fake_cdp.script(polls=[ALONE, BOTH])
+    await signals.tab_tick(start + 304)
+    assert faults(temp_root) == []
+
+    await signals.tab_tick(start + 306)
+    assert faults(temp_root) == []
 
 
 async def test_meeting_end_clears_the_fault(fake_cdp: Any, temp_root: Path) -> None:

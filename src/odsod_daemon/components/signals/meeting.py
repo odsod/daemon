@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-from odsod_daemon.components.signals.platforms.base import MeetingRef
+from odsod_daemon.components.signals.platforms.base import MeetingRef, same_meeting
 
 Cause = Literal["left", "tab-closed"]
 
@@ -55,7 +55,7 @@ class Meeting:
                 events.append(End(self._ref, now, "tab-closed"))
                 self._end()
                 return events
-            if ref != self._ref:
+            if not same_meeting(ref, self._ref):
                 events.append(End(self._ref, now, "tab-closed"))
                 self._end()
             elif tiles is None:

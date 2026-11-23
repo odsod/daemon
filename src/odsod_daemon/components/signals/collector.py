@@ -30,6 +30,7 @@ from odsod_daemon.components.signals.platforms.base import (
     MeetingRef,
     Platform,
     PollTile,
+    same_meeting,
 )
 from odsod_daemon.lib import clock, healthfile, paths, streams
 
@@ -195,9 +196,9 @@ class Collector:
         moment = clock.wall() if now is None else now
         candidate = await self._find_candidate()
         ref = candidate[0] if candidate is not None else None
-        if ref != self._ref:
+        if not same_meeting(ref, self._ref):
             self._reset_tab()
-            self._ref = ref
+        self._ref = ref
         self._candidate = candidate
         evaluated = (
             await self._evaluate(moment, connect=True)
@@ -264,28 +265,34 @@ class Collector:
                 log.debug("cannot open tab socket: %s", error)
                 return None
             self._ws_url = ws_url
-            self._failures = 0
         session = self._session
         assert session is not None
 
         speaking_class = self._classes.get(ref.platform)
         try:
-            if speaking_class is None:
-                return await self._discover(session, ref, platform, now)
-            value = await session.evaluate(platform.poll_js(speaking_class))
-            tiles = tuple(platform.parse_poll(value))
-            self._failures = 0
-            return _Eval(tuple(PollTile(t.name, t.speaking) for t in tiles), True)
+            expression = (
+                None if speaking_class is None else platform.poll_js(speaking_class)
+            )
         except ValueError:
+            # Not a valid CSS identifier: drop it and rediscover now.
             self._classes.pop(ref.platform, None)
             self._discovery = None
-            self._failures = 0
+            return None
+        try:
+            if expression is None:
+                return await self._discover(session, ref, platform, now)
+            value = await session.evaluate(expression)
+            tiles = tuple(platform.parse_poll(value))
+        except ValueError:
+            self._failed(ref)
             return None
         except cdp.CdpError as error:
             await self.close()
             self._failed(ref)
             log.debug("evaluate failed: %s", error)
             return None
+        self._failures = 0
+        return _Eval(tuple(PollTile(t.name, t.speaking) for t in tiles), True)
 
     async def _discover(
         self,
@@ -337,7 +344,7 @@ class Collector:
         assert resume is not None
         if (
             candidate is not None
-            and candidate[0] == resume.ref
+            and same_meeting(candidate[0], resume.ref)
             and evaluated is not None
             and evaluated.tiles
         ):
@@ -488,12 +495,15 @@ class Collector:
             return
 
         self._discovery_since = None
+        if tiles < 2:
+            self._speaker_at = None
+            return
         if self._debounce.active:
             self._speaker_at = now
             return
         if self._speaker_at is None:
             self._speaker_at = now
-        elif now - self._speaker_at >= self.config.no_indicator_after_s and tiles >= 2:
+        elif now - self._speaker_at >= self.config.no_indicator_after_s:
             self._classes.pop(ref.platform, None)
             self._discovery = None
             self._speaker_at = now

@@ -101,6 +101,20 @@ async def test_adopted_speaker_stops_after_the_grace(
     assert speaking[-1]["at"] == clock.iso(datetime.fromtimestamp(start + 0.25, UTC))
 
 
+async def test_resume_with_a_changed_title_writes_nothing(
+    fake_cdp: Any, temp_root: Path
+) -> None:
+    write_open_meeting(temp_root)
+    fake_cdp.add_tab("Meet \u2013 Standup (1)", MEET_URL)
+    fake_cdp.script(snapshots=[snapshot(("Alice", ["cls-a"]))])
+    signals = collector(fake_cdp)
+    start = clock.wall()
+    before = records(temp_root)
+    await signals.start(start)
+    await signals.tab_tick(start)
+    assert records(temp_root) == before
+
+
 async def test_gone_meeting_ends_with_restart(fake_cdp: Any, temp_root: Path) -> None:
     write_open_meeting(temp_root)
     signals = collector(fake_cdp)

@@ -15,7 +15,7 @@
     Array.from(document.querySelectorAll('[data-tid="voice-level-stream-outline"]'))
       .map(function(el) {
         var name = getName(el);
-        var classes = el.className.split(/\s+/);
+        var classes = Array.from(el.classList);
         return {name: name, classes: classes};
       })
       .filter(function(x) { return x.name; })

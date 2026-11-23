@@ -28,6 +28,18 @@ class MeetingRef:
     title: str
     url: str
 
+    @property
+    def key(self) -> tuple[str, str]:
+        """The meeting identity; the title and URL may change mid-call."""
+        return (self.platform, self.code)
+
+
+def same_meeting(left: MeetingRef | None, right: MeetingRef | None) -> bool:
+    """Two refs name the same meeting, even when a tab title changed."""
+    if left is None or right is None:
+        return left is None and right is None
+    return left.key == right.key
+
 
 @dataclass(frozen=True)
 class SnapshotTile:
@@ -70,10 +82,9 @@ class Platform:
             if not isinstance(name, str) or not name:
                 continue
             raw = item.get("classes")
-            classes = (
-                frozenset(str(name) for name in raw)
-                if isinstance(raw, list)
-                else frozenset()
+            values = raw if isinstance(raw, list) else []
+            classes = frozenset(
+                text for text in (str(value).strip() for value in values) if text
             )
             tiles.append(SnapshotTile(name, classes))
         return tiles

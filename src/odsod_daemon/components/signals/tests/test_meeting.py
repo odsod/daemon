@@ -9,6 +9,12 @@ MEET = MeetingRef(
 OTHER = MeetingRef(
     "meet", "zzz-yyyy-xxx", "Review", "https://meet.google.com/zzz-yyyy-xxx"
 )
+RENAMED = MeetingRef(
+    "meet",
+    "abc-defg-hij",
+    "Standup with a longer calendar title",
+    "https://meet.google.com/abc-defg-hij",
+)
 
 
 def test_lobby_does_not_start_a_meeting() -> None:
@@ -64,6 +70,13 @@ def test_code_change_to_a_lobby_starts_later() -> None:
     assert meeting.observe(2.0, OTHER, 0) == [End(MEET, 2.0, "tab-closed")]
     assert meeting.active is None
     assert meeting.observe(4.0, OTHER, 2) == [Start(OTHER, 4.0)]
+
+
+def test_title_change_keeps_the_meeting_open() -> None:
+    meeting = Meeting(end_grace_s=10)
+    meeting.observe(0.0, MEET, 2)
+    assert meeting.observe(2.0, RENAMED, 2) == []
+    assert meeting.active == MEET
 
 
 def test_unknown_tiles_keep_the_state() -> None:

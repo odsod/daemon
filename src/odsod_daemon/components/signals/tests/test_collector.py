@@ -11,10 +11,13 @@ import pytest
 from odsod_daemon.components import signals
 from odsod_daemon.components.signals.collector import Collector
 from odsod_daemon.components.signals.config import SignalsConfig
+from odsod_daemon.components.signals.platforms.meet import Meet
 from odsod_daemon.lib import clock, paths, streams
 
 MEET_URL = "https://meet.google.com/abc-defg-hij"
 OTHER_URL = "https://meet.google.com/zzz-yyyy-xxx"
+MEET_SNAPSHOT = Meet().snapshot_js()
+MEET_POLL = Meet().poll_js("x")
 
 pytestmark = pytest.mark.looptime(False)
 
@@ -195,6 +198,74 @@ async def test_code_change_ends_and_starts(fake_cdp: Any, temp_root: Path) -> No
     assert written[1]["code"] == "abc-defg-hij"
     assert written[1]["cause"] == "tab-closed"
     assert written[2]["code"] == "zzz-yyyy-xxx"
+
+
+async def test_title_change_mid_call_gives_no_meeting_end(
+    fake_cdp: Any, temp_root: Path
+) -> None:
+    fake_cdp.add_tab("Meet \u2013 Standup", MEET_URL)
+    fake_cdp.snapshot_values = [
+        snapshot(("Alice Smith", ["cls-a"]), ("Bob Jones", ["cls-a"]))
+    ]
+    collector = Collector(config(fake_cdp), roots=paths.roots())
+    start = clock.wall()
+    await collector.start(start)
+    await collector.tab_tick(start)
+
+    fake_cdp.tabs.clear()
+    fake_cdp.add_tab("Meet \u2013 Standup (1)", MEET_URL)
+    await collector.tab_tick(start + 2)
+
+    assert kinds(temp_root) == ["meeting-start"]
+
+
+async def test_ten_evaluate_failures_reset_discovery(
+    fake_cdp: Any, temp_root: Path
+) -> None:
+    fake_cdp.add_tab("Meet \u2013 Standup", MEET_URL)
+    fake_cdp.snapshot_values = [
+        snapshot(("Alice Smith", ["cls-a"]), ("Bob Jones", ["cls-a"])),
+        snapshot(("Alice Smith", ["cls-a", "x"]), ("Bob Jones", ["cls-a"])),
+        snapshot(("Alice Smith", ["cls-a"]), ("Bob Jones", ["cls-a"])),
+    ]
+    collector = Collector(config(fake_cdp, toggles_required=1), roots=paths.roots())
+    start = clock.wall()
+    await collector.start(start)
+    for offset in (0, 2, 4):
+        await collector.tab_tick(start + offset)
+
+    fake_cdp.error_next = 10
+    for tick in range(10):
+        await collector.tab_tick(start + 6 + tick * 2)
+    assert fake_cdp.expressions[-1] == MEET_POLL
+
+    await collector.tab_tick(start + 26)
+    assert fake_cdp.expressions[-1] == MEET_SNAPSHOT
+
+
+async def test_bad_json_counts_as_an_evaluate_failure(
+    fake_cdp: Any, temp_root: Path
+) -> None:
+    fake_cdp.add_tab("Meet \u2013 Standup", MEET_URL)
+    fake_cdp.snapshot_values = [
+        snapshot(("Alice Smith", ["cls-a"]), ("Bob Jones", ["cls-a"])),
+        snapshot(("Alice Smith", ["cls-a", "x"]), ("Bob Jones", ["cls-a"])),
+        snapshot(("Alice Smith", ["cls-a"]), ("Bob Jones", ["cls-a"])),
+    ]
+    collector = Collector(config(fake_cdp, toggles_required=1), roots=paths.roots())
+    start = clock.wall()
+    await collector.start(start)
+    for offset in (0, 2, 4):
+        await collector.tab_tick(start + offset)
+
+    fake_cdp.poll_values = ["not json"]
+    for tick in range(9):
+        await collector.tab_tick(start + 6 + tick * 2)
+    await collector.tab_tick(start + 24)
+    assert fake_cdp.expressions[-1] == MEET_POLL
+
+    await collector.tab_tick(start + 26)
+    assert fake_cdp.expressions[-1] == MEET_SNAPSHOT
 
 
 async def test_a_dropped_socket_reconnects(fake_cdp: Any, temp_root: Path) -> None:

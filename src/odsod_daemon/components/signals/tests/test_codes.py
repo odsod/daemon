@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from odsod_daemon.components.signals.platforms.base import slug
+from odsod_daemon.components.signals.platforms.base import SnapshotTile, slug
 from odsod_daemon.components.signals.platforms.meet import Meet
 from odsod_daemon.components.signals.platforms.teams import Teams
 
@@ -173,3 +173,8 @@ def test_parse_rejects_bad_json() -> None:
 def test_parse_skips_tiles_without_a_name() -> None:
     assert MEET.parse_snapshot('[{"name": "", "classes": ["x"]}]') == []
     assert MEET.parse_poll('[{"name": null, "speaking": true}]') == []
+
+
+def test_parse_ignores_empty_class_names() -> None:
+    tiles = TEAMS.parse_snapshot('[{"name": "Alice", "classes": ["", "cls-a", " "]}]')
+    assert tiles == [SnapshotTile("Alice", frozenset({"cls-a"}))]
