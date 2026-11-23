@@ -62,7 +62,7 @@ dictation socket ([ADR-0007](0007-keys-daemon.md)).
   in memory. No cursor files, no job files, no claim and no lease.
 - The transcription worker takes pending dictation utterances first, then
   ambient ones, oldest first.
-- Reprocessing sends a request only when no dictation or ambient utterance is
+- The interactions batch pass sends a request only when no dictation or ambient utterance is
   pending.
 
 ### Audio
@@ -85,19 +85,19 @@ dictation socket ([ADR-0007](0007-keys-daemon.md)).
 
 | Path                                                               | Kind                  | Writer                                | Readers                                          |
 | ------------------------------------------------------------------ | --------------------- | ------------------------------------- | ------------------------------------------------ |
-| `state/audio/<channel>/<hour>Z.pcm`                                | Audio                 | capture                               | segmentation, transcription, reprocessing, bench |
-| `state/events/<source>/<day>.jsonl`                                | Stream                | one source each: `signals`, `user`    | segmentation, transcript, reprocessing           |
-| `state/utterances/ambient/<day>.jsonl`                             | Stream                | segmentation                          | transcription                                    |
+| `state/audio/<channel>/<hour>Z.pcm`                                | Audio                 | capture                               | segmentation, transcription, interactions, bench |
+| `state/events/<source>/<day>.jsonl`                                | Stream                | one source each: `signals`, `user`    | transcript, interactions                         |
+| `state/utterances/ambient/<day>.jsonl`                             | Stream                | segmentation                          | transcription, interactions                      |
 | `state/utterances/dictation/<day>.jsonl`                           | Stream                | dictation                             | transcription                                    |
 | `state/asr/<backend>/<day>.jsonl`                                  | Stream                | transcription worker for that backend | cleanup, bench                                   |
 | `state/text/<day>.jsonl`                                           | Stream                | cleanup                               | transcript, dictation                            |
-| `state/interactions/<day>.jsonl`                                   | Stream                | segmentation                          | reprocessing                                     |
+| `state/interactions/<day>.jsonl`                                   | Stream                | interactions                          | interactions                                     |
 | `state/bench/<case-id>/`                                           | Documents             | bench                                 | bench                                            |
 | `run/status.json`                                                  | Document              | dictation                             | tray, `odsodctl status`                          |
 | `run/muted.json`                                                   | Document              | dictation                             | dictation (after a restart)                      |
 | `config/config.json`, glossary, prompts                            | Documents             | owner                                 | all                                              |
 | `state/documents/transcripts/<local-day>-<host>.md`                | Markdown, append-only | transcript                            | publish                                          |
-| `state/documents/interactions/<local-day>-<HHMM>-<host>-<slug>.md` | Document              | reprocessing                          | publish                                          |
+| `state/documents/interactions/<local-day>-<HHMM>-<host>-<slug>.md` | Document              | interactions                          | publish                                          |
 | `state/published/<target>/<day>.jsonl`                             | Stream                | publish                               | publish                                          |
 | `<target dir>/<document name>`                                     | Document copy         | publish                               | third parties                                    |
 
@@ -122,7 +122,7 @@ dictation socket ([ADR-0007](0007-keys-daemon.md)).
   The consumer can move, edit or delete the copy.
 - The daemons never read from a target. `state/published/<target>/` records
   what it delivered. Pending = finished documents with no delivery record.
-- An interaction document is finished when reprocessing writes it. A daily
+- An interaction document is finished when `interactions` writes it. A daily
   transcript is finished when its local day ends.
 - Document names include the host, so targets that sync across hosts get no
   name clashes.

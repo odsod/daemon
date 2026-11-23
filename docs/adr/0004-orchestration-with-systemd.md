@@ -25,13 +25,13 @@ Proposed
 
 ### systemd units supervise every daemon
 
-| Unit                            | Scope  | Runs                                         | Wanted by                  | Watchdog               |
-| ------------------------------- | ------ | -------------------------------------------- | -------------------------- | ---------------------- |
-| `odsod-daemon-keys.service`     | system | `odsod-daemon-keys` (C)                      | `multi-user.target`        | No                     |
-| `odsod-daemon-capture.service`  | user   | `odsodctl run capture`                       | `default.target`           | Yes, on audio progress |
-| `odsod-daemon-pipeline.service` | user   | `odsodctl run pipeline`                      | `default.target`           | Yes, on main loop      |
+| Unit                            | Scope  | Runs                                                      | Wanted by                  | Watchdog               |
+| ------------------------------- | ------ | --------------------------------------------------------- | -------------------------- | ---------------------- |
+| `odsod-daemon-keys.service`     | system | `odsod-daemon-keys` (C)                                   | `multi-user.target`        | No                     |
+| `odsod-daemon-capture.service`  | user   | `odsodctl run capture`                                    | `default.target`           | Yes, on audio progress |
+| `odsod-daemon-pipeline.service` | user   | `odsodctl run pipeline`                                   | `default.target`           | Yes, on main loop      |
 | `odsod-daemon-session.service`  | user   | `odsodctl run session` (`dictation`, `tray`, `shortcuts`) | `graphical-session.target` | No                     |
-| `odsod-daemon.target`           | user   | Groups the user units above                  | `default.target`           |                        |
+| `odsod-daemon.target`           | user   | Groups the user units above                               | `default.target`           |                        |
 
 - All services use `Restart=always`, a short `RestartSec`, and a start limit
   to stop crash loops.
