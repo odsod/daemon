@@ -194,7 +194,7 @@ Section `publishing`:
     "targets": [
       {
         "name": "vault",
-        "dir": "~/Vaults/odsod/inbox",
+        "dir": "~/Code/git.lan/odsod/brain/inbox",
         "types": ["transcripts", "interactions"]
       }
     ],
