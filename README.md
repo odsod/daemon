@@ -1,14 +1,14 @@
 # daemon
 
-My personal daemon: long-running services on my hosts that handle input,
-audio and text. Built for one system: Fedora, KDE Plasma on Wayland, PipeWire
-and systemd.
+My personal daemon: one system of long-running services on my hosts that
+handle input, audio and text. Built for one setup: Fedora, KDE Plasma on
+Wayland, PipeWire and systemd.
 
 ![odsod-daemon system configuration](docs/diagrams/overview.svg)
 
-## Daemons
+## Services
 
-| Daemon   | Service                         | Job                                                     |
+| Service  | Unit                            | Job                                                     |
 | -------- | ------------------------------- | ------------------------------------------------------- |
 | keys     | `odsod-daemon-keys.service`     | Remap keys; hold Left Alt to dictate; paste the text    |
 | capture  | `odsod-daemon-capture.service`  | Record mic and system audio, always on                  |

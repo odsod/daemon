@@ -20,17 +20,17 @@ Proposed
 
 ### Roots
 
-| Root      | Location                                             | Synced             | Content                                |
-| --------- | ---------------------------------------------------- | ------------------ | -------------------------------------- |
-| `state/`  | `$XDG_STATE_HOME/odsod-daemon/`, mode `0700`         | No                 | Audio, streams, documents, bench cases |
-| `run/`    | `$XDG_RUNTIME_DIR/odsod-daemon/` (tmpfs)             | No                 | Live status, mute record               |
-| `config/` | `$XDG_CONFIG_HOME/odsod-daemon/`                     | No                 | Config, glossary, prompts              |
-| targets   | Directories set in config, for example a vault inbox | Not by the daemons | Copies of finished documents           |
+| Root      | Location                                             | Synced            | Content                                |
+| --------- | ---------------------------------------------------- | ----------------- | -------------------------------------- |
+| `state/`  | `$XDG_STATE_HOME/odsod-daemon/`, mode `0700`         | No                | Audio, streams, documents, bench cases |
+| `run/`    | `$XDG_RUNTIME_DIR/odsod-daemon/` (tmpfs)             | No                | Live status, mute record               |
+| `config/` | `$XDG_CONFIG_HOME/odsod-daemon/`                     | No                | Config, glossary, prompts              |
+| targets   | Directories set in config, for example a vault inbox | Not by the daemon | Copies of finished documents           |
 
-The daemons only read `config/`. Only the owner edits it.
+The services only read `config/`. Only the owner edits it.
 
-The keys daemon runs as root and keeps no files. Its only interface is the
-dictation socket ([ADR-0007](0007-keys-daemon.md)).
+The keys service runs as root and keeps no files. Its only interface is the
+dictation socket ([ADR-0007](0007-keys-service.md)).
 
 ### File kinds
 
@@ -113,14 +113,14 @@ dictation socket ([ADR-0007](0007-keys-daemon.md)).
 
 ### Output targets
 
-- The daemons treat every consumer of its output, such as a personal vault,
+- The daemon treats every consumer of its output, such as a personal vault,
   as a third party.
 - Config lists targets. Each target has a name, a directory and the document
   types it gets (`transcripts`, `interactions`).
 - `publish` copies each finished document to each target that wants it:
   written to a temporary name, renamed into place, then never touched again.
   The consumer can move, edit or delete the copy.
-- The daemons never read from a target. `state/published/<target>/` records
+- The daemon never reads from a target. `state/published/<target>/` records
   what it delivered. Pending = finished documents with no delivery record.
 - An interaction document is finished when `interactions` writes it. A daily
   transcript is finished when its local day ends.
@@ -164,7 +164,7 @@ dictation socket ([ADR-0007](0007-keys-daemon.md)).
 
 ### Write documents straight into the vault
 
-- Simplest, but the vault becomes part of the daemons' state. An inbox that
+- Simplest, but the vault becomes part of the daemon's state. An inbox that
   moves files away breaks append-only writes and reruns.
 - Rejected: the pipeline keeps its own copy and delivers finished copies.
 

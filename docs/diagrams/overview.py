@@ -1,4 +1,4 @@
-"""Overview schematic: the four daemons on one host. Hero image of the README.
+"""Overview schematic: the four services on one host. Hero image of the README.
 
 Usage: uv run docs/diagrams/overview.py docs/diagrams/overview.svg
 """
@@ -154,7 +154,7 @@ p.table(
     kx,
     ky,
     kw,
-    "DAEMONS",
+    "SERVICES",
     [
         (letter("A"), "KEYS", "ROOT, FROM BOOT"),
         (letter("B"), "CAPTURE", "NEVER STOPS"),
@@ -168,6 +168,6 @@ p.text(kx, ky + 200, "HEAVY LINE: SPEECH PATH", 11, anchor="start", fill=GRAY)
 p.text(kx, ky + 216, "DASHED LINE: BATCH PASS", 11, anchor="start", fill=GRAY)
 p.text(kx, ky + 232, "DASHED BOX: OUTSIDE SYSTEM", 11, anchor="start", fill=GRAY)
 
-p.footer("OD-2-001", "Figure 1-1.  Daemon Configuration", "1-1")
+p.footer("OD-2-001", "Figure 1-1.  Service Configuration", "1-1")
 with open(sys.argv[1] if len(sys.argv) > 1 else "overview.svg", "w") as f:
     f.write(p.svg())

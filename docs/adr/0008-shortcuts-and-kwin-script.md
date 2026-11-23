@@ -30,10 +30,11 @@ Proposed
 
 ### Move both parts into this repo
 
-- The service becomes the **`shortcuts`** component, in the session daemon.
+- The service becomes the **`shortcuts`** component, in the session service.
   It has the same lifecycle as `dictation` and `tray`: it needs the graphical
   session and is idle otherwise.
-- The KWin script moves to `kwin/` and ships as package data.
+- The KWin script moves to `components/shortcuts/kwin/` and ships as
+  package data.
   `odsodctl install` installs or upgrades it with `kpackagetool6` and reloads
   it.
 - The script stays JavaScript, because KWin scripts must be JavaScript.
@@ -43,7 +44,7 @@ Proposed
 
 ### D-Bus interface
 
-The names follow the repo's terms: the bus name is the daemon, the interface
+The names follow the repo's terms: the bus name is the service, the interface
 is the component.
 
 | Item        | Name                                |
@@ -56,20 +57,21 @@ is the component.
 | ----------- | ------------------ | --------------------------------------------------------------------------------------------------- |
 | `Configure` | JSON shortcut list | Registers each shortcut in KGlobalAccel; removes stale `[odsod]` shortcuts and conflicting bindings |
 | `Run`       | JSON shortcut      | Launches the shortcut's command                                                                     |
-| `Log`       | JSON values        | Writes a script log line to the session daemon's log                                                |
+| `Log`       | JSON values        | Writes a script log line to the session service's log                                               |
 
-- `contracts/` holds the pydantic model of the shortcut JSON. Tests check the
+- `components/shortcuts/contract.py` holds the pydantic model of the
+  shortcut JSON. Tests check the
   script's shortcut list against it.
 - A D-Bus activation file names `odsod-daemon-session.service` as its
-  `SystemdService`. A call from the script before the daemon is up waits for
-  the daemon to start, as it does today.
+  `SystemdService`. A call from the script before the service is up waits for
+  the service to start, as it does today.
 - Another session component that needs D-Bus adds its own interface on the
   same bus name.
 
 ### Launch apps in their own scope
 
 - `Run` starts each command with `systemd-run --user --scope`, so the app
-  lives in its own unit. A restart of the session daemon never kills a
+  lives in its own unit. A restart of the session service never kills a
   launched app.
 
 ### What stays in the `machine` repo
@@ -83,17 +85,17 @@ is the component.
 ### Move only the D-Bus service
 
 - Rejected: the D-Bus contract would cross two repos, the problem
-  [ADR-0007](0007-keys-daemon.md) solved for keys.
+  [ADR-0007](0007-keys-service.md) solved for keys.
 
 ### Keep the name `io.github.odsod.kwin`
 
 - No change to the script's calls.
 - Rejected: the script moves and changes in the same commit anyway, and the
-  old name does not say which daemon owns it.
+  old name does not say which service owns it.
 
-### A fifth daemon for shortcuts
+### A fifth service for shortcuts
 
-- Rejected: same lifecycle as the session daemon. Principle 13 splits daemons
+- Rejected: same lifecycle as the session service. Principle 13 splits services
   by lifecycle, not by module.
 
 ### Keep D-Bus activation of a separate script
@@ -105,9 +107,9 @@ is the component.
 
 - Shortcut code gets tests: key sequence parsing, the stale shortcut diff and
   the shortcut contract.
-- Shortcuts that launch apps need the session daemon. Shortcuts for KWin
+- Shortcuts that launch apps need the session service. Shortcuts for KWin
   actions work without it once registered.
-- A session daemon crash stops app launching until systemd restarts it. Apps
+- A session service crash stops app launching until systemd restarts it. Apps
   that are already open are not affected.
 - The Chrome `.desktop` files in the `machine` repo stay coupled to the
   script's launch commands.

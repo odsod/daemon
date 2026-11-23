@@ -10,7 +10,7 @@ Proposed
 
 ## Context
 
-- [ADR-0002](0002-high-level-architecture.md) splits the system into daemons
+- [ADR-0002](0002-high-level-architecture.md) splits the system into services
   by lifecycle. Something must start, stop, restart and watch them.
 - The system targets one platform: Fedora, KDE Plasma on Wayland, PipeWire and
   systemd.
@@ -18,12 +18,12 @@ Proposed
   configures it.
 - Silent failure is the worst outcome for an always-on recorder: it looks fine
   and records nothing.
-- The keys daemon must run before login and needs root for `/dev/input` and
-  `/dev/uinput`. The other daemons belong to the owner's session.
+- The keys service must run before login and needs root for `/dev/input` and
+  `/dev/uinput`. The other services belong to the owner's session.
 
 ## Decision
 
-### systemd units supervise every daemon
+### systemd units supervise every service
 
 | Unit                            | Scope  | Runs                                                      | Wanted by                  | Watchdog               |
 | ------------------------------- | ------ | --------------------------------------------------------- | -------------------------- | ---------------------- |
@@ -47,20 +47,20 @@ Proposed
 - Commands (`note`, `status`, `bench`) have no unit.
 - Batch tools that need torch, such as diarization, run as one-shot
   subcommands started by a component, with input and output in files. torch
-  never loads in a long-running daemon.
-- No daemon forks into the background. systemd does what a classic daemon did
+  never loads in a long-running service.
+- No service forks into the background. systemd does what a classic daemon did
   for itself: detach from the terminal, set the working directory, redirect
   output.
 
-### Crash-only daemons
+### Crash-only services
 
-- On an unexpected internal error, a daemon exits with a non-zero code.
+- On an unexpected internal error, a service exits with a non-zero code.
   systemd restarts it. No internal supervisors or retry trees.
-- A restart is cheap because each daemon rebuilds its state from files
+- A restart is cheap because each service rebuilds its state from files
   ([ADR-0003](0003-filesystem-interface.md)).
-- When the keys daemon exits, the kernel releases its keyboard grabs. The
+- When the keys service exits, the kernel releases its keyboard grabs. The
   keyboard works unmapped until the restart, and nothing stays stuck.
-- When the session daemon restarts, dictation unmutes every stream listed in
+- When the session service restarts, dictation unmutes every stream listed in
   `run/muted.json`.
 - External faults are not crashes. When the inference host is out of reach,
   pipeline retries with backoff and work stays pending in files. When the keys
@@ -69,7 +69,7 @@ Proposed
 
 ### Watchdog pings mean progress
 
-- Python daemons send `WATCHDOG=1` through `sd_notify` (one datagram to
+- Python services send `WATCHDOG=1` through `sd_notify` (one datagram to
   `$NOTIFY_SOCKET`, no library).
 - Capture pings only when audio bytes advance. A stalled audio stream then
   causes a restart instead of silent loss.
@@ -98,7 +98,7 @@ systemd does not tell the owner when a unit gives up. The tray does.
 - systemd never restarts a unit that was stopped on purpose.
 - Pause does not survive a reboot. Recording resumes, which suits an always-on
   recorder.
-- Pause does not touch the keys daemon or dictation.
+- Pause does not touch the keys service or dictation.
 
 ### Unit installation
 
@@ -109,7 +109,7 @@ systemd does not tell the owner when a unit gives up. The tray does.
   writes the D-Bus activation file that starts the session service on a call
   from the KWin script ([ADR-0008](0008-shortcuts-and-kwin-script.md)).
 - `odsodctl install --system`, run with sudo, builds and installs the keys
-  daemon and its system unit ([ADR-0007](0007-keys-daemon.md)).
+  service and its system unit ([ADR-0007](0007-keys-service.md)).
 - [ADR-0006](0006-installation.md) covers how the package itself gets
   installed and upgraded.
 
@@ -122,7 +122,7 @@ systemd does not tell the owner when a unit gives up. The tray does.
 
 ### Unit files in the `machine` repo
 
-- Matches how whisper-server is set up today, and how the keyboard daemon was
+- Matches how whisper-server is set up today, and how the keyboard service was
   installed.
 - Rejected: units are part of the system's contract. Agents must change them
   in the same commit as the code.
@@ -132,7 +132,7 @@ systemd does not tell the owner when a unit gives up. The tray does.
 - Rejected: a restart does not bring the inference host back, and a loop of
   restarts hides the real cause.
 
-### Keys daemon as a user unit
+### Keys service as a user unit
 
 - It would need the owner in the `input` group and access to `/dev/uinput`.
 - Rejected: it must run before login, and the remapping must not depend on a
@@ -146,5 +146,5 @@ systemd does not tell the owner when a unit gives up. The tray does.
 - Recording needs a logged-in user session. Recording while logged out is
   not supported.
 - An upgrade restarts capture, which leaves an audio gap of a few seconds.
-- Installing the keys daemon needs sudo once per host and on each upgrade of
+- Installing the keys service needs sudo once per host and on each upgrade of
   the C code.
