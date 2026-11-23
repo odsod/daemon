@@ -115,7 +115,7 @@
 <text x="591.7" y="784.0" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">AUDIO SLICES, TEXT</text>
 <rect x="1060" y="335" width="300" height="160" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
 <line x1="1060" y1="365" x2="1360" y2="365" stroke="#1b1b1b" stroke-width="2"/>
-<text x="1210.0" y="356" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#1b1b1b">DAEMONS</text>
+<text x="1210.0" y="356" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#1b1b1b">SERVICES</text>
 <circle cx="1082" cy="387" r="11" fill="#1b1b1b"/>
 <text x="1082" y="391.4" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#f7f5ee">A</text>
 <text x="1104" y="392" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">KEYS</text>
@@ -136,7 +136,7 @@
 <text x="1060" y="551" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="start" fill="#6b6b6b">DASHED LINE: BATCH PASS</text>
 <text x="1060" y="567" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="start" fill="#6b6b6b">DASHED BOX: OUTSIDE SYSTEM</text>
 <text x="1360" y="868" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="end" fill="#1b1b1b">OD-2-001</text>
-<text x="700.0" y="896" font-family="'Courier New', Courier, monospace" font-size="19" font-weight="normal" text-anchor="middle" fill="#1b1b1b">Figure 1-1.  Daemon Configuration</text>
+<text x="700.0" y="896" font-family="'Courier New', Courier, monospace" font-size="19" font-weight="normal" text-anchor="middle" fill="#1b1b1b">Figure 1-1.  Service Configuration</text>
 <line x1="40" y1="912" x2="1360" y2="912" stroke="#1b1b1b" stroke-width="3"/>
 <text x="700.0" y="940" font-family="'Courier New', Courier, monospace" font-size="18" font-weight="normal" text-anchor="middle" fill="#1b1b1b">HOST CONFIGURATION</text>
 <text x="40" y="978" font-family="'Courier New', Courier, monospace" font-size="16" font-weight="normal" text-anchor="start" fill="#1b1b1b">Host</text>

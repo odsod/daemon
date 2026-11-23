@@ -12,8 +12,9 @@ Proposed
 
 ### Scope
 
-`odsod-daemon` is the owner's set of personal daemons: long-running services
-on the owner's hosts that handle input, audio and text. A daemon is a program
+`odsod-daemon` is the owner's personal daemon: one system of long-running
+services on the owner's hosts that handle input, audio and text. A daemon is a
+program
 that runs as a background process, not under the direct control of a user.
 The name follows the Unix term
 ([Daemon (computing)](<https://en.wikipedia.org/wiki/Daemon_(computing)>)).
@@ -41,8 +42,8 @@ The name follows the Unix term
   request at a time, so dictation competes with ambient work.
 - Raw ASR output is never final text. It needs LLM cleanup with a glossary.
 - Recording and dictation need the same audio, cut in different ways.
-- The keyboard daemon grabs every physical keyboard. No other process can read
-  key events from them, so dictation keys must come from the keyboard daemon.
+- The keys service grabs every physical keyboard. No other process can read key
+  events from them, so dictation keys must come from the keys service.
 - A source study of nine dictation and meeting tools
   ([docs/research/](../research/alternatives.md)) found no tool that records
   always-on, and none that mutes the meeting while the owner dictates.
@@ -51,13 +52,14 @@ The name follows the Unix term
 
 ### Terms
 
-| Term          | Meaning                                                    | Example                              |
-| ------------- | ---------------------------------------------------------- | ------------------------------------ |
-| **daemon**    | A long-running background process                          | the keys daemon, the pipeline daemon |
-| **service**   | The systemd unit that runs a daemon                        | `odsod-daemon-keys.service`          |
-| **component** | A module with one job, inside a daemon or run as a command | `segmentation`, `cleanup`            |
-| **command**   | An on-demand CLI call that works with the daemons' files   | `odsodctl note`, `odsodctl bench`    |
-| **owner**     | The one person who uses and runs the system                |                                      |
+| Term          | Meaning                                                                      | Example                                |
+| ------------- | ---------------------------------------------------------------------------- | -------------------------------------- |
+| **daemon**    | The whole system: one repo, one install, one CLI                             | `odsod-daemon`                         |
+| **service**   | One systemd unit and its process. Runs the components that share a lifecycle | the keys service, the pipeline service |
+| **service**   | The systemd unit that runs a daemon                                          | `odsod-daemon-keys.service`            |
+| **component** | A module with one job, inside a service or run as a command                  | `segmentation`, `cleanup`              |
+| **command**   | A component that runs on demand, with no service                             | `odsodctl note`, `odsodctl bench`      |
+| **owner**     | The one person who uses and runs the system                                  |                                        |
 
 ### Principles
 
@@ -73,10 +75,10 @@ The name follows the Unix term
      documented contracts.
    - **Memory** inside a component: control loops and stream state. A
      component rebuilds its state from files on restart.
-   - **One Unix socket** between the keys daemon and the session daemon, for
+   - **One Unix socket** between the keys service and the session service, for
      key events and paste requests that must arrive within milliseconds
-     ([ADR-0007](0007-keys-daemon.md)).
-   - **D-Bus** between KWin and the session daemon, because a KWin script can
+     ([ADR-0007](0007-keys-service.md)).
+   - **D-Bus** between KWin and the session service, because a KWin script can
      reach other processes only through D-Bus
      ([ADR-0008](0008-shortcuts-and-kwin-script.md)).
    - **HTTP** from each host to the shared inference servers. No broker in
@@ -104,26 +106,26 @@ The name follows the Unix term
     diarization, speaker names, summaries.
 11. **Hosts are independent.** Each host records and writes its own files. Hosts
     share only inference servers. No locks or coordination between hosts.
-12. **Consumers are third parties.** The daemons keep their own documents and
-    copy finished ones to configured target directories, such as a vault
-    inbox. They never read from a target. What syncs a target is outside this
+12. **Consumers are third parties.** The daemon keeps its own documents and
+    copies finished ones to configured target directories, such as a vault
+    inbox. It never reads from a target. What syncs a target is outside this
     system.
-13. **Split daemons by lifecycle, not by module.** The keys daemon runs as root
+13. **Split services by lifecycle, not by module.** The keys service runs as root
     from boot, so the keyboard works before login. Capture runs alone, so
     changes elsewhere never cause audio gaps. Session-bound parts (dictation,
     tray icon) run in the graphical session. All else can restart freely.
-    systemd supervises every daemon
+    systemd supervises every service
     ([ADR-0004](0004-orchestration-with-systemd.md)).
 14. **Python, with two exceptions.** The best speech and audio tools are
-    Python libraries. The keys daemon is C: it is small, runs as root and
-    handles key timing ([ADR-0007](0007-keys-daemon.md)). The KWin script is
+    Python libraries. The keys service is C: it is small, runs as root and
+    handles key timing ([ADR-0007](0007-keys-service.md)). The KWin script is
     JavaScript, because KWin requires it
     ([ADR-0008](0008-shortcuts-and-kwin-script.md)). Another language needs an
     ADR.
 
-### Daemons
+### Services
 
-| Daemon   | Runs as                  | Job                                                     |
+| Service  | Runs as                  | Job                                                     |
 | -------- | ------------------------ | ------------------------------------------------------- |
 | keys     | root, from boot          | Remap keys; detect the dictation key; inject paste keys |
 | capture  | owner                    | Record mic and system audio to the audio buffer         |
@@ -146,7 +148,7 @@ The name follows the Unix term
 ### Flow
 
 ```
-keyboards ──► keys daemon ──► remapped keys ──► applications
+keyboards ──► keys service ──► remapped keys ──► applications
                   │  ▲
      dictation key│  │paste
                   ▼  │
@@ -165,20 +167,22 @@ benchmark: reads stored audio and results
 ### Detailed ADRs
 
 - [ADR-0003](0003-filesystem-interface.md): files, paths and formats.
-- [ADR-0004](0004-orchestration-with-systemd.md): daemons, services and
+- [ADR-0004](0004-orchestration-with-systemd.md): services, units and
   supervision.
 - [ADR-0005](0005-components-and-implementation.md): components, languages
   and tools, with the architecture diagram.
 - [ADR-0006](0006-installation.md): installation and upgrade.
-- [ADR-0007](0007-keys-daemon.md): the keys daemon and the dictation socket.
+- [ADR-0007](0007-keys-service.md): the keys service and the dictation socket.
 - [ADR-0008](0008-shortcuts-and-kwin-script.md): the shortcuts component and
   the KWin script.
+- [ADR-0009](0009-taxonomy-and-code-organization.md): terms and code
+  organization.
 
 ## Alternatives considered
 
-### Separate repos for the keyboard daemon and the recorder
+### Separate repos for the keys service and the recorder
 
-- The keyboard daemon lived in the `machine` repo.
+- The keyboard daemon `odsod-keys` lived in the `machine` repo.
 - Rejected: dictation depends on it. The socket contract, both of its ends
   and the units must change in one commit.
 
@@ -186,7 +190,7 @@ benchmark: reads stored audio and results
 
 - Two audio feeds and two pipelines. No shared data, no common benchmark set.
 
-### One daemon with an in-memory audio buffer
+### One process with an in-memory audio buffer
 
 - Fast, but audio is lost on restart, nothing can be replayed, and benchmark
   data needs a separate path.
@@ -197,7 +201,7 @@ benchmark: reads stored audio and results
   ambient audio must stay local. A later ADR can reopen this for dictation
   only.
 
-### One daemon per component
+### One service per component
 
 - More services to run, with no benefit. Files already give the decoupling.
 
@@ -220,7 +224,7 @@ benchmark: reads stored audio and results
 
 - Lets each part use its best ecosystem, but costs several toolchains and
   duplicated file helpers. For this system, Python is the best ecosystem for
-  the hard parts and good enough for the rest. The keys daemon is the one
+  the hard parts and good enough for the rest. The keys service is the one
   exception, for the reasons in ADR-0007.
 
 ## Consequences
@@ -236,4 +240,4 @@ benchmark: reads stored audio and results
   more load.
 - Dictation can take a few seconds longer when another host is transcribing.
 - Live text has no speaker names. Names appear when the batch pass finishes.
-- Two toolchains: Python and C. The C part stays one small daemon.
+- Two toolchains: Python and C. The C part stays one small service.

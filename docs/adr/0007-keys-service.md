@@ -1,4 +1,4 @@
-# ADR-0007: Keys daemon and dictation socket
+# ADR-0007: Keys service and dictation socket
 
 ## Status
 
@@ -23,7 +23,7 @@ Proposed
   KWin delivers the press and release of a modifier-only shortcut together,
   after the key goes up ([OpenWhispr](../research/openwhispr.md)). Every tool
   with hold-to-talk on Wayland reads evdev.
-- `EVIOCGRAB` gives the keys daemon every key event. No other process can read
+- `EVIOCGRAB` gives the keys service every key event. No other process can read
   the physical keyboards.
 - Dictation pastes with a simulated key chord. Tools that inject keys from a
   second device race the owner's fingers: a held Alt joins the chord
@@ -33,34 +33,34 @@ Proposed
 
 ## Decision
 
-### The keys daemon owns all keyboard I/O
+### The keys service owns all keyboard I/O
 
 - `odsod-keys` moves into this repo as `odsod-daemon-keys`. It keeps all its
   current remapping.
 - It adds two jobs: the **dictation key** and **paste injection**.
-- No other daemon reads `/dev/input` or writes `/dev/uinput`.
+- No other process reads `/dev/input` or writes `/dev/uinput`.
 
 ### Dictation key: Left Alt held alone
 
-- Left Alt down: the daemon holds the press back.
-- Another key before the hold threshold: the daemon sends Alt and the key, as
+- Left Alt down: the service holds the press back.
+- Another key before the hold threshold: the service sends Alt and the key, as
   a normal chord (`Alt+Tab` works).
-- Released before the threshold: the daemon sends an Alt tap, as today.
+- Released before the threshold: the service sends an Alt tap, as today.
 - Held alone past the threshold, with a client connected: dictation starts.
   The Alt press never reaches an application, so no menu bar opens.
 - Release during dictation: dictation stops.
-- Another key during dictation: dictation is cancelled, and the daemon sends
+- Another key during dictation: dictation is cancelled, and the service sends
   Alt and the key as a late chord.
 - No client connected: Left Alt behaves as a plain Alt. The keyboard never
-  depends on the session daemon.
+  depends on the session service.
 - Right Alt (AltGr) is never a dictation key, because Swedish symbols need it.
 - The threshold is a constant in the code, tuned by use.
 
 ### Paste: `Shift+Insert` from the virtual keyboard
 
-- On a `paste` request, the daemon waits until no physical modifier is down
+- On a `paste` request, the service waits until no physical modifier is down
   (at most 1.5 s), then sends `Shift+Insert` on its virtual keyboard.
-- The daemon tracks the physical key state itself, so no other process polls
+- The service tracks the physical key state itself, so no other process polls
   it.
 - `Shift+Insert` pastes in GUI apps and in terminals such as Konsole, on every
   layout ([OpenWhispr](../research/openwhispr.md),
@@ -70,9 +70,9 @@ Proposed
 ### The dictation socket
 
 - Path: `/run/odsod-daemon-keys/dictation.sock`, a Unix stream socket, mode
-  `0600`, owned by the owner. `install --system` sets the owner. The daemon
+  `0600`, owned by the owner. `install --system` sets the owner. The service
   also checks the peer's user ID (`SO_PEERCRED`).
-- One client at a time: the session daemon. A new connection replaces the old
+- One client at a time: the session service. A new connection replaces the old
   one.
 - Messages are text lines that end in `\n`. Timestamps are the wall-clock
   time of the key event, UTC, RFC 3339 with milliseconds.
@@ -90,12 +90,12 @@ Proposed
   utterance from the audio buffer, so no words are lost to the threshold.
 - A disconnect during dictation ends the dictation on both sides. Neither side
   keeps state across a reconnect.
-- A new message type, or a change to one, needs an ADR. `contracts/` holds the
-  Python model of each message.
+- A new message type, or a change to one, needs an ADR. `components/keys/contract.py`
+  holds the Python model of each message.
 
 ## Alternatives considered
 
-### evdev in the session daemon
+### evdev in the session service
 
 - The common design in other tools (YazSes, hyprwhspr).
 - Rejected: the grab hides the physical keyboards. Reading the virtual
@@ -110,29 +110,29 @@ Proposed
 
 ### `ydotool` for paste
 
-- Rejected: one more daemon, its socket and `uinput` access for the owner,
-  and it races the held Alt. The keys daemon already has a virtual keyboard.
+- Rejected: one more background process, its socket and `uinput` access for the owner,
+  and it races the held Alt. The keys service already has a virtual keyboard.
 
 ### RemoteDesktop portal for paste
 
 - KWin injects keys for the app after a one-time consent dialog. No root and
-  no daemon ([OpenWhispr](../research/openwhispr.md)).
+  no background process ([OpenWhispr](../research/openwhispr.md)).
 - Rejected: the dialog comes back when its token is lost, the session must be
   kept open over D-Bus, and it still races the held Alt. It is the fallback if
-  the system must ever run without the keys daemon.
+  the system must ever run without the keys service.
 
 ### Files instead of a socket
 
 - Rejected: paste is a request with a reply, key events need millisecond
-  delivery, and a root daemon must not write into the owner's directories.
+  delivery, and a root service must not write into the owner's directories.
 
-### Keys daemon in Python
+### Keys service in Python
 
 - One language for the whole repo.
-- Rejected: the C daemon works and is small. Key timing must not depend on a
+- Rejected: the C program works and is small. Key timing must not depend on a
   garbage collector, and a rewrite adds risk for no gain.
 
-### Keys logic inside the session daemon, as root
+### Keys logic inside the session service, as root
 
 - Rejected: a root GUI process with inference clients would hold the keyboard
   grab. A bug there could freeze typing.
@@ -141,9 +141,9 @@ Proposed
 
 - One process owns the keyboard. Remaps, the dictation key and paste cannot
   conflict.
-- The session daemon needs no input group, no udev rules and no injection
+- The session service needs no input group, no udev rules and no injection
   tool.
-- A keys daemon bug can break typing for every app. The daemon stays small,
+- A keys service bug can break typing for every app. The service stays small,
   and a crash releases the grab, so the raw keyboard comes back at once.
 - The dictation key is fixed in code. A change needs a rebuild and
   `install --system`.

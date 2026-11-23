@@ -421,7 +421,7 @@
 <text x="1720" y="1413" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">MERGE</text>
 <circle cx="1660" cy="1434" r="9" fill="#1b1b1b"/>
 <text x="1660" y="1437.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">A</text>
-<text x="1720" y="1439" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">DAEMON (FILLED LETTER)</text>
+<text x="1720" y="1439" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">SERVICE (FILLED LETTER)</text>
 <circle cx="1660" cy="1460" r="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
 <text x="1660" y="1464.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">1</text>
 <text x="1720" y="1465" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">COMPONENT (HOLLOW NUMBER)</text>

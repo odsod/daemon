@@ -137,7 +137,7 @@ class Page:
         self.lines(x + w / 2, y + h / 2 + 30, rows, 13)
 
     def frame(self, x, y, w, h, letter, name):
-        """Boundary of one daemon: thin dashed frame with a filled letter."""
+        """Boundary of one service: thin dashed frame with a filled letter."""
         self.rect(x, y, w, h, width=1.2, dash="4 4")
         self.callout(x + 2, y + 2, letter, 13)
         self.text(x + 22, y + 18, name, 12, "bold", anchor="start")
@@ -225,7 +225,7 @@ class Page:
     # ------------------------------------------------------------ callouts and keys
 
     def callout(self, x, y, letter, r=15):
-        """Filled letter: a daemon."""
+        """Filled letter: a service."""
         self.add(f'<circle cx="{x}" cy="{y}" r="{r}" fill="{INK}"/>')
         self.text(x, y + r * 0.4, letter, int(r * 1.15), "bold", fill=PAPER)
 

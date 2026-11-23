@@ -201,7 +201,7 @@ def num(n):
     return lambda x, y: p.number(x, y, n, r=10)
 
 
-def daemon(ch):
+def service(ch):
     return lambda x, y: p.callout(x, y, ch, 9)
 
 
@@ -227,7 +227,7 @@ COMPONENTS = [
 
 
 def comp_row(n, name, domain, d, job):
-    return (num(n), name, domain, daemon(d) if d else "CMD", job)
+    return (num(n), name, domain, service(d) if d else "CMD", job)
 
 
 cols = [(20, "middle"), (42, "start"), (200, "start"), (318, "middle"), (345, "start")]
@@ -266,7 +266,7 @@ SYMBOLS = [
     ),
     (lambda x, y: p.dot(x, y), "JUNCTION"),
     (lambda x, y: p.merge(x, y, 9), "MERGE"),
-    (lambda x, y: p.callout(x, y, "A", 9), "DAEMON (FILLED LETTER)"),
+    (lambda x, y: p.callout(x, y, "A", 9), "SERVICE (FILLED LETTER)"),
     (lambda x, y: p.number(x, y, 1, r=10), "COMPONENT (HOLLOW NUMBER)"),
     (
         lambda x, y: p.rect(x - 28, y - 9, 56, 18, width=1.4, dash="6 4"),

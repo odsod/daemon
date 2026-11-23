@@ -13,10 +13,10 @@ Proposed
 - One person installs the system, on a few hosts that the `machine` repo
   provisions. Installation must be practical for that person only.
 - The system is a Python package ([ADR-0005](0005-components-and-implementation.md))
-  plus one C daemon ([ADR-0007](0007-keys-daemon.md)), in the public GitHub
+  plus one C service ([ADR-0007](0007-keys-service.md)), in the public GitHub
   repo `odsod/daemon`. `uv` and `mise` are on every host.
 - `main` is always deployable: `mise run build` gates every merge.
-- The keys daemon needs root to install. Everything else installs as the owner.
+- The keys service needs root to install. Everything else installs as the owner.
 - The pyannote model is gated on Hugging Face and needs a token to download.
 
 ## Decision
@@ -31,7 +31,7 @@ uv tool install --force --reinstall \
 - No releases, no package index, no build pipeline.
 - To roll back, install `@<commit>` instead of `@main`.
 - uv fetches the Python version that `requires-python` asks for.
-- The keys daemon's C source and unit template ship as package data.
+- The keys service's C source and unit template ship as package data.
 
 ### The version is the commit
 
@@ -54,7 +54,7 @@ odsodctl install
 """
 ```
 
-- `install --system` compiles the keys daemon, installs it as
+- `install --system` compiles the keys service, installs it as
   `/usr/local/bin/odsod-daemon-keys`, writes its system unit with the owner
   as the socket owner, and restarts it. It is a no-op restart when the
   binary did not change.
@@ -68,7 +68,7 @@ odsodctl install
   `~/.config/odsod-daemon/`, and keeps the platform settings the daemons rely
   on, such as the WirePlumber Bluetooth profile config.
 - The `machine` repo no longer builds `odsod-keys`. The first `daemon:setup`
-  disables and removes `odsod-keys.service`, which the keys daemon replaces.
+  disables and removes `odsod-keys.service`, which the keys service replaces.
 - The `machine` repo no longer installs the KWin script or the
   `io.github.odsod.kwin` D-Bus service. It keeps the KWin settings (window
   rules, focus policy).
@@ -81,14 +81,14 @@ run = "uv tool install --force --reinstall '.[diarize]' && odsodctl install"
 ```
 
 - Runs the local workspace as the live system, to test a branch.
-- `deploy:system` adds `sudo odsodctl install --system` for keys daemon
+- `deploy:system` adds `sudo odsodctl install --system` for keys service
   changes.
 - The next `daemon:setup` puts `main` back.
 
 ### Secrets only at install time
 
 - The Hugging Face token is needed only by `odsodctl models fetch`.
-  Running daemons never read a secret.
+  Running services never read a secret.
 - The owner runs `uvx hf auth login` once per host and pastes the token from
   KeePass. The Hugging Face client stores it in its own cache.
 - Use a fine-grained read-only token.
@@ -129,5 +129,5 @@ run = "uv tool install --force --reinstall '.[diarize]' && odsodctl install"
 - Hosts can run different commits if one is not upgraded.
   `odsodctl version` shows which.
 - An upgrade restarts capture, which leaves an audio gap of a few seconds. A
-  keys daemon restart leaves the keyboard unmapped for about a second.
+  keys service restart leaves the keyboard unmapped for about a second.
 - A new host needs one manual step: `uvx hf auth login`.

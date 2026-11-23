@@ -13,7 +13,7 @@ Proposed
 - [ADR-0002](0002-high-level-architecture.md) sets the capabilities and
   principles. [ADR-0003](0003-filesystem-interface.md) defines the files,
   [ADR-0004](0004-orchestration-with-systemd.md) the services and
-  [ADR-0007](0007-keys-daemon.md) the keys daemon.
+  [ADR-0007](0007-keys-service.md) the keys service.
 - Agents need to know exactly which components exist, what each one does, and
   how to build it: language, libraries, tools and code layout.
 - The best speech and audio tools (Silero VAD, pyannote, language ID, ASR
@@ -31,16 +31,17 @@ Proposed
 
 ### Language and tooling
 
-- **Python 3.14** for all code except the keys daemon, pinned in
+- **Python 3.14** for all code except the keys service, pinned in
   `.python-version`. Move to the next Python version when every runtime
   dependency ships wheels for it. (Python 3.15 is out, but onnxruntime has no
   3.15 wheels yet.)
-- **C** for the keys daemon (ADR-0007), built with `gcc -Wall -Wextra -Werror`.
+- **C** for the keys service (ADR-0007), built with `gcc -Wall -Wextra -Werror`.
 - **uv** manages Python, dependencies (`uv.lock`) and installs. uv comes from
   mise.
 - **ruff** for lint and format. **pyright** in strict mode for types.
-  **pytest** for tests. **import-linter** enforces the module boundaries below.
-- `mise run build` runs all of them and compiles the keys daemon. It is the CI
+  **pytest** for tests. **import-linter** enforces the module boundaries
+  ([ADR-0009](0009-taxonomy-and-code-organization.md)).
+- `mise run build` runs all of them and compiles the keys service. It is the CI
   gate.
 
 ### Libraries
@@ -66,47 +67,19 @@ Proposed
   ([YazSes](../research/yazses.md)). The system ships the Silero ONNX model
   file and runs it on `onnxruntime` directly.
 - torch comes only with the `diarize` extra. It never loads in a long-running
-  daemon.
-- The keys daemon uses only libc and Linux headers.
+  service.
+- The keys service uses only libc and Linux headers.
 - A new runtime dependency needs an ADR.
 
 ### Code layout
 
-```
-pyproject.toml, uv.lock, .python-version
-keys/                 # ADR-0007: odsod-daemon-keys.c, unit template
-kwin/                 # ADR-0008: KWin script package (metadata.json, main.js)
-src/odsod_daemon/
-  cli.py              # typer app: one subcommand per component and command
-  config.py           # pydantic config models, meeting profiles
-  contracts/          # pydantic models for every stream record, document, socket and D-Bus message
-  files/              # ADR-0003: paths, streams, documents, audio, pending, watch
-  clients/            # wire clients: whisper, llm, cdp, keys socket. No business logic.
-  health/             # unit states, audio freshness, backlog (tray, status)
-  components/         # one package per Python component (table below)
-  systemd/            # unit templates, sd_notify, install
-  prompts/            # jinja2 templates
-  models/             # Silero VAD ONNX file
-tests/                # mirrors src/odsod_daemon; file-in, file-out fixtures
-```
-
-- **Boundaries (import-linter):** a component imports only `contracts`,
-  `files`, `clients`, `config` and `health`, never another component.
-  Components talk only through files, the keys socket and D-Bus.
-- **`health`** is a shared module, not a component: unit states from systemd,
-  audio freshness and backlog from files. `tray` and `odsodctl status` use
-  it.
-- **Contracts are code.** Each stream in ADR-0003, each socket message in
-  ADR-0007 and each D-Bus message in ADR-0008 has one pydantic model in `contracts/`. A change to a model is a
-  change to the interface.
-- **Each component** exposes one async `run(config)` entry point and can run
-  alone: `odsodctl run <component>`.
-- **One CLI, `odsodctl`,** for the owner and for the units. The units start
-  each daemon with `odsodctl run <daemon>`. The keys daemon is its own binary,
-  `odsod-daemon-keys`.
-- **Tests** feed input files to a component and compare output files. A fake
-  HTTP server stands in for the inference host. A fake keys socket stands in
-  for the keys daemon.
+- [ADR-0009](0009-taxonomy-and-code-organization.md) defines the terms, the
+  folders, the dependency rules and the tests.
+- `lib/health` gives unit states from systemd, and audio freshness and
+  backlog from files. `tray` and `status` use it.
+- `odsodctl run <service>` starts a service. The units use it.
+  `odsodctl run <component>` runs one component alone. The keys service is
+  its own binary, `odsod-daemon-keys`.
 
 ### Components
 
@@ -117,37 +90,37 @@ with the shared style in [`schematic.py`](../diagrams/schematic.py). The README
 shows the overview, [`overview.py`](../diagrams/overview.py). Regenerate with
 `uv run docs/diagrams/<name>.py docs/diagrams/<name>.svg`.
 
-Components fall into four domains. Daemons group them by lifecycle
+Components fall into four domains. Services group them by lifecycle
 (ADR-0002 principle 13); domains group them by what they are about. Each
 component owns one job or one output.
 
-| Domain    | Component         | Responsibility                                                       | Daemon or command | Main tools                          |
-| --------- | ----------------- | -------------------------------------------------------------------- | ----------------- | ----------------------------------- |
-| Input     | keys              | Device level: remap keys; dictation key; paste keys                  | keys              | `evdev` and `uinput` ioctls (C)     |
-| Input     | shortcuts         | Compositor level: register global shortcuts; launch apps for KWin    | session           | `dbus-fast`, `systemd-run`          |
-| Speech    | capture           | Record mic and system audio to the audio buffer                      | capture           | `pw-record`                         |
-| Speech    | segmentation      | Cut ambient audio into utterances                                    | pipeline          | Silero VAD                          |
-| Speech    | transcription     | Turn utterances into text; one worker per ASR backend                | pipeline          | whisper-server, Silero VAD          |
-| Speech    | cleanup           | Fix ASR text with an LLM and the glossary                            | pipeline          | llama-server                        |
-| Speech    | dictation         | The dictation loop: meeting mute, utterance, clipboard               | session           | keys socket, `pactl`, `wl-copy`     |
-| Documents | signals           | Meeting and speaker events from the browser                          | pipeline          | Chrome DevTools Protocol            |
-| Documents | transcript        | Sole writer of the daily transcript (live pass)                      | pipeline          |                                     |
-| Documents | interactions      | Sole writer of interactions: boundaries, then documents (batch pass) | pipeline          | `odsodctl diarize`, llama-server    |
-| Documents | publish           | Copy finished documents to configured targets                        | pipeline          |                                     |
-| Control   | tray              | Tray icon: mode and health; pause and resume                         | session           | PySide6, `systemctl`                |
-| Control   | note, pin, status | Owner events; health view                                            | command           | `systemctl`                         |
-| Control   | install           | Write and enable the units; build keys; install the KWin script      | command           | `systemctl`, `gcc`, `kpackagetool6` |
-| Control   | models            | Download models at install time                                      | command           | Hugging Face client                 |
-| Control   | diarize           | Diarize one audio slice (one-shot)                                   | command           | pyannote                            |
-| Control   | bench             | Score backends and strategies against references                     | command           | jiwer                               |
-| Control   | version           | Print the installed commit                                           | command           |                                     |
+| Domain    | Component         | Responsibility                                                       | Service or command | Main tools                          |
+| --------- | ----------------- | -------------------------------------------------------------------- | ------------------ | ----------------------------------- |
+| Input     | keys              | Device level: remap keys; dictation key; paste keys                  | keys               | `evdev` and `uinput` ioctls (C)     |
+| Input     | shortcuts         | Compositor level: register global shortcuts; launch apps for KWin    | session            | `dbus-fast`, `systemd-run`          |
+| Speech    | capture           | Record mic and system audio to the audio buffer                      | capture            | `pw-record`                         |
+| Speech    | segmentation      | Cut ambient audio into utterances                                    | pipeline           | Silero VAD                          |
+| Speech    | transcription     | Turn utterances into text; one worker per ASR backend                | pipeline           | whisper-server, Silero VAD          |
+| Speech    | cleanup           | Fix ASR text with an LLM and the glossary                            | pipeline           | llama-server                        |
+| Speech    | dictation         | The dictation loop: meeting mute, utterance, clipboard               | session            | keys socket, `pactl`, `wl-copy`     |
+| Documents | signals           | Meeting and speaker events from the browser                          | pipeline           | Chrome DevTools Protocol            |
+| Documents | transcript        | Sole writer of the daily transcript (live pass)                      | pipeline           |                                     |
+| Documents | interactions      | Sole writer of interactions: boundaries, then documents (batch pass) | pipeline           | `odsodctl diarize`, llama-server    |
+| Documents | publish           | Copy finished documents to configured targets                        | pipeline           |                                     |
+| Control   | tray              | Tray icon: mode and health; pause and resume                         | session            | PySide6, `systemctl`                |
+| Control   | note, pin, status | Owner events; health view                                            | command            | `systemctl`                         |
+| Control   | install           | Write and enable the units; build keys; install the KWin script      | command            | `systemctl`, `gcc`, `kpackagetool6` |
+| Control   | models            | Download models at install time                                      | command            | Hugging Face client                 |
+| Control   | diarize           | Diarize one audio slice (one-shot)                                   | command            | pyannote                            |
+| Control   | bench             | Score backends and strategies against references                     | command            | jiwer                               |
+| Control   | version           | Print the installed commit                                           | command            |                                     |
 
 - `dictation` sits on the edge of Input and Speech. It belongs to Speech: it
-  produces utterances, and uses the keys daemon only as trigger and paste.
+  produces utterances, and uses the keys service only as trigger and paste.
 
 ### keys
 
-- Defined in [ADR-0007](0007-keys-daemon.md).
+- Defined in [ADR-0007](0007-keys-service.md).
 
 ### shortcuts
 
@@ -250,7 +223,7 @@ component owns one job or one output.
   - Writes the text to CLIPBOARD and PRIMARY with
     `wl-copy --sensitive --type 'text/plain;charset=utf-8'`, so the KDE
     clipboard history does not keep it.
-  - Sends `paste` to the keys socket. The keys daemon sends `Shift+Insert`,
+  - Sends `paste` to the keys socket. The keys service sends `Shift+Insert`,
     which pastes in GUI apps and terminals, on every layout.
   - After `pasted` and about 500 ms, restores the old clipboard, but only if
     the clipboard still holds the dictated text.
@@ -314,7 +287,7 @@ component owns one job or one output.
 - Pause and resume run `systemctl --user stop|start odsod-daemon-capture`.
 - No overlay window. A normal window steals focus on Wayland and catches the
   pasted text ([YazSes](../research/yazses.md)).
-- Runs in the same daemon as `dictation`, because both need the graphical
+- Runs in the same service as `dictation`, because both need the graphical
   session. They share no code or memory, so `tray` can move to its own unit
   without code changes if it ever proves unstable.
 
@@ -324,7 +297,7 @@ component owns one job or one output.
 - `status` reads unit states from systemd and freshness and backlog from
   files.
 - `install` writes the user units and installs the KWin script (ADR-0008).
-  `install --system` builds and installs the keys daemon (ADR-0004).
+  `install --system` builds and installs the keys service (ADR-0004).
 - `models fetch` downloads the pyannote model with the owner's Hugging Face
   login. Silero ships in the package.
 - `version` prints the installed commit (ADR-0006).
@@ -409,12 +382,12 @@ component owns one job or one output.
 
 ## Consequences
 
-- Two toolchains, Python and C. The C part is one small daemon.
-- Each always-on Python daemon uses on the order of 100 MB of memory.
+- Two toolchains, Python and C. The C part is one small service.
+- Each always-on Python service uses on the order of 100 MB of memory.
 - PySide6 is a large dependency, only for the tray icon.
 - The pyannote model needs a Hugging Face account and a token at install
-  time. Running daemons never use it.
-- Dictation needs the keys daemon. Without it, the tray shows an error and the
+  time. Running services never use it.
+- Dictation needs the keys service. Without it, the tray shows an error and the
   rest of the system runs on.
 - The meeting mute relies on how meeting apps react to a muted capture stream.
   Test it with Meet and Teams before dictation ships.
