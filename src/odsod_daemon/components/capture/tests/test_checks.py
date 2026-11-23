@@ -50,9 +50,9 @@ def test_muted_source_shows_mic_muted_and_no_silent_fault() -> None:
 
 
 def test_stall_start_is_the_later_of_audio_end_and_service_start() -> None:
-    assert checks.stall_start(None, 10.0) == 10.0
-    assert checks.stall_start(5.0, 10.0) == 10.0
-    assert checks.stall_start(20.0, 10.0) == 20.0
+    assert checks.stall_start(None, 10.0, floor=10.0) == 10.0
+    assert checks.stall_start(5.0, 10.0, floor=10.0) == 10.0
+    assert checks.stall_start(20.0, 10.0, floor=10.0) == 20.0
     assert not checks.is_stalled(10.0, 69.9, 60.0)
     assert checks.is_stalled(10.0, 70.0, 60.0)
 
@@ -80,3 +80,19 @@ def test_unmute_discards_zeros_from_before_and_during_mute() -> None:
     mic.block(ZERO, start=81)
     assert mic.faults(now=140.9) == []
     assert mic.faults(now=141) == [checks.Active(checks.MIC_SILENT, since=81)]
+
+
+def test_stall_floor_resets_only_after_a_clean_exit() -> None:
+    """ADR-0011: a stall that began before a watchdog restart still shows."""
+    assert checks.stall_floor(None, None, 1000.0) == 1000.0
+    assert checks.stall_floor("stop", 990.0, 1000.0) == 1000.0
+    # Crash or watchdog kill: no stop, and audio was recent.
+    assert checks.stall_floor("start", 990.0, 1000.0) is None
+    assert checks.stall_floor("gap", 900.0, 1000.0) is None
+    # Old crash (power loss last night): a new day starts clean.
+    assert checks.stall_floor("start", 500.0, 1000.0) == 1000.0
+
+
+def test_stall_start_keeps_a_stall_across_restarts() -> None:
+    assert checks.stall_start(5.0, 10.0, floor=None) == 5.0
+    assert checks.stall_start(None, 10.0, floor=None) == 10.0

@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import signal
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import cast
 
@@ -150,6 +150,11 @@ async def run(
         )
         for name in CHANNELS
     }
+    floor = checks.stall_floor(
+        _last_event(state / "events" / "capture"),
+        max((e for e in (lp.audio_end for lp in loops.values()) if e), default=None),
+        service_start,
+    )
 
     def on_source(state_now: source.SourceState) -> None:
         mic.set_muted(state_now.muted, clock.wall())
@@ -161,7 +166,7 @@ async def run(
             now = clock.wall()
             faults: list[Active] = []
             for name, loop in loops.items():
-                start = loop.stall_start(service_start)
+                start = checks.stall_start(loop.audio_end, service_start, floor=floor)
                 if checks.is_stalled(start, now, config.stall_error_s):
                     faults.append(Active(checks.CAPTURE_STALLED, start, key=name))
             faults.extend(mic.faults(now))
@@ -209,3 +214,10 @@ async def _sleep(stopping: asyncio.Event, seconds: float) -> bool:
     except TimeoutError:
         return False
     return True
+
+
+def _last_event(directory: Path) -> str | None:
+    """The kind of the newest capture event of today or yesterday (UTC)."""
+    today = clock.utc_now().date()
+    events = streams.read_days(directory, today - timedelta(days=1), today)
+    return events[-1]["kind"] if events else None

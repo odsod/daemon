@@ -133,11 +133,6 @@ class ChannelLoop:
         self._restart_reason = None
         return reason
 
-    def stall_start(self, service_start: float) -> float:
-        if self.audio_end is None:
-            return service_start
-        return max(self.audio_end, service_start)
-
     async def run(self, stopping: asyncio.Event) -> None:
         resumed: str | None = None
         while not stopping.is_set():

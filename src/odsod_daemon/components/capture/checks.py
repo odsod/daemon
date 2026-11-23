@@ -64,11 +64,36 @@ class MicCheck:
         return active
 
 
-def stall_start(audio_end: float | None, service_start: float) -> float:
+# A previous run that wrote audio this recently and left no stop was killed
+# (crash or watchdog), not paused or logged out.
+RESTART_WINDOW_S = 120.0
+
+
+def stall_floor(
+    last_event: str | None, newest_audio: float | None, service_start: float
+) -> float | None:
+    """The earliest start of a stall, or None to keep a stall from before.
+
+    A clean start (the last event is a stop, or there is none) resets the
+    stall, so old audio from before a pause never counts. A watchdog restart
+    must not reset it, or a stall that a restart does not fix never shows
+    (ADR-0011 "Stall, suspend and restart").
+    """
+    killed = (
+        last_event not in (None, "stop")
+        and newest_audio is not None
+        and service_start - newest_audio <= RESTART_WINDOW_S
+    )
+    return None if killed else service_start
+
+
+def stall_start(
+    audio_end: float | None, service_start: float, *, floor: float | None
+) -> float:
     """When a channel's current stall began."""
     if audio_end is None:
         return service_start
-    return max(audio_end, service_start)
+    return audio_end if floor is None else max(audio_end, floor)
 
 
 def is_stalled(start: float, now: float, stall_error_s: float) -> bool:
