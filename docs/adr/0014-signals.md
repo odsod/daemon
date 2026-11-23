@@ -136,7 +136,9 @@ components/signals/
     the same code (`interactions` AC-14).
   - Teams: the thread ID from the URL when the URL has one
     (`19:meeting_…@thread.v2`). Otherwise a slug of the tab title, prefixed
-    `title:`. The Teams web client often hides the meeting ID. A title slug
+    `title:`. The slug uses the same rule as interaction document names
+    (ADR-0016, Document: ASCII, lowercase, `-` between words, at most 40
+    characters). The Teams web client often hides the meeting ID. A title slug
     still matches across hosts when the meeting has a name.
 - Title: the tab title, with the platform prefix removed (`Meet – `).
   Falls back to the code.
@@ -154,9 +156,31 @@ idle ──(tiles seen in a matching tab)──► active ──(no tiles for en
   Detection takes at most `tab_poll_s` plus `end_grace_s`, so 12 s, plus the
   transcript's own delay.
 
+#### Port source
+
+The Go recorder at the repo root is the reference. Port the behavior, not
+the code layout:
+
+| Go file                                 | Gives                                                          |
+| --------------------------------------- | -------------------------------------------------------------- |
+| `internal/speaker/detector.go`          | Discovery: snapshot diff, candidate class, toggle count        |
+| `internal/conference/meet/meet.go`      | Meet URL match, tile selector, `.notranslate` name rule, JS    |
+| `internal/conference/teams/teams.go`    | Teams URL match, `[data-tid="voice-level-stream-outline"]`, JS |
+| `internal/conference/conference.go`     | The shared provider interface                                  |
+| `internal/signals/speaker_tracker.go`   | Debounce: two polls in a row before a name speaks              |
+| `internal/signals/speaker_collector.go` | Poll loop and port scan                                        |
+
+- The Go tests seed the fixtures: `internal/speaker/detector_test.go`,
+  `internal/conference/meet/meet_test.go`,
+  `internal/conference/teams/teams_test.go`,
+  `internal/conference/teams/teams_dom_test.go` and
+  `internal/signals/speaker_tracker_test.go`. Their snapshot sequences and
+  DOM strings become `testdata/discovery/*.json` and `testdata/dom/*.html`
+  before the Go code moves to `legacy/` (ADR-0009).
+
 #### Speaking-class discovery
 
-The Go recorder's method, kept as is:
+Meet: the Go recorder's method, kept as is:
 
 1. Snapshot: for each participant tile, the name and the set of CSS classes
    of all elements in the tile.
@@ -175,6 +199,12 @@ The Go recorder's method, kept as is:
   space. Tiles with no name are left out.
 - The poll expression checks the class name against `^[A-Za-z0-9_-]+$`
   before it builds JavaScript from it.
+- Teams: the tile outline has a stable `data-tid`
+  (`voice-level-stream-outline`, from the Go code). If a saved Teams DOM
+  fixture shows that an attribute or class on that element marks
+  speaking, the Teams poll reads it directly, with no discovery and no
+  5 min wait. Until such a fixture exists, Teams uses the same discovery
+  as Meet. Both give the same records and the same debounce.
 
 #### Speaker debounce
 
@@ -329,8 +359,8 @@ Component tests in `components/signals/tests/`. No browser.
 
 - Simpler than discovery.
 - Rejected: Meet uses generated class names that change with each release.
-  Discovery adapts with no code change. Teams has a stable `data-tid`
-  attribute, and the same discovery handles it.
+  Discovery adapts with no code change. Teams uses a fixed selector only
+  when a saved DOM fixture proves it (see Speaking-class discovery).
 
 ### Speaker attribution inside signals
 

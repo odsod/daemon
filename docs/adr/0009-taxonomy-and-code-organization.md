@@ -106,7 +106,7 @@ Subsystem rules:
 │   ├── components/<component>/    BEHAVIOR     one folder per component, flat
 │   └── lib/<mechanism>/           MECHANISM    shared code with no business logic
 ├── tests/                         SYSTEM TESTS across components
-└── docs/                          adr/ diagrams/ prd/ research/
+└── docs/                          adr/ diagrams/ plan/ prd/ research/
 ```
 
 - The package root holds only these four entries. Each is one tier.
@@ -161,8 +161,12 @@ components/<component>/
      installed package.
    - System tests, in the root `tests/`: several components through their
      files.
-   - Fakes for outside systems (inference host, keys socket, D-Bus) live in
-     `lib/`, next to the client they stand in for.
+   - Fakes for an outside system live next to its client. A client that
+     several subsystems use is in `lib/` with its fake, such as the
+     inference host and systemd. A system that one subsystem uses keeps its
+     fake in that subsystem: PipeWire in capture, the browser in signals,
+     the keys socket in dictation, KWin in shortcuts
+     ([ADR-0010](0010-contracts-and-runtime.md)).
 
 ### Toolchain layers
 

@@ -40,31 +40,37 @@ A subsystem ADR can add fields. Paths that only one subsystem reads, such
 as a checkpoint, are internal: its ADR defines them, and ADR-0003 lists
 them.
 
-| Interface                       | Writer                                                  | Readers                                                                  |
-| ------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------ |
-| Audio buffer                    | capture                                                 | speech, dictation and control (file size only), bench; retention deletes |
-| `events/capture/`               | capture                                                 | transcript, interactions                                                 |
-| `events/signals/`               | signals                                                 | transcript, interactions                                                 |
-| `events/user/`                  | transcript (`note`, `pin`), control (`pause`, `resume`) | transcript, interactions                                                 |
-| `utterances/ambient/`           | speech                                                  | transcript, interactions, control                                        |
-| `utterances/dictation/`         | dictation                                               | speech, transcript, interactions, control                                |
-| `coverage/`                     | speech                                                  | transcript, interactions, control                                        |
-| `asr/<backend>/`                | speech                                                  | bench                                                                    |
-| `text/`                         | speech                                                  | transcript, dictation, interactions, control, bench                      |
-| `interactions/`                 | interactions                                            | bench                                                                    |
-| `documents/transcripts/`        | transcript                                              | publishing                                                               |
-| `documents/interactions/`       | interactions                                            | publishing, bench                                                        |
-| `finished/<source>/`            | transcript, interactions (one source each)              | publishing                                                               |
-| `published/<target>/`           | publishing                                              | publishing                                                               |
-| `run/health/<service>.json`     | each service                                            | control                                                                  |
-| `run/status.json`               | dictation                                               | control, speech                                                          |
-| `run/muted.json`                | dictation                                               | dictation (`unmute-stale`)                                               |
-| `run/paused`                    | control                                                 | capture unit, control                                                    |
-| `state/install/current`         | operations                                              | control, bench                                                           |
-| `state/install/previous-commit` | operations                                              | control                                                                  |
-| `config/glossary.txt`           | owner                                                   | speech, interactions, bench                                              |
-| Keys socket                     | keys                                                    | dictation ([ADR-0007](0007-keys-service.md))                             |
-| KWin D-Bus calls                | shortcuts                                               | shortcuts ([ADR-0008](0008-shortcuts-and-kwin-script.md))                |
+| Interface                                                             | Writer                                                  | Readers                                                                  |
+| --------------------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Audio buffer                                                          | capture                                                 | speech, dictation and control (file size only), bench; retention deletes |
+| `events/capture/`                                                     | capture                                                 | transcript, interactions                                                 |
+| `CAPTURE_APP_NAME` constant                                           | capture (`contract.py`)                                 | dictation (skips capture's own PipeWire streams)                         |
+| `events/signals/`                                                     | signals                                                 | transcript, interactions                                                 |
+| `events/user/`                                                        | transcript (`note`, `pin`), control (`pause`, `resume`) | transcript, interactions                                                 |
+| `utterances/ambient/`                                                 | speech                                                  | transcript, interactions, control                                        |
+| `utterances/dictation/`                                               | dictation                                               | speech, transcript, interactions, control                                |
+| `coverage/`                                                           | speech                                                  | transcript, interactions, control                                        |
+| `asr/<backend>/`                                                      | speech                                                  | bench                                                                    |
+| `text/`                                                               | speech                                                  | transcript, dictation, interactions, control, bench                      |
+| `interactions/`                                                       | interactions                                            | bench                                                                    |
+| `documents/transcripts/`                                              | transcript                                              | publishing                                                               |
+| `documents/interactions/`                                             | interactions                                            | publishing, bench                                                        |
+| `finished/<source>/`                                                  | transcript, interactions (one source each)              | publishing                                                               |
+| `published/<target>/`                                                 | publishing                                              | publishing                                                               |
+| `run/health/<service>.json`                                           | each service                                            | control                                                                  |
+| `run/status.json`                                                     | dictation                                               | control, speech                                                          |
+| `run/muted.json`                                                      | dictation                                               | dictation (`unmute-stale`)                                               |
+| `run/paused`                                                          | control                                                 | capture unit, control                                                    |
+| `state/install/current`                                               | operations                                              | control, bench                                                           |
+| `state/install/previous-commit`                                       | operations                                              | control                                                                  |
+| `config/glossary.txt`                                                 | owner                                                   | speech, interactions, bench                                              |
+| `speech` config section, prompts `cleanup.md`, `cleanup-dictation.md` | owner (speech owns the schema)                          | speech, bench (sandbox overrides)                                        |
+| Keys package-data constants                                           | keys (`contract.py`)                                    | operations (`install --system` builds and installs keys)                 |
+| Keys socket                                                           | keys                                                    | dictation ([ADR-0007](0007-keys-service.md))                             |
+| KWin D-Bus calls                                                      | shortcuts                                               | shortcuts ([ADR-0008](0008-shortcuts-and-kwin-script.md))                |
+
+A `contract.py` holds models and interface constants, such as an
+application name or a package-data resource name. It holds no behavior.
 
 `events/user/` has two writer subsystems. Each record kind has one writer,
 and every write is one atomic `O_APPEND` line (ADR-0003), so they never
@@ -89,25 +95,26 @@ clash.
 
 Required fields per stream. `ts` and `kind` are implied.
 
-| Stream                  | Kind              | Fields                                                                                                                                |
-| ----------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `events/capture/`       | `start`, `stop`   | `channel`                                                                                                                             |
-|                         | `gap`             | `channel`, `start`, `end`                                                                                                             |
-| `events/signals/`       | `meeting-start`   | `platform` (`meet`, `teams`), `code`, `title`                                                                                         |
-|                         | `meeting-end`     | `platform`, `code`                                                                                                                    |
-|                         | `participants`    | `platform`, `code`, `names` (list, full set after the change)                                                                         |
-|                         | `speaking`        | `platform`, `code`, `names` (list of who speaks now; empty list for nobody)                                                           |
-| `events/user/`          | `note`            | `text`                                                                                                                                |
-|                         | `pin`             | `text` (may be empty)                                                                                                                 |
-|                         | `pause`, `resume` | (none; `by` beyond the seam, ADR-0018)                                                                                                |
-| `utterances/ambient/`   | `utterance`       | `id`, `channel` (`mic`, `sys`), `start`, `end`                                                                                        |
-| `utterances/dictation/` | `utterance`       | `id`, `channel` (`dic`), `start`, `end`                                                                                               |
-| `coverage/`             | `covered`         | `channel` (`mic`, `sys`), `end`: no utterance of that channel will start before `end`                                                 |
-| `asr/<backend>/`        | `asr`             | `input`, `outcome`, `text`, `language`, `setup` (fingerprint of model and settings)                                                   |
-| `text/`                 | `text`            | `input`, `outcome`, `channel`, `start`, `end`, `text`, `language`, `raw` (true when cleanup was skipped)                              |
-| `interactions/`         | `interaction`     | `id`, `start`, `end`, `outcome` (`ok`, `skipped`, `failed`), `document` (name, when `ok`), `meeting` (`platform` and `code`, or null) |
-| `finished/<source>/`    | `finished`        | `document` (file name), `type` (`transcripts`, `interactions`)                                                                        |
-| `published/<target>/`   | `delivery`        | `document`, `target`                                                                                                                  |
+| Stream                  | Kind            | Fields                                                                                                                                                                       |
+| ----------------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `events/capture/`       | `start`         | `channel`, `audio_start` (time of the first sample), `prev_end` (end of the existing audio of the channel, or null)                                                          |
+|                         | `stop`          | `channel`                                                                                                                                                                    |
+|                         | `gap`           | `channel`, `start`, `end`, `reason` (`suspend`, `clock`, `stall`, or null)                                                                                                   |
+| `events/signals/`       | `meeting-start` | `platform` (`meet`, `teams`), `code`, `title`, `at` (time of the change, before debounce)                                                                                    |
+|                         | `meeting-end`   | `platform`, `code`, `at`                                                                                                                                                     |
+|                         | `participants`  | `platform`, `code`, `names` (list, full set after the change)                                                                                                                |
+|                         | `speaking`      | `platform`, `code`, `names` (list of who speaks now; empty list for nobody), `at`                                                                                            |
+| `events/user/`          | `note`          | `text`                                                                                                                                                                       |
+|                         | `pin`           | `text` (may be empty)                                                                                                                                                        |
+|                         | `pause`         | (none; `by` beyond the seam, ADR-0018)                                                                                                                                       |
+| `utterances/ambient/`   | `utterance`     | `id`, `channel` (`mic`, `sys`), `start`, `end`                                                                                                                               |
+| `utterances/dictation/` | `utterance`     | `id`, `channel` (`dic`), `start`, `end`                                                                                                                                      |
+| `coverage/`             | `covered`       | `channel` (`mic`, `sys`), `end`: no utterance of that channel will start before `end`                                                                                        |
+| `asr/<backend>/`        | `asr`           | `input`, `outcome`, `text`, `language` (ISO 639-1), `setup` (fingerprint of model and settings), `ms` (request duration)                                                     |
+| `text/`                 | `text`          | `input`, `outcome`, `channel`, `start`, `end`, `text`, `language`, `raw` (true when cleanup was skipped), `setup` (fingerprint of LLM model, prompt hash and settings), `ms` |
+| `interactions/`         | `interaction`   | `id`, `start`, `end`, `outcome` (`ok`, `skipped`, `failed`), `document` (name, when `ok`)                                                                                    |
+| `finished/<source>/`    | `finished`      | `document` (file name), `type` (`transcripts`, `interactions`)                                                                                                               |
+| `published/<target>/`   | `delivery`      | `document`, `target`                                                                                                                                                         |
 
 Notes:
 
@@ -127,15 +134,25 @@ Notes:
   finds its work only in `finished/` ([ADR-0017](0017-publishing.md)).
 - `raw: true` marks dictation text pasted without cleanup after the 1 s
   limit (ADR-0002, principle 9).
+- A crash writes no `stop`. The next `start` gives the hole exactly: from
+  `prev_end` to `audio_start`. Readers derive recording-off ranges from
+  `start` records plus `gap` records, which covers clean stops and crashes
+  alike. A `stop` with no later `start` is an open range that ends at now.
+- `at` is when signals saw the change; `ts` is when it wrote the record.
+  Speaker overlap uses `at`.
+- `ms` is the request duration in milliseconds. bench reads it.
+- Records may carry other fields, such as `resume` records in
+  `events/user/` or `meeting` in `interactions/`. No other subsystem relies
+  on them, so they are not seam fields.
 
 ### Run documents
 
 | Path                            | Fields                                                                                                                                |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `run/health/<service>.json`     | `service`, `ts`, `faults`: list of `code`, `since`, `message`, `fix` (a command, or null)                                             |
+| `run/health/<service>.json`     | `service`, `ts`, `faults`: list of `code`, `key` (or null), `since`, `message`, `fix` (a command, or null)                            |
 | `run/status.json`               | `mode` (`idle`, `dictating`), `since`, `keys` (`connected`, `paused`, `no-inference`, `no-socket`), `audio_start` (while `dictating`) |
 | `state/install/current`         | `source` (`git`, `dev`), `commit`, `workspace` (or null), `dirty`, `installed_at`                                                     |
-| `state/install/previous-commit` | `commit`, `source`, `replaced_at`                                                                                                     |
+| `state/install/previous-commit` | `commit`, `source`                                                                                                                    |
 | `run/muted.json`                | `streams`: list of `id` (PipeWire stream ID) and `app`                                                                                |
 | `run/paused`                    | `since`                                                                                                                               |
 
@@ -145,13 +162,18 @@ Notes:
 - `audio_start` is the start of the open dictation utterance (key press
   minus pre-roll). segmentation reads it and never emits a `mic` utterance
   that overlaps an open dictation (`live-transcript` AC-16).
+- A fault is one entry per `(code, key)`. `key` tells apart faults of one
+  code within a service, such as `whisper` and `llama` for
+  `inference-unreachable`, or the target name for `target-missing`. Clearing
+  one key never clears another.
 - `fix` names the right command for the unit scope
   ([ADR-0004](0004-orchestration-with-systemd.md)).
 
 ### Fault codes
 
 The fault code fixes the severity. Severity `Mark` shows a state but never
-changes the exit code: it ranks as the Mic muted state. control owns the precedence of states
+changes the exit code: it ranks as the Mic muted state. control owns the
+precedence of states
 ([PRD health-and-control](../prd/health-and-control.md)).
 
 | Code                    | Writer   | Severity |
@@ -169,9 +191,9 @@ changes the exit code: it ranks as the Mic muted state. control owns the precede
 
 control adds the states that no service can report itself: a unit that
 failed or hit its start limit, the keys unit included (Error); stale audio
-from a hung capture (Error); the backlog of untranscribed audio (Warning); an unreadable health file
-(`health-unreadable`, Warning);
-Paused; and the dev mark. PipeWire belongs to capture, so capture reports
+from a hung capture (Error); the backlog of untranscribed audio (Warning);
+an unreadable health file (`health-unreadable`, Warning); Paused; and the
+dev mark. PipeWire belongs to capture, so capture reports
 Mic muted as `mic-muted`.
 
 ### Config
@@ -180,7 +202,10 @@ Mic muted as `mic-muted`.
   subsystem, named as the subsystem, plus `common`.
 - `common`: `host` (default: the hostname), `retention_days` (14),
   `inference` (`whisper_url`, `llama_url`, both localhost or tailnet,
-  ADR-0002).
+  ADR-0002). Each URL is the full endpoint, such as
+  `http://host:8178/v1/audio/transcriptions`, not a base URL.
+- `lib.pending` reads `common.retention_days` once, so every consumer uses
+  the same pending window.
 - Each subsystem owns its section. Its component loads it with
   `lib.config.section("<subsystem>", Model)`. `lib/` never imports a section
   model.
@@ -197,13 +222,13 @@ Mic muted as `mic-muted`.
 | Module       | Gives                                                                                                                  |
 | ------------ | ---------------------------------------------------------------------------------------------------------------------- |
 | `paths`      | The roots from the XDG variables. `ODSOD_DAEMON_ROOT` overrides all three, for tests and the bench sandbox             |
-| `clock`      | `now()` and sleep. Tests inject a fake clock                                                                           |
+| `clock`      | `wall()`, `monotonic()`, `boottime()`, `sleep()` and `timeout()`. The only source of time for components               |
 | `streams`    | Append one record; read a day range; follow new lines within 20 ms of the write (inotify), a timer scan as backstop    |
 | `documents`  | Atomic write (temp name, rename); read                                                                                 |
 | `audio`      | Cut a time range of a channel; `covered_until(channel)` from the file size; wait until the file covers a time          |
 | `pending`    | Pending inputs: input IDs in the window minus output IDs; bounded retry with backoff                                   |
 | `config`     | Load a section into a model; list errors                                                                               |
-| `healthfile` | Set and clear faults of this service; rewrite the file                                                                 |
+| `healthfile` | Set and clear faults of this service by `(code, key)`; rewrite the file                                                |
 | `inference`  | Async clients for whisper-server and llama-server; URL check; `reachable(url, timeout)`; `is_loopback(url)`; fakes     |
 | `systemd`    | Unit states over D-Bus, user and system bus (`ActiveState`, `SubState`, `Result`, `StateChangeTimestamp`); `sd_notify` |
 | `power`      | `on_mains()` from `/sys/class/power_supply`                                                                            |
@@ -219,7 +244,23 @@ Mic muted as `mic-muted`.
   reachable. `is_loopback` tells a local server, which never runs on
   battery (`live-transcript` AC-15).
 - `streams.follow` sets a low watchfiles debounce. The default 1.6 s alone
-  would break `dictation` AC-3, which crosses three streams.
+  would break `dictation` AC-3, which crosses three streams. The target is
+  20 ms. CI checks p95 under 100 ms over 1,000 appends, in a test marked
+  `timing`. bench and the owner measure the real dictation latency.
+- `clock`: components never call `time.time`, `time.monotonic`,
+  `datetime.now` or `asyncio.wait_for` with a raw number. They use
+  `lib.clock`, so tests control all time.
+
+### Time in tests
+
+- Component tests run on a virtual-time event loop (the pytest plugin
+  `looptime`, a dev dependency). `sleep(3600)`, `timeout()` and httpx
+  timeouts then pass in virtual time, with no wait.
+- System tests across processes run in real time with small config values,
+  such as cutoffs of tens of milliseconds. They check order and outcomes,
+  never latency.
+- Latency criteria, such as `dictation` AC-3, AC-4 and AC-21, are bench
+  measures and owner checks, not CI tests.
 
 ### Services
 
@@ -238,22 +279,22 @@ Mic muted as `mic-muted`.
 
 ### Command surface
 
-| Command                                          | Subsystem  | `--json` | Notes                                              |
-| ------------------------------------------------ | ---------- | -------- | -------------------------------------------------- |
-| `run <service \| component> [--once]`            | runtime    | No       | Units use it. `--once`: drain pending work, exit 0 |
-| `config check`                                   | runtime    | Yes      | All sections                                       |
-| `status`                                         | control    | Yes      | Exit codes 0 to 3 (ADR-0004)                       |
-| `pause`, `resume` `[--by cli\|tray\|timer]`      | control    | Yes      | The resume timer passes `--by timer`               |
-| `notify-failed <unit>`                           | control    | No       | Run by the notify units (ADR-0004)                 |
-| `note <text>`, `pin [text]`                      | transcript | Yes      |                                                    |
-| `transcript [--day]`                             | transcript | Yes      |                                                    |
-| `dictation last`                                 | dictation  | Yes      |                                                    |
-| `unmute-stale`                                   | dictation  | No       | `ExecStopPost` of the session unit                 |
-| `retention`                                      | capture    | No       | Run by the retention timer                         |
-| `shortcuts`                                      | shortcuts  | Yes      |                                                    |
-| `bench cases\|list\|run\|accept\|delete\|report` | bench      | Yes      | Extra `bench`                                      |
-| `install [--system]`                             | operations | No       |                                                    |
-| `version`                                        | operations | Yes      |                                                    |
+| Command                                            | Subsystem  | `--json` | Notes                                              |
+| -------------------------------------------------- | ---------- | -------- | -------------------------------------------------- |
+| `run <service \| component> [--once]`              | runtime    | No       | Units use it. `--once`: drain pending work, exit 0 |
+| `config check`                                     | runtime    | Yes      | All sections                                       |
+| `status`                                           | control    | Yes      | Exit codes 0 to 3 (ADR-0004)                       |
+| `pause`, `resume` `[--by cli\|tray\|timer\|login]` | control    | Yes      | The timer and login units pass `--by`              |
+| `notify-failed <unit>`                             | control    | No       | Run by the notify units (ADR-0004)                 |
+| `note <text>`, `pin [text]`                        | transcript | Yes      |                                                    |
+| `transcript [--day]`                               | transcript | Yes      |                                                    |
+| `dictation last`                                   | dictation  | Yes      |                                                    |
+| `unmute-stale`                                     | dictation  | No       | `ExecStopPost` of the session unit                 |
+| `retention`                                        | capture    | No       | Run by the retention timer                         |
+| `shortcuts`                                        | shortcuts  | Yes      |                                                    |
+| `bench cases\|list\|run\|accept\|delete\|report`   | bench      | Yes      | Extra `bench`                                      |
+| `install [--system]`                               | operations | No       |                                                    |
+| `version`                                          | operations | Yes      |                                                    |
 
 - Each component that has commands exports a typer app from `cli.py` in its
   folder. The root `cli.py` mounts them and adds `run` and `config check`.
@@ -279,7 +320,9 @@ Mic muted as `mic-muted`.
     ADR-0009 table;
   - an import of a component in another subsystem goes to its `contract`
     module only;
-  - `lib/` imports no component.
+  - `lib/` imports no component;
+  - no code outside `lib/clock` calls `time.time`, `time.monotonic` or
+    `datetime.now`.
 - Both run in `mise run build`.
 
 ### Test fixtures
@@ -287,9 +330,12 @@ Mic muted as `mic-muted`.
 Every subsystem must be buildable and testable with no owner hardware.
 The runtime subsystem gives:
 
-- A temp root for `state/`, `run/` and `config/`, and a fake clock.
-- Fake whisper-server and llama-server (`lib/inference`): scripted answers
-  by request, with set delays and failures.
+- A temp root for `state/`, `run/` and `config/`, and the virtual-time loop.
+- Fake whisper-server and llama-server (`lib/inference`): a stdlib HTTP
+  server on `127.0.0.1:0`, started by a pytest fixture. It replays request
+  and response pairs recorded from the real servers, stored in
+  `lib/inference/testdata/`, with scripted delays and status codes. The
+  same fake serves in-process tests and `--once` subprocesses.
 - A fake systemd unit-state source (`lib/systemd`).
 - Audio fixtures: short recordings of speech in Swedish and English, and
   silence, in `testdata/` of the subsystem that needs them. Synthetic audio

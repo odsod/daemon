@@ -99,17 +99,18 @@ The setup manifest, in each result:
 
 ### Reads
 
-| Path                            | Seam fields relied on                                                          | Used for                           |
-| ------------------------------- | ------------------------------------------------------------------------------ | ---------------------------------- |
-| Audio buffer                    | Cut by channel and time (`lib.audio`)                                          | Case audio                         |
-| `state/text/`                   | `input`, `outcome`, `channel`, `start`, `end`, `text`, `language`, `raw`, `ts` | Candidates; live text and latency  |
-| `state/asr/<backend>/`          | `input`, `outcome`, `text`, `language`, `setup`                                | Live ASR text per backend          |
-| `state/interactions/`           | `id`, `start`, `end`, `outcome`, `document`                                    | Interaction candidates             |
-| `state/documents/interactions/` | The document by name                                                           | `document.md` of interaction cases |
-| `config/glossary.txt`           | One term per line                                                              | Setups; glossary measure           |
-| `config/prompts/<name>.md`      | A prompt file that a setup names                                               | `pipeline` setups                  |
-| `config/config.json`            | Sections `bench` and `common` (`host`, `inference`)                            | Setups; case source                |
-| `state/install/current`         | `commit` ([ADR-0006](0006-installation.md))                                    | Manifest                           |
+| Path                                                               | Seam fields relied on                                                                                        | Used for                           |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ | ---------------------------------- |
+| Audio buffer                                                       | Cut by channel and time (`lib.audio`)                                                                        | Case audio                         |
+| `state/text/`                                                      | `input`, `outcome`, `channel`, `start`, `end`, `text`, `language`, `raw`, `ts`                               | Candidates; live text and latency  |
+| `state/asr/<backend>/`                                             | `input`, `outcome`, `text`, `language`, `setup`                                                              | Live ASR text per backend          |
+| `state/interactions/`                                              | `id`, `start`, `end`, `outcome`, `document`                                                                  | Interaction candidates             |
+| `state/documents/interactions/`                                    | The document by name                                                                                         | `document.md` of interaction cases |
+| `config/glossary.txt`                                              | One term per line                                                                                            | Setups; glossary measure           |
+| `config/prompts/<name>.md`                                         | A prompt file that a setup names                                                                             | `pipeline` setups                  |
+| `config/config.json`                                               | Sections `bench`, `common` (`host`, `inference`) and `speech` (whole section, as a base for setup overrides) | Setups; case source                |
+| `config/prompts/cleanup.md`, `config/prompts/cleanup-dictation.md` | The live prompt names of speech ([ADR-0012](0012-speech.md))                                                 | Base prompts of a setup            |
+| `state/install/current`                                            | `commit` ([ADR-0006](0006-installation.md))                                                                  | Manifest                           |
 
 - `text/` carries channel and time, so bench never joins with `utterances/`
   (ADR-0010).
@@ -227,7 +228,8 @@ A setup in config:
     "llama_url": null,
     "model": "qwen3-30b-a3b",
     "revision": "q4_k_m",
-    "prompt": null,
+    "ambient_prompt": null,
+    "dictation_prompt": null,
     "settings": {}
   }
 }
@@ -236,8 +238,12 @@ A setup in config:
 - `kind: asr` runs ASR only; `pipeline` runs ASR and cleanup.
 - Null URLs take `common.inference`. A null prompt takes the live prompt of
   speech.
+- `ambient_prompt` replaces `config/prompts/cleanup.md` and
+  `dictation_prompt` replaces `config/prompts/cleanup-dictation.md` in the
+  sandbox. The two names are a read seam of speech (ADR-0010).
 - `settings` override the host's `speech` config section key by key. The
-  manifest holds the merged section.
+  manifest holds the merged section. The `speech` section and the prompt
+  names are a declared read seam of bench (ADR-0010).
 - `model` and `revision` are what the setup states. whisper-server and
   llama-server serve one model each, so the URL picks the model. Another
   model means another server on another port, set up by the `machine` repo.
@@ -249,26 +255,42 @@ A setup in config:
 
 #### Sandbox run
 
-One sandbox per case, so cases never share a queue and latency stays clean.
+Two modes:
+
+- **Quality run** (default): one sandbox per setup. All selected cases go
+  into one temp root, each at its own synthetic time. transcription and
+  cleanup run once each, and bench joins the results by input ID. Process
+  start is paid once per setup, not once per case.
+- **Timing diagnostic** (`--isolated`): one sandbox per case, so cases never
+  share a queue. Use it to look at one case's request time in isolation.
+
+Steps, for one sandbox:
 
 1. Make a temp dir with `state/`, `run/` and `config/`.
 2. `config/config.json`: the host's config, with `common.inference` set to
    the setup URLs and the `speech` section merged with the setup
    `settings`. `config/glossary.txt`: a copy of the host's glossary. The
    setup prompt, if any, goes to its name under `config/prompts/`.
-3. Write the case audio into `state/audio/<channel>/<hour>Z.pcm` at the
-   offset of its original time ([ADR-0003](0003-filesystem-interface.md)).
-   The rest of the hour stays a hole. Dictation case audio goes to the
-   `mic` channel.
-4. Append one utterance record with the case's source ID, channel, start
-   and end to `utterances/ambient/` or `utterances/dictation/`. Its audio
-   is complete, so no coverage wait applies.
-5. Run `odsodctl run transcription --once` with `ODSOD_DAEMON_ROOT` set to
+3. Give each case a synthetic time near now: the sandbox base time (the
+   current hour, from `lib.clock`) plus a fixed slot per case, with 5 s
+   between cases. The original time is too old for the pending window
+   (14 days, [ADR-0003](0003-filesystem-interface.md)), and a case lives
+   with no end date (`benchmarking` AC-7).
+4. Write the case audio into `state/audio/<channel>/<hour>Z.pcm` at the
+   offset of its synthetic time. The rest of the hour stays a hole.
+   Dictation case audio goes to the `mic` channel.
+5. Append one utterance record per case with a synthetic ID
+   (`<kind>-<synthetic start>`), channel, start and end to
+   `utterances/ambient/` or `utterances/dictation/`. bench keeps a map from
+   the synthetic ID to the case ID. The case's original ID and time stay in
+   its `case.json`. The audio is complete, so no coverage wait applies.
+6. Run `odsodctl run transcription --once` with `ODSOD_DAEMON_ROOT` set to
    the temp dir. For a `pipeline` setup, then run
    `odsodctl run cleanup --once` the same way.
-6. Read the `asr` record (and the `text` record) for the case's ID. Output
-   is the ASR text (`asr`) or the cleaned text (`pipeline`).
-7. Delete the temp dir.
+7. Read the `asr` records (and the `text` records), and map each input ID
+   back to its case. Output is the ASR text (`asr`) or the cleaned text
+   (`pipeline`).
+8. Delete the temp dir.
 
 - A non-zero exit of a `--once` command (for example the inference host
   stays out of reach for 60 s) leaves the case with no record. bench then
@@ -278,31 +300,39 @@ One sandbox per case, so cases never share a queue and latency stays clean.
 
 #### `bench run`
 
-`odsodctl bench run <setup> [--kind K] [--limit N] [--retry-failed] [--json]`:
+`odsodctl bench run <setup> [--kind K] [--limit N] [--retry-failed] [--isolated] [--json]`:
 
 1. Load the setup and build its manifest and fingerprint.
 2. Select cases that the adapter accepts and that have a reference (draft
    or accepted).
 3. Skip cases with a result for this fingerprint, except `failed` ones
    with `--retry-failed`. An interrupted run resumes where it stopped.
-4. Run one case at a time, oldest first. One request at a time keeps the
-   shared inference host free for live dictation (ADR-0002, principle 9).
+4. The sandboxed components take cases one at a time, oldest first. One
+   request at a time keeps the shared inference host free for live
+   dictation (ADR-0002, principle 9).
 5. Write the result file. A failure writes `outcome: failed` and `error`,
    and the run goes on (`benchmarking` AC-9).
 6. Print a summary: cases run, ok, empty, failed.
 
 - `latency_ms` is the request time that speech records: `ms` of the `asr`
-  record, plus `ms` of the `text` record for a `pipeline` setup. Process
-  start of the `--once` commands is left out. For dictation cases it is the offline part of
-  "release to text". The live part comes from `live.json`.
+  record, plus `ms` of the `text` record for a `pipeline` setup. It is a
+  partial measure: it leaves out process start, scheduling, VAD and
+  delivery. The report labels it "request time", never "release to text".
 
 #### Live results
 
 - `bench cases` turns `live.json` into one result per case with the setup
-  name `live` and the fingerprint `live-<asr setup>`. Its `commit` is null,
-  because the live pass ran under an unknown commit.
-- Live latency for dictation is the `ts` of the `text` record minus its
-  `end`: the real time from release to text (`dictation` AC-3).
+  name `live` and the fingerprint `live-<asr setup>-<text setup>`: the
+  `setup` of the `asr` record and the `setup` of the `text` record (cleanup
+  model, prompt hash and settings, ADR-0010). A change of the live cleanup
+  prompt or model then gives a new row (`benchmarking` AC-11). Its `commit`
+  is null, because the live pass ran under an unknown commit.
+- Text-ready latency for dictation is the `ts` of the `text` record minus
+  the release time, which is the utterance `end` minus dictation's
+  post-roll. It is also partial: it leaves out paste.
+- Release to paste, the real `dictation` AC-3 measure, comes from
+  dictation's timing log ([ADR-0013](0013-dictation.md)). bench reports it
+  when the log is present, labeled "release to paste".
 
 #### Scoring and report
 
@@ -408,9 +438,13 @@ clock, the fake whisper-server and llama-server, and audio fixtures in
 | Drafts and hash mismatches count apart from accepted cases                                                        | `benchmarking` AC-10             |
 | A changed prompt, setting or commit gives a new fingerprint and a new row                                         | `benchmarking` AC-11             |
 | WER and normalization on known pairs, with å, ä and ö                                                             | `live-transcript` AC-3 (measure) |
-| Live latency from `text` `ts` minus `end`                                                                         | `dictation` AC-3 (measure)       |
+| Text-ready latency from `text` `ts` minus release (utterance `end` minus post-roll), labeled partial              | `dictation` AC-3 (measure)       |
+| A live cleanup prompt change gives a new live fingerprint and row                                                 | `benchmarking` AC-11             |
 | `bench list --json` and `bench report --json` hold all text fields                                                | `health-and-control` AC-10       |
 | Sandbox run with the fake servers: one `asr` and one `text` record per case read back; the host root is unchanged | `benchmarking` AC-11             |
+| A case six months old (fake clock) runs in the sandbox at a synthetic time and maps back to its case ID           | `benchmarking` AC-7              |
+| A quality run puts all cases in one sandbox and starts each `--once` command once                                 | `benchmarking` AC-3              |
+| `ambient_prompt` and `dictation_prompt` land in `cleanup.md` and `cleanup-dictation.md` in the sandbox            | `benchmarking` AC-11             |
 | A `--once` command that exits non-zero gives a `failed` result for its case                                       | `benchmarking` AC-9              |
 
 ### Build without hardware
@@ -472,8 +506,10 @@ clock, the fake whisper-server and llama-server, and audio fixtures in
 - bench depends on the `--once` mode of transcription and cleanup, and on
   `ODSOD_DAEMON_ROOT`. A change to the `speech` config section changes the
   manifest and starts new rows.
-- Each sandbox case costs two process starts, about 1 s each. 200 cases
-  take a few minutes beyond the inference time.
+- A quality run costs two process starts per setup, about 1 s each. A
+  timing diagnostic with `--isolated` pays them per case.
+- Sandbox times are synthetic. Reports and case files keep the original
+  source time; only the sandbox sees the synthetic one.
 - Seam decisions (orchestrator, 2026-11-23): bench reads `text/`,
   `interactions/`, `documents/interactions/` and the glossary; it runs speech
   in a sandbox with `--once`; `bench list` and `bench delete` are in the

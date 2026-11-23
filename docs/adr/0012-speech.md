@@ -70,12 +70,12 @@ Proposed
 
 Records and fields beyond the seam:
 
-| Stream                | Kind        | Extra fields                                                                                                                                  |
-| --------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `utterances/ambient/` | `utterance` | `vad`: mean speech probability (2 decimals). `cut`: `pause`, `forced`, `mask` (dictation window) or `end-of-audio`                            |
-| `coverage/`           | `covered`   | Seam: `channel`, `end`. No utterance of that channel will start before `end`                                                                  |
-| `asr/<backend>/`      | `asr`       | `channel`, `start`, `end` (copied from the utterance), `ms` (request time), `attempts`, `gate` (dictation: peak speech probability)           |
-| `text/`               | `text`      | `raw_reason` (when `raw`): `timeout`, `llm-empty`, `guard-length`, `guard-number`, `guard-name`. `ms`. `prompt` (hash of the rendered prompt) |
+| Stream                | Kind        | Extra fields                                                                                                                        |
+| --------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `utterances/ambient/` | `utterance` | `vad`: mean speech probability (2 decimals). `cut`: `pause`, `forced`, `mask` (dictation window) or `end-of-audio`                  |
+| `coverage/`           | `covered`   | Seam: `channel`, `end`. No utterance of that channel will start before `end`                                                        |
+| `asr/<backend>/`      | `asr`       | `channel`, `start`, `end` (copied from the utterance), `ms` (request time), `attempts`, `gate` (dictation: peak speech probability) |
+| `text/`               | `text`      | `raw_reason` (when `raw`): `timeout`, `llm-empty`, `guard-length`, `guard-number`. `ms`. `prompt` (hash of the rendered prompt)     |
 
 - `covered` is written at each utterance (with `end` = the utterance end)
   and at least every 60 s while the channel advances. It has its own
@@ -86,17 +86,19 @@ Records and fields beyond the seam:
 - Every input gets exactly one output record with an outcome (ADR-0003).
   cleanup copies `empty`, `expired` and `failed` from `asr/` to `text/`,
   so `text/` alone tells its readers that an utterance is done.
-- Fault: `inference-unreachable` in the pipeline health file.
+- Fault: `inference-unreachable` in the pipeline health file, with key
+  `whisper` (transcription) or `llama` (cleanup), so one server coming back
+  never clears the other's fault (ADR-0010).
 
 ### Reads
 
 | Path                                                | Seam fields relied on                          | Reader                 |
 | --------------------------------------------------- | ---------------------------------------------- | ---------------------- |
 | `state/audio/mic/`, `state/audio/sys/`              | Format and coverage by file size (`lib.audio`) | segmentation           |
-| `state/audio/mic/`                                  | Same, to cut dictation and ambient slices      | transcription          |
+| `state/audio/mic/`, `state/audio/sys/`              | Same, to cut dictation and ambient slices      | transcription          |
 | `state/utterances/dictation/`                       | `id`, `start`, `end`                           | segmentation           |
 | `state/utterances/{ambient,dictation}/`             | `id`, `channel`, `start`, `end`                | transcription          |
-| `run/status.json`                                   | `mode`, `since`, `audio_start` (request Q1)    | segmentation           |
+| `run/status.json`                                   | `mode`, `since`, `audio_start`                 | segmentation           |
 | `config/glossary.txt`                               | One term per line, most important last         | transcription, cleanup |
 | `config/prompts/cleanup.md`, `cleanup-dictation.md` | Optional prompt overrides                      | cleanup                |
 | `config/config.json`                                | Section `speech`; `common.inference`           | all                    |
@@ -123,7 +125,7 @@ Records and fields beyond the seam:
 components/segmentation/
 ├── __init__.py     SUBSYSTEM = "speech", run(config)
 ├── contract.py     AmbientUtterance, Covered
-├── vad.py          Silero ONNX session; one state per channel; 512-sample frames
+├── vad.py          Silero ONNX session; one state and context per channel
 ├── cutter.py       pure: frame probabilities → utterances (hysteresis, pads, forced cut)
 ├── mask.py         pure: dictation windows and the open dictation → masked ranges
 ├── runner.py       per channel: read new audio, run vad and cutter, append records
@@ -139,7 +141,8 @@ components/transcription/
 components/cleanup/
 ├── __init__.py, contract.py (TextRecord)
 ├── filters.py      pure: phantom phrases, glossary echo
-├── guard.py        pure: length ratio, numbers, names
+├── guard.py        pure: length ratio, numbers
+├── language.py     pure: whisper language field → ISO 639-1 code
 ├── prompt.py       render templates with the glossary
 ├── prompts/        cleanup.md, cleanup-dictation.md (jinja2)
 ├── worker.py       two lanes: dictation and ambient
@@ -150,10 +153,21 @@ components/cleanup/
 
 Per channel (`mic`, `sys`) one task reads new audio and runs the cutter.
 
+- **Model:** Silero VAD v5, ONNX, 16 kHz
+  (source: `https://github.com/snakers4/silero-vad`, file
+  `src/silero_vad/data/silero_vad.onnx`). The repo pins the file by its
+  SHA-256, written into `vad.py` when the file is added. Inputs: `input`
+  (float32, shape 1 × 576: 64 samples of context from the end of the
+  previous frame, then 512 new samples), `state` (float32, 2 × 1 × 128,
+  zeros at start) and `sr` (int64, 16000). Outputs: the speech probability
+  (1 × 1) and the next `state`. A test runs the model on a fixture and
+  checks the shapes.
 - **Frames:** 512 samples (32 ms). A frame of all zeros (a capture hole or
-  a muted mic) gets probability 0 without the model. A frame under
-  `energy_floor_dbfs` also gets 0. After such a run, the Silero state is
-  reset. This keeps the CPU cost of silence and holes near zero.
+  a muted mic) gets probability 0 without the model. A frame whose RMS is
+  under `energy_floor_dbfs` also gets 0. RMS is in dBFS with full scale
+  32768: `20 · log10(rms / 32768)`. After such a run, the Silero state and
+  context are reset. This keeps the CPU cost of silence and holes near
+  zero.
 - **Cutter** (hysteresis, as Silero's own and Meetily, Handy):
   - Speech starts at the first frame with probability ≥ `threshold`.
   - A candidate end is the first frame under `neg_threshold`. Speech ends
@@ -176,16 +190,31 @@ Per channel (`mic`, `sys`) one task reads new audio and runs the cutter.
     get probability 0, and open speech ends at the mask start (`cut:
     mask`).
   - While `run/status.json` says `dictating`, the `mic` task stops at its
-    `audio_start` (request Q1). Dictation writes the utterance record
-    before it sets the mode back to `idle`, so when the mode is `idle`
-    again, the mask is already in the stream.
-  - The `mic` task also stays 1.2 s behind the live audio. The status file
-    shows `dictating` at most about 850 ms after `audio_start` (300 ms
-    pre-roll, 350 ms threshold, 150 ms mute, a write). So no `mic` frame
-    is cut before segmentation can know of the dictation.
-  - A status whose `since` is older than `dictation_stale_s` (130 s: the
+    `audio_start`. Dictation writes the utterance record
+    before it sets the mode back to `idle`.
+  - **Unmask rule:** when the `mic` task sees the mode leave `dictating`,
+    it reads `utterances/dictation/` to its end, synchronously, before it
+    reads any `mic` audio past the held `audio_start`. File write order
+    alone does not order two reads, so the task never trusts `idle` until
+    the stream is read.
+  - **Guard:** the `mic` task reads only up to
+    `min(newest audio, now − DICTATION_GUARD)`. The status file shows
+    `dictating` at most about 850 ms after `audio_start` (300 ms pre-roll,
+    350 ms threshold, 150 ms mute, a write). So no `mic` frame is cut
+    before segmentation can know of the dictation. When capture stops,
+    the wall clock passes the guard and the task reads to the end of the
+    audio, so coverage reaches the stop time.
+  - A status whose `since` is older than `DICTATION_STALE` (130 s: the
     dictation limit of 120 s plus a margin) is stale (a crash), and
     segmentation ignores it.
+  - **Constants, not config** (owner decision, 2026-11-23):
+    `DICTATION_GUARD` (1.2 s) and `DICTATION_STALE` (130 s) are constants
+    in `components/segmentation/`. Their safety depends on the dictation
+    constants of [ADR-0013](0013-dictation.md) (pre-roll, threshold, mute
+    limit, maximum hold). A test asserts the budget:
+    pre-roll + threshold + mute limit + 200 ms margin ≤ guard, and maximum
+    hold + 10 s ≤ stale. A config change can then never leak a dictation
+    into ambient text (`dictation` AC-24).
   - A cancelled dictation writes no utterance. Its audio stays ambient.
 - **Restart:** per channel, segmentation starts at the newest `covered.end`
   in `coverage/`. It searches back day by day, at most over the
@@ -199,7 +228,7 @@ Per channel (`mic`, `sys`) one task reads new audio and runs the cutter.
   `utterances/ambient/` in the pending window, minus the `input` IDs in
   `asr/<backend>/`. Rebuilt from files at start (ADR-0003). New records
   arrive through `lib.streams.follow`, which must wake within 20 ms
-  (request Q4).
+  .
 - **Order:** dictation first, then ambient, oldest first (ADR-0003). One
   request in flight, because whisper-server serves one at a time. Before
   each request the worker takes the head of the queue again, so a new
@@ -208,8 +237,9 @@ Per channel (`mic`, `sys`) one task reads new audio and runs the cutter.
 - **Audio:** `lib.audio` cuts the range from `mic` or `sys` (dictation:
   `mic`) and wraps it as WAV in memory. A range whose hour file is gone gets
   outcome `expired` with no request.
-- **Request fields** (whisper.cpp `/inference`, `response_format =
-  verbose_json`, `temperature = 0`, no previous-text context):
+- **Request fields** (POST to `common.inference.whisper_url`, a full
+  endpoint URL, such as `.../v1/audio/transcriptions` on the owner's
+  server; `response_format = verbose_json`, `temperature = 0`, no previous-text context):
 
 | Field                            | Ambient                     | Dictation             |
 | -------------------------------- | --------------------------- | --------------------- |
@@ -222,6 +252,10 @@ Per channel (`mic`, `sys`) one task reads new audio and runs the cutter.
   `glossary.txt` until `glossary_prompt_chars` (800, about 200 tokens).
   Whisper keeps only the tail of a long prompt, so the most important
   terms go last (`live-transcript` AC-5).
+- **Language field:** whisper.cpp may return the language as a name
+  (`swedish`) or a code (`sv`). One pure function in `language.py` maps
+  both to an ISO 639-1 code. Its test uses the recorded responses in
+  `lib/inference/testdata/` (ADR-0010). Every comparison uses the code.
 - **Language:** with `auto`, a detected language outside
   `ambient.languages` gets one more request with `fallback_language`
   (`sv`). Whisper often hears Swedish as Norwegian or Danish. Bench data
@@ -235,21 +269,29 @@ Per channel (`mic`, `sys`) one task reads new audio and runs the cutter.
   (OpenWhispr).
 - **Empty result:** whitespace-only text gives outcome `empty`.
 - **Battery:** while `lib.power.on_mains()` is false and the whisper URL is
-  a loopback address (request Q5), the worker sends no request and work
+  a loopback address, the worker sends no request and work
   waits (`live-transcript` AC-15).
 
 #### Inference faults
 
 The worker tells host faults from input faults:
 
-- **Host fault** (connect refused, DNS failure, connect timeout): the host
-  is down. The worker stops, counts no attempt, and probes again with
+- **Host fault:** connect refused, DNS failure, connect timeout, a
+  connection reset before a response, HTTP 502, 503 or 504, and HTTP 429.
+  These say that the host cannot serve now, not that the input is bad. The
+  host is down. The worker stops, counts no attempt, and probes again with
   backoff (2 s doubling to 30 s). After 60 s down with work pending, it
   sets `inference-unreachable`. The first success clears it. Work waits in
   files, so one hour down loses nothing (`live-transcript` AC-11).
-- **Input fault:** HTTP 5xx or a read timeout counts one attempt. After
-  `attempts` (3) the record gets outcome `failed`. HTTP 4xx gives `failed`
-  at once. `error` holds one line.
+- **Input fault:** HTTP 500, any other 5xx, or a read timeout after the
+  server accepted the request, counts one attempt for that input. After
+  `attempts` (3) the record gets outcome `failed`.
+- **Input rejection:** HTTP 400, 413 or 422, or a 200 reply that does not
+  parse. The input itself is bad, so the record gets `failed` at once.
+  `error` holds one line.
+- A host that stays reachable but answers 503 for an hour then loses no
+  input: the worker waits, as for a host that is down
+  (`live-transcript` AC-11).
 - The same rules apply to cleanup and llama-server.
 
 #### Cleanup
@@ -263,22 +305,25 @@ The worker tells host faults from input faults:
 - **Filters before the LLM** (no request; outcome `empty`):
   - text that is only a known phantom phrase (`phantoms`, such as "Tack
     för att du tittade", "Thanks for watching");
-  - glossary echo: three or more glossary terms in glossary order and
-    little else (OpenWhispr, Handy).
+  - glossary echo: three or more glossary terms in glossary order, and
+    glossary tokens are at least 70% of all tokens (OpenWhispr, Handy).
 - **Request:** system prompt from `prompts/cleanup.md` (ambient) or
   `prompts/cleanup-dictation.md`, rendered with the glossary and
   `prompt_languages`. The user message wraps the text in
   `<transcript>…</transcript>`. The prompt says that the speaker never
   talks to the model, that questions are never answered, and that the text
   stays in its language (`live-transcript` AC-4, `dictation` AC-8).
-  `temperature = 0`, reasoning off, `max_tokens` about twice the input.
+  `temperature = 0`, reasoning off,
+  `max_tokens = max(64, 2 · len(text) // 3)`, with `len` in characters
+  (about twice the input in tokens).
   The reply loses any `<think>` block and zero-width characters.
 - **Guard** (YazSes). The reply is replaced by the raw text, with
   `raw: true` and a `raw_reason`, when:
   - its length is outside 0.5 to 2.0 times the input length;
-  - it drops a number of the input;
-  - it drops a capitalized word from mid-sentence in the input, unless it
-    adds a glossary term.
+  - it drops a number of the input.
+- A guard for dropped capitalized words is deferred (owner decision,
+  2026-11-23). It can undo valid fixes in mixed-language text. Bench data
+  on accepted cases decides if it comes back.
 - **Empty reply:** ambient gives outcome `empty` (the prompt asks for
   empty output on pure hallucination). Dictation passed the presence gate,
   so an empty reply there gives the raw text with `raw_reason: llm-empty`.
@@ -326,17 +371,17 @@ For a 15 s dictation (`dictation` AC-3, 2 s from release):
 
 ### Failure modes
 
-| Fault                                  | What speech does                                               | Code                    |
-| -------------------------------------- | -------------------------------------------------------------- | ----------------------- |
-| whisper-server or llama-server down    | Waits, probes with backoff; dictation cleanup pastes raw text  | `inference-unreachable` |
-| Rejected request (4xx)                 | `failed` record at once                                        | none                    |
-| 5xx or read timeout                    | Up to 3 attempts, then `failed`                                | none                    |
-| Audio of a pending utterance expired   | `expired` record, no request                                   | none                    |
-| On battery with a loopback whisper URL | No request; work waits                                         | none                    |
-| Silence hallucination                  | Filters or the LLM give `empty`                                | none                    |
-| LLM rewrites too much                  | Guard writes the raw text                                      | none                    |
-| Silero model fails to load             | Raises; the pipeline exits and systemd restarts it             | none (unit state)       |
-| Crash at any point                     | Restart rebuilds pending sets from files; one record per input | none                    |
+| Fault                                                      | What speech does                                               | Code                                               |
+| ---------------------------------------------------------- | -------------------------------------------------------------- | -------------------------------------------------- |
+| whisper-server or llama-server down, or 429, 502, 503, 504 | Waits, probes with backoff; dictation cleanup pastes raw text  | `inference-unreachable` (key `whisper` or `llama`) |
+| Rejected request (400, 413, 422, bad reply)                | `failed` record at once                                        | none                                               |
+| 500 or read timeout                                        | Up to 3 attempts, then `failed`                                | none                                               |
+| Audio of a pending utterance expired                       | `expired` record, no request                                   | none                                               |
+| On battery with a loopback whisper URL                     | No request; work waits                                         | none                                               |
+| Silence hallucination                                      | Filters or the LLM give `empty`                                | none                                               |
+| LLM rewrites too much                                      | Guard writes the raw text                                      | none                                               |
+| Silero model fails to load                                 | Raises; the pipeline exits and systemd restarts it             | none (unit state)                                  |
+| Crash at any point                                         | Restart rebuilds pending sets from files; one record per input | none                                               |
 
 - Backlog size is control's state, not a speech fault
   ([ADR-0018](0018-control.md)).
@@ -359,9 +404,7 @@ Section `speech`:
       "pad_end_ms": 400,
       "max_s": 28,
       "idle_close_s": 3,
-      "energy_floor_dbfs": -65,
-      "dictation_guard_ms": 1200,
-      "dictation_stale_s": 130
+      "energy_floor_dbfs": -65
     },
     "ambient": {
       "language": "auto",
@@ -387,51 +430,73 @@ Section `speech`:
   values per channel. Bench data tunes the values (`live-transcript` AC-3).
 - The defaults are the study's starting values (Meetily, Handy, YazSes,
   OpenWhispr).
+- The dictation mask timings are constants, not config (see Segmentation).
+- `common.inference.whisper_url` and `llama_url` are full endpoint URLs
+  (ADR-0010).
 
 ### Tests
 
-Component tests use audio fixtures in `testdata/` (Swedish and English
-speech, silence, zeros, fan noise), the fake clock, and the fake
-whisper-server and llama-server from `lib.inference` with scripted
-answers, delays and failures.
+Component tests run on the virtual-time event loop of `lib.clock`
+(ADR-0010), so backoffs and timeouts take no real time. They use the
+shared audio fixtures (public-domain Swedish and English speech, with
+provenance; silence, zeros and fan noise; ADR-0010), and the fake
+whisper-server and llama-server from `lib.inference`. The fakes replay
+recorded request and response pairs, with scripted delays and status
+codes. Latency targets are not CI tests: they are bench measures and owner
+checks.
 
-| Test                                                                        | Checks                   |
-| --------------------------------------------------------------------------- | ------------------------ |
-| Cutter on scripted probabilities: start, end, pads, min speech              | `live-transcript` AC-1   |
-| Forced cut lands at the lowest probability in the second half               | AC-3 (shorter requests)  |
-| One hour of zeros and fan noise gives no utterance, and little CPU          | AC-9                     |
-| Idle coverage closes an utterance; no utterance spans a hole                | AC-14                    |
-| Dictation record and `dictating` status mask `mic`; cancel does not         | AC-16; `dictation` AC-24 |
-| Stale `dictating` status is ignored after the limit                         | AC-16                    |
-| Restart from `covered`: no duplicate ID, no lost speech                     | AC-10                    |
-| `--once` drains pending work and exits 0; host down → non-zero, no `failed` | `benchmarking` AC-11     |
-| Pending order: a dictation queued behind ambient goes next                  | `dictation` AC-4         |
-| Host down 1 h (fake): no attempts counted; fault after 60 s; catch up       | `live-transcript` AC-11  |
-| 4xx → `failed`; 3 × 5xx → `failed`; expired audio → `expired`               | ADR-0003 outcomes        |
-| Battery with loopback URL: no request; tailnet URL: requests go on          | AC-15                    |
-| Dictation silence: presence gate gives `empty`, no request                  | `dictation` AC-7         |
-| Detected `no` language → second request with `sv`                           | AC-4                     |
-| Glossary prompt keeps the tail within 800 chars                             | AC-5                     |
-| Phantom and glossary echo give `empty`                                      | AC-9; `dictation` AC-7   |
-| Guard: length, number and name rules fall back to raw                       | AC-3                     |
-| Dictated question: prompt and fake LLM keep it a question                   | `dictation` AC-8         |
-| llama-server slow 2 s: dictation text is raw within 1 s; `raw: true`        | `dictation` AC-22        |
-| Dictation lane runs while an ambient cleanup is in flight                   | `dictation` AC-4, AC-21  |
+| Test                                                                          | Checks                    |
+| ----------------------------------------------------------------------------- | ------------------------- |
+| Cutter on scripted probabilities: start, end, pads, min speech                | `live-transcript` AC-1    |
+| Forced cut lands at the lowest probability in the second half                 | AC-3 (shorter requests)   |
+| One hour of zeros and fan noise gives no utterance, and little CPU            | AC-9                      |
+| Idle coverage closes an utterance; no utterance spans a hole                  | AC-14                     |
+| Dictation record and `dictating` status mask `mic`; cancel does not           | AC-16; `dictation` AC-24  |
+| Status goes `idle` before the follow delivers the record: still masked        | AC-16; `dictation` AC-24  |
+| Capture stops: coverage reaches the stop time once the guard passes           | AC-12, AC-14              |
+| Mask budget: dictation constants fit the guard and stale constants            | `dictation` AC-24         |
+| Silero model: input and output shapes on a fixture; pinned SHA-256            | AC-1                      |
+| Stale `dictating` status is ignored after the limit                           | AC-16                     |
+| Restart from `covered`: no duplicate ID, no lost speech                       | AC-10                     |
+| `--once` drains pending work and exits 0; host down → non-zero, no `failed`   | `benchmarking` AC-11      |
+| Pending order: a dictation queued behind ambient goes next                    | `dictation` AC-4          |
+| Host down 1 h (fake): no attempts counted; fault after 60 s; catch up         | `live-transcript` AC-11   |
+| 400 → `failed`; 3 × 500 → `failed`; expired audio → `expired`                 | ADR-0003 outcomes         |
+| 503 for 1 h, then 200: no `failed` record; all text arrives                   | `live-transcript` AC-11   |
+| Whisper fault set, llama fine: cleanup does not clear it (keyed fault)        | `health-and-control` AC-2 |
+| Language names and codes from recorded replies map to ISO codes               | AC-4                      |
+| Battery with loopback URL: no request; tailnet URL: requests go on            | AC-15                     |
+| Dictation silence: presence gate gives `empty`, no request                    | `dictation` AC-7          |
+| Detected `no` language → second request with `sv`                             | AC-4                      |
+| Glossary prompt keeps the tail within 800 chars                               | AC-5                      |
+| Phantom and glossary echo give `empty`                                        | AC-9; `dictation` AC-7    |
+| Guard: length and number rules fall back to raw                               | AC-3                      |
+| Dictated question: prompt and fake LLM keep it a question                     | `dictation` AC-8          |
+| llama-server slow 2 s: dictation text is raw after the 1 s limit; `raw: true` | `dictation` AC-22         |
+| Dictation lane runs while an ambient cleanup is in flight (order, not time)   | `dictation` AC-4, AC-21   |
 
 System tests (root `tests/`): capture fake → segmentation → transcription
 → cleanup with fake servers. One utterance gives one `text` record after a
-pipeline kill at any step (`live-transcript` AC-10). A dictation with a
-batch summary holding one fake llama slot keeps its text within 2 s of
-fake time (`dictation` AC-21).
+pipeline kill at any step (`live-transcript` AC-10). System tests run in
+real time with small config values and check order and outcomes, never
+latency. A dictation with a batch summary holding one fake llama slot
+gets its text before the batch request ends (`dictation` AC-21, order
+only).
 
-Bench measures (not here, [ADR-0019](0019-bench.md)): WER (`live-transcript`
-AC-3, `dictation` AC-6), language (AC-4), glossary spelling (AC-5),
-dictation latency (`dictation` AC-3).
+Bench measures and owner checks (not here, [ADR-0019](0019-bench.md)):
+WER (`live-transcript` AC-3, `dictation` AC-6), language (AC-4), glossary
+spelling (AC-5), dictation latency (`dictation` AC-3, AC-21).
 
 ### Build without hardware
 
 - An agent builds and tests all three components with the fixtures and the
   fake servers. Silero runs on the CPU, so the VAD tests need no GPU.
+- Initial audio fixtures are public-domain recordings with a
+  `PROVENANCE.md` (owner decision, 2026-11-23). After the first day of
+  capture, real audio from the owner's host extends them.
+- The fakes need recorded whisper-server and llama-server replies. An
+  agent records them once against the owner's inference host, over the
+  tailnet, before the build (ADR-0010).
 - Real WER, language behavior and latency need the owner's inference host
   and the bench. The owner reviews bench references; agents run the rest.
 
@@ -459,6 +524,18 @@ dictation latency (`dictation` AC-3).
 - Rejected: raw text has no glossary fixes, and lines would differ by luck
   of timing. Ambient work waits; only dictation, which the owner waits for,
   pastes raw text.
+
+### Config keys for the dictation mask timings
+
+- The owner could tune the guard and the stale limit per host.
+- Rejected for v1 (owner decision, 2026-11-23): the mask is safe only
+  while these values fit the dictation constants. A config change could
+  leak private dictation into ambient text.
+
+### A guard for dropped capitalized words
+
+- Deferred: it can undo valid fixes, and new names outside the glossary
+  trigger it. Bench data decides.
 
 ### A language-ID model before Whisper
 

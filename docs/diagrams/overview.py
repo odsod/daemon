@@ -164,7 +164,7 @@ p.table(
     "SERVICES",
     [
         (letter("A"), "KEYS", "ROOT, FROM BOOT"),
-        (letter("B"), "CAPTURE", "NEVER STOPS"),
+        (letter("B"), "CAPTURE", "LOGIN SESSION"),
         (letter("C"), "PIPELINE", "RESTARTS FREELY"),
         (letter("D"), "SESSION", "GRAPHICAL SESSION"),
         (letter("E"), "TRAY", "GRAPHICAL SESSION"),
