@@ -1,6 +1,6 @@
 # Plan: publishing (stretch)
 
-- Status: Draft
+- Status: Done 2026-11-23
 - Depends on: [transcript](2026-11-23-transcript.md)
 - Design: [ADR-0017](../adr/0017-publishing.md),
   PRD [publishing](../prd/publishing.md)
