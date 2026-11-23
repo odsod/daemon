@@ -3,7 +3,7 @@
 import asyncio
 import contextlib
 
-from odsod_daemon.components.keys import contract
+import odsod_daemon.components.keys.contract as contract
 from odsod_daemon.lib import clock
 
 

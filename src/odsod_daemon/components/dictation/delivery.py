@@ -19,7 +19,14 @@ class Selection:
 
 async def save(primary: bool) -> Selection | None:
     flags = ["--primary"] if primary else []
-    types = (await command("wl-paste", *flags, "--list-types")).decode().splitlines()
+    try:
+        types = (
+            (await command("wl-paste", *flags, "--list-types")).decode().splitlines()
+        )
+    except OSError as error:
+        if str(error).strip().lower() in {"no selection", "nothing is copied"}:
+            return Selection(TEXT, b"")
+        raise
     if not types:
         return Selection(TEXT, b"")
     mime = TEXT if TEXT in types else types[0]

@@ -56,9 +56,18 @@ mise run build
 - 2026-11-23: Step 3 passed: session composition, both CLI commands,
   ordered delivery, gate reasons and crash cleanup. 41 component checks pass.
 
+- 2026-11-23: Step 4 system test passed in six cases with real speech and
+  inference replay servers. One hold gives one fixture paste before queued
+  ambient ASR; cancel and silence give none. Capture writes during the hold.
+  A killed session is unmuted by the command without a session restart.
+- 2026-11-23: After the system test passed, added session to the shipped
+  install list. Checked its graphical-session order and ExecStopPost cleanup.
+
 ## Decisions to confirm
 
 - Desktop subprocess tests use real time because the fake executables need
   OS scheduling. Hold timers and the clipboard restore delay use virtual time.
 - Each completed hold starts its text wait at once. Clipboard delivery stays
   in hold order, so a later result can meet its deadline behind an older paste.
+- The system test gives executable Python pactl fakes a 2 s mute budget.
+  Production keeps 150 ms. The test checks order and outcomes, not latency.

@@ -28,6 +28,7 @@ class Mute:
         self.count = 0
 
     async def start(self) -> bool:
+        self.count = 0
         try:
             async with asyncio.timeout(MUTE_TIMEOUT):
                 selected = [

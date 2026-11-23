@@ -3,11 +3,11 @@ import json
 
 import pytest
 
+import odsod_daemon.components.keys.contract as contract
 from odsod_daemon.components.capture.contract import CAPTURE_APP_NAME
 from odsod_daemon.components.dictation import delivery, mute, pactl
 from odsod_daemon.components.dictation.keys_client import KeysClient
 from odsod_daemon.components.dictation.tests.fakes import Keys
-from odsod_daemon.components.keys import contract
 from odsod_daemon.lib import documents
 
 
@@ -157,3 +157,11 @@ def test_last_pending_and_late(temp_root):
     assert newest()["late"]
     assert newest()["raw"]
     assert newest()["text"] == "late words"
+
+
+async def test_empty_selection_exit_is_not_a_clipboard_failure(monkeypatch):
+    async def empty(*args, **kwargs):
+        raise OSError("No selection")
+
+    monkeypatch.setattr(delivery, "command", empty)
+    assert await delivery.save(False) == delivery.Selection(delivery.TEXT, b"")

@@ -1,9 +1,10 @@
 """Scripted keys peer using the real line contract."""
 
 import asyncio
+from collections.abc import Callable
 from pathlib import Path
 
-from odsod_daemon.components.keys import contract
+import odsod_daemon.components.keys.contract as contract
 
 
 class Keys:
@@ -13,7 +14,7 @@ class Keys:
         self.pastes: list[bytes] = []
         self.pasted = asyncio.Event()
         self.reply = True
-        self.on_paste = lambda: b""
+        self.on_paste: Callable[[], bytes] = lambda: b""
 
     async def accept(self, reader, writer):
         self.writer = writer
