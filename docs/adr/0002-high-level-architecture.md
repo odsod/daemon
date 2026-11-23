@@ -34,8 +34,10 @@ The name follows the Unix term
 
 ### Forces
 
-- Speech mixes Swedish and English. Whisper-family models detect one language
-  per request and lose the other language in long mixed chunks. Short requests,
+- Speech is Swedish or English. Swedish speech carries English technical
+  words, and the language of a call changes when an English speaker joins or
+  leaves. Whisper-family models detect one language per request and lose the
+  other language in long chunks that span a change. Short requests,
   one utterance each, avoid most of that loss (benchmark 2026-11: mixed WER
   45% on long chunks, 5.3% split per utterance, as an upper bound).
 - Local inference runs on one shared GPU host. Inference servers handle one
@@ -65,7 +67,8 @@ The name follows the Unix term
 
 1. **Simple over complete.** Prefer the 80/20 design. Accept measured
    trade-offs rather than add services or mechanisms.
-2. **Local only.** No cloud services for audio or text.
+2. **Local only.** No cloud services for ambient audio or its text.
+   Dictation is the one candidate for an exception (see "Cloud ASR").
 3. **Built for one system.** Fedora, KDE Plasma on Wayland, PipeWire and
    systemd. No portability layers.
 4. **Self-contained.** The repo ships everything it runs: code, units, models,
@@ -134,16 +137,18 @@ The name follows the Unix term
 
 ### Capabilities
 
-| Capability            | What the owner gets                                                                                         |
-| --------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Keyboard remapping    | Custom key behavior in every application, from boot.                                                        |
-| Ambient recording     | Every host records mic and system audio in the background. Audio is kept for a rolling period.              |
-| Live transcript       | A daily log of what was said, within seconds, with notes, pins and meeting changes.                         |
-| Dictation             | Hold a key, speak, release: the text appears in the active application. Meetings do not hear the dictation. |
-| Interaction documents | Each finished meeting or conversation gets a transcript with speaker names and a summary.                   |
-| Publishing            | Finished documents go to configured directories, such as a vault inbox.                                     |
-| Benchmarking          | Stored audio and results compare models, prompts and strategies on real speech.                             |
-| Health and control    | A tray icon shows the mode and any problem. Pause stops recording.                                          |
+| Capability            | What the owner gets                                                                                          |
+| --------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Keyboard remapping    | Custom key behavior in every application, from boot.                                                         |
+| Ambient recording     | Every host records mic and system audio in the background. Audio is kept for a rolling period.               |
+| Live transcript       | A daily log of what was said, within seconds, with notes, pins and meeting changes.                          |
+| Dictation             | Hold a key, speak, release: the text appears in the active application. Meetings do not hear the dictation.  |
+| Interaction documents | Each finished meeting or conversation gets a transcript with speaker names and a summary.                    |
+| Publishing            | Finished documents go to configured directories, such as a vault inbox.                                      |
+| Benchmarking          | Stored audio and results compare models, prompts and strategies on real speech.                              |
+| Global shortcuts      | One key chord focuses or launches an app, or runs a window action.                                           |
+| Health and control    | A tray icon shows the mode and any problem. Pause stops recording. `odsodctl` can do all that the tray does. |
+| Install and upgrade   | One command installs or upgrades a host from `main`; a dev deploy runs local work live.                      |
 
 ### Flow
 
@@ -198,8 +203,12 @@ benchmark: reads stored audio and results
 ### Cloud ASR
 
 - Cloud services claim better mixed-language accuracy. Rejected because
-  ambient audio must stay local. A later ADR can reopen this for dictation
-  only.
+  ambient audio must stay local.
+- Reopened for dictation only. Dictation is English speech that the owner
+  chooses to send, mostly about work. `bench` evaluates a cloud model on
+  dictation audio, through the host's ambient Google Cloud credentials. An
+  ADR adopts it only if bench data supports it. Dictation then falls back
+  to the local path when the credentials are missing or the cloud fails.
 
 ### One service per component
 

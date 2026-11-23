@@ -78,8 +78,8 @@ dictation socket ([ADR-0007](0007-keys-service.md)).
 - When capture was not running, it seeks past the gap. The file has a hole
   that reads as silence and uses no disk.
 - File size tells readers how far the audio goes.
-- Capture deletes hour files older than the retention period (proposed:
-  14 days) when it opens a new hour.
+- Capture deletes hour files older than the retention period (14 days,
+  about 77 GB per host) when it opens a new hour.
 
 ### Paths
 
@@ -130,7 +130,11 @@ dictation socket ([ADR-0007](0007-keys-service.md)).
 ### Retention
 
 - Audio expires after the retention period. Capture deletes it.
-- Streams, documents and bench cases stay. They are small text.
+- Streams and documents stay. They are small text.
+- Bench cases stay until deleted, with their audio. Each case directory is
+  self-contained: the audio slice, the ASR text, the reference, its review
+  state (draft or accepted, and by whom) and the source (host, time,
+  channel). Retention never reads `state/bench/`.
 - Only publish copies data out of `state/`, and only to configured targets.
 
 ### Change notification

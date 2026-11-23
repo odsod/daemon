@@ -94,26 +94,26 @@ Components fall into four domains. Services group them by lifecycle
 (ADR-0002 principle 13); domains group them by what they are about. Each
 component owns one job or one output.
 
-| Domain    | Component         | Responsibility                                                       | Service or command | Main tools                          |
-| --------- | ----------------- | -------------------------------------------------------------------- | ------------------ | ----------------------------------- |
-| Input     | keys              | Device level: remap keys; dictation key; paste keys                  | keys               | `evdev` and `uinput` ioctls (C)     |
-| Input     | shortcuts         | Compositor level: register global shortcuts; launch apps for KWin    | session            | `dbus-fast`, `systemd-run`          |
-| Speech    | capture           | Record mic and system audio to the audio buffer                      | capture            | `pw-record`                         |
-| Speech    | segmentation      | Cut ambient audio into utterances                                    | pipeline           | Silero VAD                          |
-| Speech    | transcription     | Turn utterances into text; one worker per ASR backend                | pipeline           | whisper-server, Silero VAD          |
-| Speech    | cleanup           | Fix ASR text with an LLM and the glossary                            | pipeline           | llama-server                        |
-| Speech    | dictation         | The dictation loop: meeting mute, utterance, clipboard               | session            | keys socket, `pactl`, `wl-copy`     |
-| Documents | signals           | Meeting and speaker events from the browser                          | pipeline           | Chrome DevTools Protocol            |
-| Documents | transcript        | Sole writer of the daily transcript (live pass)                      | pipeline           |                                     |
-| Documents | interactions      | Sole writer of interactions: boundaries, then documents (batch pass) | pipeline           | `odsodctl diarize`, llama-server    |
-| Documents | publish           | Copy finished documents to configured targets                        | pipeline           |                                     |
-| Control   | tray              | Tray icon: mode and health; pause and resume                         | session            | PySide6, `systemctl`                |
-| Control   | note, pin, status | Owner events; health view                                            | command            | `systemctl`                         |
-| Control   | install           | Write and enable the units; build keys; install the KWin script      | command            | `systemctl`, `gcc`, `kpackagetool6` |
-| Control   | models            | Download models at install time                                      | command            | Hugging Face client                 |
-| Control   | diarize           | Diarize one audio slice (one-shot)                                   | command            | pyannote                            |
-| Control   | bench             | Score backends and strategies against references                     | command            | jiwer                               |
-| Control   | version           | Print the installed commit                                           | command            |                                     |
+| Domain    | Component                        | Responsibility                                                       | Service or command | Main tools                          |
+| --------- | -------------------------------- | -------------------------------------------------------------------- | ------------------ | ----------------------------------- |
+| Input     | keys                             | Device level: remap keys; dictation key; paste keys                  | keys               | `evdev` and `uinput` ioctls (C)     |
+| Input     | shortcuts                        | Compositor level: register global shortcuts; launch apps for KWin    | session            | `dbus-fast`, `systemd-run`          |
+| Speech    | capture                          | Record mic and system audio to the audio buffer                      | capture            | `pw-record`                         |
+| Speech    | segmentation                     | Cut ambient audio into utterances                                    | pipeline           | Silero VAD                          |
+| Speech    | transcription                    | Turn utterances into text; one worker per ASR backend                | pipeline           | whisper-server, Silero VAD          |
+| Speech    | cleanup                          | Fix ASR text with an LLM and the glossary                            | pipeline           | llama-server                        |
+| Speech    | dictation                        | The dictation loop: meeting mute, utterance, clipboard               | session            | keys socket, `pactl`, `wl-copy`     |
+| Documents | signals                          | Meeting and speaker events from the browser                          | pipeline           | Chrome DevTools Protocol            |
+| Documents | transcript                       | Sole writer of the daily transcript (live pass)                      | pipeline           |                                     |
+| Documents | interactions                     | Sole writer of interactions: boundaries, then documents (batch pass) | pipeline           | `odsodctl diarize`, llama-server    |
+| Documents | publish                          | Copy finished documents to configured targets                        | pipeline           |                                     |
+| Control   | tray                             | Tray icon: mode and health; pause and resume                         | session            | PySide6, `systemctl`                |
+| Control   | note, pin, status, pause, resume | Owner events; health view; pause and resume recording                | command            | `systemctl`                         |
+| Control   | install                          | Write and enable the units; build keys; install the KWin script      | command            | `systemctl`, `gcc`, `kpackagetool6` |
+| Control   | models                           | Download models at install time                                      | command            | Hugging Face client                 |
+| Control   | diarize                          | Diarize one audio slice (one-shot)                                   | command            | pyannote                            |
+| Control   | bench                            | Score backends and strategies against references                     | command            | jiwer                               |
+| Control   | version                          | Print the installed commit                                           | command            |                                     |
 
 - `dictation` sits on the edge of Input and Speech. It belongs to Speech: it
   produces utterances, and uses the keys service only as trigger and paste.
@@ -130,8 +130,12 @@ component owns one job or one output.
 
 - Runs one `pw-record --raw --rate 16000 --channels 1 --format s16` per
   channel as an asyncio subprocess. PipeWire resamples and mixes down.
-- `mic` targets the physical mic by node name. `sys` targets the default
-  sink's monitor.
+- `mic` follows the default source, so recording captures the mic the owner
+  uses. A plugged-in mic, or a new choice in KDE, takes effect with no
+  restart. When the mic in use disappears, PipeWire moves the stream to the
+  next source. A Bluetooth headset offers no mic (see Context), so this never
+  switches a headset to call mode.
+- `sys` follows the default sink's monitor.
 - Sets its own stream properties (application name `odsod-daemon-capture`),
   so dictation never mutes capture.
 - Uses the default PipeWire latency and no media role. A small fragment can
@@ -180,8 +184,9 @@ component owns one job or one output.
   - Stricter decoder thresholds against hallucinated tails, for dictation
     only. Bench data confirms the values.
 - Shadow backends get a configured sample of utterances, for benchmark data.
-- The code-switching strategy is a config choice. Bench data picks the
-  default.
+- **Dictation is English.** Dictation requests fix the language to English
+  (owner decision). The code-switching strategy applies to ambient audio
+  only. It is a config choice, and bench data picks the default.
 
 ### cleanup
 
@@ -203,7 +208,7 @@ component owns one job or one output.
   timing. Modules: `mute`, `delivery`.
 - Connects to the keys socket and gets `start`, `stop` and `cancel` with key
   timestamps.
-- `mute`, on `start`: mutes every capture stream on the physical mic except
+- `mute`, on `start`: mutes every capture stream on the mic in use except
   capture's own, with `pactl`. The meeting app hears nothing, and `capture`
   still records the owner.
   - Mutes only streams that were not muted already, and records them in
@@ -216,7 +221,12 @@ component owns one job or one output.
     [Vibe Typer](../research/vibetyper.md), applied to capture streams
     instead of playback.
 - On `stop`: appends a dictation utterance (from the `start` timestamp minus
-  pre-roll to the `stop` timestamp) and waits for its text in `state/text/`.
+  pre-roll to the `stop` timestamp) and waits for its text in `state/text/`,
+  for at most 10 s.
+- No text in 10 s: dictation gives up and sends a desktop notification. Text
+  that arrives later is never pasted and never touches the clipboard.
+  `odsodctl dictation last` prints the newest dictation text from
+  `state/text/`, late or not.
 - `delivery` pastes the text
   ([OpenWhispr](../research/openwhispr.md), [Handy](../research/handy.md)):
   - Saves the current clipboard.
@@ -227,6 +237,8 @@ component owns one job or one output.
     which pastes in GUI apps and terminals, on every layout.
   - After `pasted` and about 500 ms, restores the old clipboard, but only if
     the clipboard still holds the dictated text.
+  - On `paste-failed`: leaves the text on the clipboard and sends a desktop
+    notification, so the owner can paste by hand.
 - Writes its mode (idle, dictating) to `run/status.json`.
 
 ### signals
@@ -243,6 +255,12 @@ component owns one job or one output.
 - Drops a `mic` line that repeats a `sys` line from the same time window
   (echo). The component ADR defines the match and how long to wait for the
   `sys` text.
+- Writes a gap line for each recording gap longer than 1 min, with its range
+  and cause: pause, restart, logout or unknown. Utterances never span a gap.
+- `odsodctl transcript` prints today's transcript of this host. `--json`
+  prints its lines as JSON.
+- On battery, the transcription workers use only remote inference hosts. With
+  none reachable, they wait for mains power.
 
 ### interactions
 
@@ -296,6 +314,8 @@ component owns one job or one output.
 - `note` and `pin` append one line to `events/user/`.
 - `status` reads unit states from systemd and freshness and backlog from
   files.
+- `pause` and `resume` stop and start capture, the same as the tray
+  ([ADR-0004](0004-orchestration-with-systemd.md)).
 - `install` writes the user units and installs the KWin script (ADR-0008).
   `install --system` builds and installs the keys service (ADR-0004).
 - `models fetch` downloads the pyannote model with the owner's Hugging Face
@@ -317,6 +337,11 @@ component owns one job or one output.
 
 - Builds cases from stored audio and ASR results, supports review to write
   `ref.txt`, reports WER per backend, strategy and VAD setting.
+- Compares dictation backends on the owner's English dictations: Whisper on
+  the inference host, a streaming model on the host's own CPU, and a cloud
+  model through ambient Google Cloud credentials. Reports WER, time from
+  release to text, local CPU load and cost. An ADR adopts a new dictation
+  backend only on this data.
 
 ## Alternatives considered
 

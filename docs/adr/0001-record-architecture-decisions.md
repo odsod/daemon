@@ -33,6 +33,10 @@ Record each significant decision as an Architecture Decision Record (ADR) in
 
 Do not write an ADR for implementation details inside one component.
 
+Owner-facing behavior goes in a PRD (`docs/prd/`), not in an ADR. A PRD says
+what the owner experiences; an ADR says how the software does it. The `prd`
+skill (`.agents/skills/prd/`) defines the format.
+
 ### Keep ADRs strategic
 
 - Record the decision, the forces behind it and the trade-offs.

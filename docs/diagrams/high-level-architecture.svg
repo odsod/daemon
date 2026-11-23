@@ -374,10 +374,10 @@
 <text x="1165" y="1391" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">OWNER EVENTS</text>
 <circle cx="840" cy="1412" r="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
 <text x="840" y="1416.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">14</text>
-<text x="862" y="1417" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">STATUS</text>
+<text x="862" y="1417" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">STATUS, PAUSE</text>
 <text x="1020" y="1417" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">CONTROL</text>
 <text x="1138" y="1417" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#1b1b1b">CMD</text>
-<text x="1165" y="1417" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">HEALTH VIEW (NOT DRAWN)</text>
+<text x="1165" y="1417" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">HEALTH VIEW; PAUSE, RESUME (NOT DRAWN)</text>
 <circle cx="840" cy="1438" r="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
 <text x="840" y="1442.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">15</text>
 <text x="862" y="1443" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">BENCH</text>

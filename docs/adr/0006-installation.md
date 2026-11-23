@@ -65,8 +65,8 @@ odsodctl install
   ([ADR-0004](0004-orchestration-with-systemd.md),
   [ADR-0008](0008-shortcuts-and-kwin-script.md)).
 - The `machine` repo also links the per-host `config.json` into
-  `~/.config/odsod-daemon/`, and keeps the platform settings the daemons rely
-  on, such as the WirePlumber Bluetooth profile config.
+  `~/.config/odsod-daemon/`, and keeps the platform settings the services
+  rely on, such as the WirePlumber Bluetooth profile config.
 - The `machine` repo no longer builds `odsod-keys`. The first `daemon:setup`
   disables and removes `odsod-keys.service`, which the keys service replaces.
 - The `machine` repo no longer installs the KWin script or the
@@ -77,13 +77,22 @@ odsodctl install
 
 ```toml
 [tasks.deploy]
-run = "uv tool install --force --reinstall '.[diarize]' && odsodctl install"
+run = "uv tool install --force --editable '.[diarize]' && odsodctl install"
 ```
 
 - Runs the local workspace as the live system, to test a branch.
+- The install is editable: the live services import the workspace source.
+  After the first deploy, a Python change needs only a restart of the
+  affected service (`mise run restart -- <service>`). Rerun `deploy` only
+  when dependencies, units or the KWin script change.
 - `deploy:system` adds `sudo odsodctl install --system` for keys service
   changes.
-- The next `daemon:setup` puts `main` back.
+- `odsodctl version` prints `dev`, the workspace path and the commit, with
+  `+dirty` for uncommitted changes. `odsodctl status` shows a Warning while a
+  host runs a dev install, so it is never left on one by mistake.
+- The next `daemon:setup` from the `machine` repo puts `main` back.
+- Moving or deleting the workspace breaks the live services. Run
+  `daemon:setup` before you remove it.
 
 ### Secrets only at install time
 
