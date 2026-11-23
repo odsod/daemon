@@ -58,6 +58,11 @@ def covered_until(state_root: Path, channel: str) -> datetime | None:
     return _parse_hour(newest) + timedelta(seconds=size / BYTES_PER_SECOND)
 
 
+def _byte_offset(delta: timedelta) -> int:
+    """Bytes of one channel for a time delta, aligned to 16-bit samples."""
+    return round(delta.total_seconds() * SAMPLE_RATE) * 2
+
+
 def cut(
     state_root: Path,
     channel: str,
@@ -74,8 +79,9 @@ def cut(
     while cursor < end:
         file_end = hour_end(cursor)
         piece_end = min(end, file_end)
-        offset = int((cursor - hour_start(cursor)).total_seconds() * BYTES_PER_SECOND)
-        length = int((piece_end - cursor).total_seconds() * BYTES_PER_SECOND)
+        hour = hour_start(cursor)
+        offset = _byte_offset(cursor - hour)
+        length = _byte_offset(piece_end - hour) - offset
         chunks.append(
             _read_piece(hour_file(state_root, channel, cursor), offset, length)
         )

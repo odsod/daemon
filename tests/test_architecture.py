@@ -67,7 +67,7 @@ def _source_files() -> list[Path]:
 
 def _component_of(path: Path) -> str | None:
     parts = path.relative_to(SRC).parts
-    if len(parts) >= 4 and parts[0] == "components":
+    if len(parts) >= 3 and parts[0] == "components":
         return parts[1]
     return None
 
@@ -79,7 +79,29 @@ def _absolute_imports(tree: ast.Module) -> list[str]:
             modules.extend(alias.name for alias in node.names)
         elif isinstance(node, ast.ImportFrom) and node.module:
             modules.append(node.module)
+            if node.module == COMPONENTS:
+                modules.extend(f"{COMPONENTS}.{alias.name}" for alias in node.names)
     return modules
+
+
+def _cross_subsystem_offenders(source: str, current: str) -> list[str]:
+    """Imports in ``source`` that reach another subsystem outside its contract."""
+    offenders: list[str] = []
+    for module in _absolute_imports(ast.parse(source)):
+        if not module.startswith(f"{COMPONENTS}."):
+            continue
+        parts = module.split(".")
+        if len(parts) < 3:
+            continue
+        target = parts[2]
+        if target == current:
+            continue
+        if SUBSYSTEMS.get(target) == SUBSYSTEMS[current]:
+            continue
+        expected = f"{COMPONENTS}.{target}.contract"
+        if module != expected:
+            offenders.append(module)
+    return offenders
 
 
 def test_relative_imports_are_not_used() -> None:
@@ -98,22 +120,29 @@ def test_cross_subsystem_imports_go_through_contract() -> None:
         current = _component_of(path)
         if current is None:
             continue
-        tree = ast.parse(path.read_text(encoding="utf-8"))
-        for module in _absolute_imports(tree):
-            if not module.startswith(f"{COMPONENTS}."):
-                continue
-            parts = module.split(".")
-            if len(parts) < 3:
-                continue
-            target = parts[2]
-            if target == current:
-                continue
-            if SUBSYSTEMS.get(target) == SUBSYSTEMS[current]:
-                continue
-            expected = f"{COMPONENTS}.{target}.contract"
-            if module != expected:
-                offenders.append(f"{path.relative_to(ROOT)}: {module}")
+        source = path.read_text(encoding="utf-8")
+        for module in _cross_subsystem_offenders(source, current):
+            offenders.append(f"{path.relative_to(ROOT)}: {module}")
     assert offenders == []
+
+
+def test_component_of_sees_top_level_files() -> None:
+    top_level = SRC / "components" / "capture" / "segment.py"
+    nested = SRC / "components" / "capture" / "tests" / "test_segment.py"
+    assert _component_of(top_level) == "capture"
+    assert _component_of(nested) == "capture"
+    assert _component_of(SRC / "lib" / "audio.py") is None
+
+
+def test_cross_subsystem_check_sees_package_imports() -> None:
+    source = "from odsod_daemon.components import signals\n"
+    assert _cross_subsystem_offenders(source, "capture") == [
+        "odsod_daemon.components.signals"
+    ]
+    contract = "from odsod_daemon.components.signals.contract import Event\n"
+    assert _cross_subsystem_offenders(contract, "capture") == []
+    same = "from odsod_daemon.components.segmentation import cut\n"
+    assert _cross_subsystem_offenders(same, "transcription") == []
 
 
 def test_lib_imports_no_component() -> None:

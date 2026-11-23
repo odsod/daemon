@@ -46,6 +46,44 @@ def unit_object_path(unit: str) -> str:
     return "/org/freedesktop/systemd1/unit/" + escaped
 
 
+_UNIT_INTERFACE = "org.freedesktop.systemd1.Unit"
+_RESULT_INTERFACES = {
+    "service": "org.freedesktop.systemd1.Service",
+    "timer": "org.freedesktop.systemd1.Timer",
+}
+
+
+def result_interface(unit: str) -> str | None:
+    """The unit-type interface that holds ``Result``, or None.
+
+    systemd keeps ``Result`` on the type-specific interface, not on ``.Unit``.
+    A unit type without the property reports no result.
+    """
+    return _RESULT_INTERFACES.get(unit.rpartition(".")[2])
+
+
+async def read_state(unit: str, scope: str, properties: Any) -> UnitState:
+    """Read a unit's state through a ``Properties`` interface."""
+
+    async def value(interface: str, name: str) -> Any:
+        variant = await properties.call_get(interface, name)
+        return variant.value
+
+    interface = result_interface(unit)
+    result = "" if interface is None else str(await value(interface, "Result"))
+    active = str(await value(_UNIT_INTERFACE, "ActiveState"))
+    sub = str(await value(_UNIT_INTERFACE, "SubState"))
+    changed = int(await value(_UNIT_INTERFACE, "StateChangeTimestamp"))
+    return UnitState(
+        unit=unit,
+        scope=scope,
+        active_state=active,
+        sub_state=sub,
+        result=result,
+        state_change_timestamp=changed,
+    )
+
+
 class DBusUnitStates:
     """Read unit properties from the user or system bus."""
 
@@ -70,29 +108,11 @@ class DBusUnitStates:
             properties = cast(
                 Any, proxy.get_interface("org.freedesktop.DBus.Properties")
             )
-            values = {}
-            for name in (
-                "ActiveState",
-                "SubState",
-                "Result",
-                "StateChangeTimestamp",
-            ):
-                variant = await properties.call_get(
-                    "org.freedesktop.systemd1.Unit", name
-                )
-                values[name] = variant.value
+            return await read_state(unit, scope, properties)
         except Exception as error:
             if "NoSuchUnit" in str(error):
                 return None
             raise
-        return UnitState(
-            unit=unit,
-            scope=scope,
-            active_state=str(values["ActiveState"]),
-            sub_state=str(values["SubState"]),
-            result=str(values["Result"]),
-            state_change_timestamp=int(values["StateChangeTimestamp"]),
-        )
 
     async def close(self) -> None:
         for bus in self._buses.values():

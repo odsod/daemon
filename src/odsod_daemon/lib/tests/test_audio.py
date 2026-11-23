@@ -32,6 +32,16 @@ def test_cut_inside_one_hour(tmp_path: Path) -> None:
     assert result == data[audio.BYTES_PER_SECOND : 2 * audio.BYTES_PER_SECOND]
 
 
+def test_cut_keeps_sample_alignment(tmp_path: Path) -> None:
+    data = b"".join(index.to_bytes(2, "little") for index in range(1000))
+    write_hour(tmp_path, "mic", HOUR, data)
+    start = HOUR + timedelta(microseconds=40)
+    end = HOUR + timedelta(microseconds=240)
+    result = audio.cut(tmp_path, "mic", start, end)
+    assert result == data[2:8]
+    assert len(result) % 2 == 0
+
+
 def test_cut_across_hours(tmp_path: Path) -> None:
     write_hour(
         tmp_path,

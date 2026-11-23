@@ -10,7 +10,7 @@ from collections.abc import Awaitable, Callable, Iterable, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
-from odsod_daemon.lib import clock
+from odsod_daemon.lib import clock, config
 
 
 @dataclass(frozen=True)
@@ -36,20 +36,27 @@ def in_window(moment: datetime, *, now: datetime, retention_days: int) -> bool:
     return moment.astimezone(UTC) >= cutoff
 
 
+def _window(retention_days: int | None) -> int:
+    """The pending window: the given days, or ``common.retention_days``."""
+    if retention_days is not None:
+        return retention_days
+    return config.load_common().retention_days
+
+
 def pending_ids(
     inputs: Iterable[Input],
     outputs: Iterable[str],
     *,
     now: datetime,
-    retention_days: int,
+    retention_days: int | None = None,
 ) -> list[str]:
     """Input IDs with no output, oldest first, inside the pending window."""
+    window = _window(retention_days)
     done = set(outputs)
     pending = [
         item
         for item in inputs
-        if item.id not in done
-        and in_window(item.at, now=now, retention_days=retention_days)
+        if item.id not in done and in_window(item.at, now=now, retention_days=window)
     ]
     pending.sort(key=lambda item: (item.at, item.id))
     return [item.id for item in pending]
@@ -60,15 +67,16 @@ def expired_ids(
     outputs: Iterable[str],
     *,
     now: datetime,
-    retention_days: int,
+    retention_days: int | None = None,
 ) -> list[str]:
     """Input IDs with no output outside the pending window."""
+    window = _window(retention_days)
     done = set(outputs)
     return [
         item.id
         for item in inputs
         if item.id not in done
-        and not in_window(item.at, now=now, retention_days=retention_days)
+        and not in_window(item.at, now=now, retention_days=window)
     ]
 
 

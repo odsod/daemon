@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import socket
 from contextlib import suppress
 from pathlib import Path
@@ -8,8 +9,13 @@ from types import ModuleType
 from typing import Any
 
 import pytest
+from pydantic import BaseModel, ValidationError
 
-from odsod_daemon.services.runner import ServiceSpec, run_service
+from odsod_daemon.services.runner import (
+    ServiceSpec,
+    load_component,
+    run_service,
+)
 
 
 def component(name: str, body: Any) -> ModuleType:
@@ -75,3 +81,46 @@ async def test_once_runs_components_and_exits() -> None:
 
     await run_service(ServiceSpec("test", [component("once", run)]), once=True)
     assert seen == [True]
+
+
+def test_load_component_accepts_the_architecture_name() -> None:
+    module = load_component("notify-failed")
+    assert module.__name__ == "odsod_daemon.components.notify_failed"
+
+
+def test_load_component_rejects_a_bad_name() -> None:
+    with pytest.raises(ValueError, match="bad component name"):
+        load_component("../lib")
+
+
+class Section(BaseModel):
+    value: int
+
+
+async def test_service_does_not_report_ready_before_config_is_valid(
+    temp_root: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (temp_root / "config" / "config.json").write_text(
+        json.dumps({"runtime": {"value": "nope"}}), encoding="utf-8"
+    )
+    path = tmp_path / "notify.sock"
+    receiver = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+    receiver.bind(str(path))
+    receiver.settimeout(0.2)
+    monkeypatch.setenv("NOTIFY_SOCKET", str(path))
+    called: list[bool] = []
+
+    async def run(_config: object, *, once: bool = False) -> None:
+        called.append(True)
+
+    module = component("invalid", run)
+    vars(module)["CONFIG_MODEL"] = Section
+    try:
+        with pytest.raises(ValidationError):
+            await run_service(ServiceSpec("test", [module]))
+        with pytest.raises(TimeoutError):
+            receiver.recv(64)
+    finally:
+        receiver.close()
+
+    assert called == []

@@ -27,14 +27,21 @@ class ServiceSpec:
     components: Sequence[ModuleType]
 
 
+@dataclass(frozen=True)
+class PreparedComponent:
+    runner: Callable[..., Awaitable[Any]]
+    section: Any
+
+
 def load_component(name: str) -> ModuleType:
-    if not name or not name.replace("_", "").isalnum():
+    module_name = name.replace("-", "_")
+    if not module_name or not module_name.replace("_", "").isalnum():
         raise ValueError(f"bad component name: {name!r}")
-    return importlib.import_module(f"odsod_daemon.components.{name}")
+    return importlib.import_module(f"odsod_daemon.components.{module_name}")
 
 
-async def run_component(module: ModuleType, *, once: bool = False) -> None:
-    """Load a component's config section and run it."""
+def prepare_component(module: ModuleType) -> PreparedComponent:
+    """Resolve a component's ``run`` and config section before it starts."""
     runner: Callable[..., Awaitable[Any]] | None = getattr(module, "run", None)
     if runner is None:
         raise ComponentNotBuilt(f"{module.__name__}: no run()")
@@ -42,14 +49,23 @@ async def run_component(module: ModuleType, *, once: bool = False) -> None:
     section: Any = None
     if model is not None:
         section = config.section(module.SUBSYSTEM, model)
-    await runner(section, once=once)
+    return PreparedComponent(runner=runner, section=section)
+
+
+async def run_prepared(prepared: PreparedComponent, *, once: bool = False) -> None:
+    await prepared.runner(prepared.section, once=once)
+
+
+async def run_component(module: ModuleType, *, once: bool = False) -> None:
+    """Load a component's config section and run it."""
+    await run_prepared(prepare_component(module), once=once)
 
 
 async def _mark_started(
-    module: ModuleType, started: asyncio.Event, *, once: bool
+    prepared: PreparedComponent, started: asyncio.Event, *, once: bool
 ) -> None:
     started.set()
-    await run_component(module, once=once)
+    await run_prepared(prepared, once=once)
 
 
 async def _watchdog(interval_s: float) -> None:
@@ -59,16 +75,17 @@ async def _watchdog(interval_s: float) -> None:
 
 
 async def run_service(spec: ServiceSpec, *, once: bool = False) -> None:
+    prepared = [prepare_component(module) for module in spec.components]
     if once:
         async with asyncio.TaskGroup() as group:
-            for component in spec.components:
-                group.create_task(run_component(component, once=True))
+            for item in prepared:
+                group.create_task(run_prepared(item, once=True))
         return
 
-    started = [asyncio.Event() for _ in spec.components]
+    started = [asyncio.Event() for _ in prepared]
     async with asyncio.TaskGroup() as group:
-        for component, event in zip(spec.components, started, strict=True):
-            group.create_task(_mark_started(component, event, once=False))
+        for item, event in zip(prepared, started, strict=True):
+            group.create_task(_mark_started(item, event, once=False))
         await asyncio.gather(*(event.wait() for event in started))
         systemd.sd_notify("READY=1")
         interval = systemd.watchdog_interval()

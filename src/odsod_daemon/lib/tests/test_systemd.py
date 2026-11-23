@@ -2,10 +2,36 @@ from __future__ import annotations
 
 import socket
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
 from odsod_daemon.lib import systemd
+
+UNIT = "org.freedesktop.systemd1.Unit"
+SERVICE = "org.freedesktop.systemd1.Service"
+TIMER = "org.freedesktop.systemd1.Timer"
+
+
+class FakeProperties:
+    def __init__(self, values: dict[tuple[str, str], object]) -> None:
+        self.values = values
+        self.calls: list[tuple[str, str]] = []
+
+    async def call_get(self, interface: str, name: str) -> object:
+        self.calls.append((interface, name))
+        try:
+            value = self.values[(interface, name)]
+        except KeyError:
+            raise AssertionError(f"no property {interface}.{name}") from None
+        return SimpleNamespace(value=value)
+
+
+UNIT_VALUES = {
+    (UNIT, "ActiveState"): "failed",
+    (UNIT, "SubState"): "failed",
+    (UNIT, "StateChangeTimestamp"): 42,
+}
 
 
 def test_unit_object_path_escapes_names() -> None:
@@ -61,3 +87,29 @@ async def test_fake_unit_states() -> None:
     fake.set(state)
     assert await fake.get(state.unit) == state
     assert await fake.get(state.unit, scope="system") is None
+
+
+def test_result_interface_by_unit_type() -> None:
+    assert systemd.result_interface("a.service") == SERVICE
+    assert systemd.result_interface("a.timer") == TIMER
+    assert systemd.result_interface("a.socket") is None
+
+
+async def test_read_state_reads_result_from_the_unit_type_interface() -> None:
+    properties = FakeProperties({**UNIT_VALUES, (SERVICE, "Result"): "exit-code"})
+    state = await systemd.read_state("capture.service", "user", properties)
+    assert state.active_state == "failed"
+    assert state.result == "exit-code"
+    assert state.state_change_timestamp == 42
+    assert (SERVICE, "Result") in properties.calls
+    result_interfaces = {
+        interface for interface, name in properties.calls if name == "Result"
+    }
+    assert result_interfaces == {SERVICE}
+
+
+async def test_read_state_defaults_result_when_the_unit_type_has_none() -> None:
+    properties = FakeProperties(UNIT_VALUES)
+    state = await systemd.read_state("capture.socket", "user", properties)
+    assert state.result == ""
+    assert {interface for interface, _name in properties.calls} == {UNIT}

@@ -112,6 +112,9 @@ def run_command(
     except ModuleNotFoundError as error:
         typer.echo(f"{target}: no such service or component", err=True)
         raise typer.Exit(2) from error
+    except ValueError as error:
+        typer.echo(f"{target}: {error}", err=True)
+        raise typer.Exit(2) from error
 
 
 @config_app.command("check")

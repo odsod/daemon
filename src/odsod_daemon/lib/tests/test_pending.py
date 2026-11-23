@@ -1,12 +1,27 @@
 from __future__ import annotations
 
+import json
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
 import pytest
 
 from odsod_daemon.lib import pending
 
 NOW = datetime(2026, 11, 23, 12, 0, tzinfo=UTC)
+
+
+def write_common(root: Path, retention_days: int) -> None:
+    value = {
+        "common": {
+            "retention_days": retention_days,
+            "inference": {
+                "whisper_url": "http://127.0.0.1:8178/v1/audio/transcriptions",
+                "llama_url": "http://127.0.0.1:8179/v1/chat/completions",
+            },
+        }
+    }
+    (root / "config" / "config.json").write_text(json.dumps(value), encoding="utf-8")
 
 
 def item(identifier: str, hours_ago: float) -> pending.Input:
@@ -36,6 +51,19 @@ def test_expired_ids() -> None:
     inputs = [item("old", 24 * 15), item("new", 1)]
     assert pending.expired_ids(inputs, [], now=NOW, retention_days=14) == ["old"]
     assert pending.expired_ids(inputs, ["old"], now=NOW, retention_days=14) == []
+
+
+def test_window_defaults_from_common_config(temp_root: Path) -> None:
+    write_common(temp_root, 2)
+    inputs = [item("old", 24 * 3), item("new", 1)]
+    assert pending.pending_ids(inputs, [], now=NOW) == ["new"]
+    assert pending.expired_ids(inputs, [], now=NOW) == ["old"]
+
+
+def test_explicit_window_wins_over_common_config(temp_root: Path) -> None:
+    write_common(temp_root, 1)
+    inputs = [item("old", 24 * 3)]
+    assert pending.pending_ids(inputs, [], now=NOW, retention_days=14) == ["old"]
 
 
 def test_retry_policy_delays() -> None:
