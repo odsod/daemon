@@ -22,7 +22,7 @@ COMPONENTS = [
     signals,
     transcript,
     interactions,
-    # publish,
+    publish,
 ]
 
 SERVICE = ServiceSpec(NAME, COMPONENTS)

@@ -34,6 +34,8 @@ mise run build
 
 - 2026-11-23: Step 1 done. Added config, pending, deliver and service;
   31 component tests pass.
+- 2026-11-23: Step 2 done. `--once` drains and exits 0; `publish` runs in
+  `services/pipeline.py`.
 
 ## Decisions to confirm
 
