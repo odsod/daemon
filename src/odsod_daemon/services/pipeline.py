@@ -19,7 +19,7 @@ COMPONENTS = [
     # segmentation,
     # transcription,
     # cleanup,
-    # signals,
+    signals,
     # transcript,
     # interactions,
     # publish,

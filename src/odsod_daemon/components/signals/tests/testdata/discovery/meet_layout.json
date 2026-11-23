@@ -1,0 +1,15 @@
+{
+  "platform": "meet",
+  "snapshots": [
+    [{ "name": "Alice Smith", "classes": ["tile"] }],
+    [{ "name": "Alice Smith", "classes": ["tile", "hover"] }],
+    [{ "name": "Alice Smith", "classes": ["tile"] }],
+    [{ "name": "Alice Smith", "classes": ["tile", "hover-wide"] }],
+    [{ "name": "Alice Smith", "classes": ["tile"] }],
+    [{ "name": "Alice Smith", "classes": ["tile", "x1"] }],
+    [{ "name": "Alice Smith", "classes": ["tile"] }],
+    [{ "name": "Alice Smith", "classes": ["tile", "y2"] }],
+    [{ "name": "Alice Smith", "classes": ["tile"] }]
+  ],
+  "confirmed": null
+}

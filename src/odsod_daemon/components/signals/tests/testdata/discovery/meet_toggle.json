@@ -1,0 +1,26 @@
+{
+  "platform": "meet",
+  "snapshots": [
+    [
+      { "name": "Alice Smith", "classes": ["cls-a", "cls-b"] },
+      { "name": "Bob Jones", "classes": ["cls-a"] }
+    ],
+    [
+      { "name": "Alice Smith", "classes": ["cls-a", "cls-b", "x"] },
+      { "name": "Bob Jones", "classes": ["cls-a"] }
+    ],
+    [
+      { "name": "Alice Smith", "classes": ["cls-a", "cls-b"] },
+      { "name": "Bob Jones", "classes": ["cls-a"] }
+    ],
+    [
+      { "name": "Alice Smith", "classes": ["cls-a", "cls-b", "x"] },
+      { "name": "Bob Jones", "classes": ["cls-a"] }
+    ],
+    [
+      { "name": "Alice Smith", "classes": ["cls-a", "cls-b"] },
+      { "name": "Bob Jones", "classes": ["cls-a"] }
+    ]
+  ],
+  "confirmed": "x"
+}

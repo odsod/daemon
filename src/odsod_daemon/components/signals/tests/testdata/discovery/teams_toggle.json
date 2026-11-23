@@ -1,0 +1,26 @@
+{
+  "platform": "teams",
+  "snapshots": [
+    [
+      { "name": "Alice Direct", "classes": ["fui-Flex", "f22iagw"] },
+      { "name": "Bob Nested", "classes": ["fui-Flex", "f22iagw"] }
+    ],
+    [
+      { "name": "Alice Direct", "classes": ["fui-Flex", "f22iagw", "speaking-active"] },
+      { "name": "Bob Nested", "classes": ["fui-Flex", "f22iagw"] }
+    ],
+    [
+      { "name": "Alice Direct", "classes": ["fui-Flex", "f22iagw"] },
+      { "name": "Bob Nested", "classes": ["fui-Flex", "f22iagw"] }
+    ],
+    [
+      { "name": "Alice Direct", "classes": ["fui-Flex", "f22iagw", "speaking-active"] },
+      { "name": "Bob Nested", "classes": ["fui-Flex", "f22iagw"] }
+    ],
+    [
+      { "name": "Alice Direct", "classes": ["fui-Flex", "f22iagw"] },
+      { "name": "Bob Nested", "classes": ["fui-Flex", "f22iagw"] }
+    ]
+  ],
+  "confirmed": "speaking-active"
+}
