@@ -118,6 +118,25 @@ mise run build
   passed, including the 140,000-utterance status timing check under 1 s.
   Two temp-home CLI installs and systemd-analyze verification pass.
 
+- 2026-11-23: Step 8 complete. Wrote mode-0600
+  `/tmp/agent-team/recorder-always-on/config.json`. Copied it with
+  `install -Dm600` into a temp root and ran `uv run odsodctl config
+  check` with a temp HOME: `config ok`. Other sections use defaults.
+
+```json
+{
+  "common": {
+    "inference": {
+      "whisper_url": "http://127.0.0.1:8178/v1/audio/transcriptions",
+      "llama_url": "http://127.0.0.1:8179/v1/chat/completions"
+    }
+  },
+  "interactions": {
+    "chunk_chars": 37000
+  }
+}
+```
+
 ## Decisions to confirm
 
 - One-shot helpers use no automatic restart. `Restart=always` is invalid
