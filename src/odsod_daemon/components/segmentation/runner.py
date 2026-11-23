@@ -7,7 +7,7 @@ from odsod_daemon.components.segmentation.config import Speech
 from odsod_daemon.components.segmentation.cutter import Cutter
 from odsod_daemon.components.segmentation.mask import ranges, read_limit
 from odsod_daemon.components.segmentation.vad import FRAME, Vad
-from odsod_daemon.lib import audio, clock, config, documents, paths, streams
+from odsod_daemon.lib import audio, clock, config, documents, healthfile, paths, streams
 
 
 def records(directory):
@@ -100,10 +100,14 @@ class ChannelRunner:
             if self.channel == "mic"
             else []
         )
+        idle = clock.monotonic() - self.last_advance >= self.settings.idle_close_s
         advanced = False
         while self.cursor < limit:
             end = min(limit, self.cursor + FRAME / audio.SAMPLE_RATE)
-            if not once and end - self.cursor < FRAME / audio.SAMPLE_RATE - 0.000001:
+            if (
+                not (once or idle)
+                and end - self.cursor < FRAME / audio.SAMPLE_RATE - 0.000001
+            ):
                 break
             overlap = next(
                 ((a, b) for a, b in masks if a < end and b > self.cursor), None
@@ -138,16 +142,32 @@ class ChannelRunner:
                 self.cover(safe)
         if advanced:
             self.last_advance = clock.monotonic()
-        if once or clock.monotonic() - self.last_advance >= self.settings.idle_close_s:
+        if once or idle:
             self.emit(self.cutter.boundary(self.cursor, "end-of-audio"))
             self.cover(self.cursor)
 
 
-async def run(speech: Speech, *, once: bool = False) -> None:
-    workers = [ChannelRunner(channel, speech) for channel in audio.CHANNELS]
+async def _channel(channel: str, speech: Speech, *, once: bool) -> None:
+    worker = ChannelRunner(channel, speech)
     while True:
-        for worker in workers:
-            await asyncio.to_thread(worker.advance, once=once)
+        await asyncio.to_thread(worker.advance, once=once)
         if once:
             return
         await clock.sleep(0.02)
+
+
+async def _heartbeat() -> None:
+    while True:
+        # Reload on the event loop so inference faults keep their own keys.
+        healthfile.HealthFile(
+            paths.roots().run / "health/pipeline.json", "pipeline"
+        ).rewrite()
+        await clock.sleep(60)
+
+
+async def run(speech: Speech, *, once: bool = False) -> None:
+    async with asyncio.TaskGroup() as group:
+        for channel in audio.CHANNELS:
+            group.create_task(_channel(channel, speech, once=once))
+        if not once:
+            group.create_task(_heartbeat())

@@ -161,3 +161,113 @@ def test_crash_after_utterance_before_coverage(temp_root, monkeypatch):
         streams.day_path(temp_root / "state/utterances/ambient", clock.utc_now().date())
     )
     assert len(rows) == len({r["id"] for r in rows})
+
+
+def test_live_hold_then_idle_reads_masks_synchronously(temp_root):
+    start, end = setup_audio(temp_root, channel="mic")
+    runner = ChannelRunner("mic", Speech())
+    status = temp_root / "run/status.json"
+    # Hold exactly at the start. The audio is older than the wall-clock guard.
+    status.write_text(
+        json.dumps(
+            {"mode": "dictating", "since": clock.iso(), "audio_start": clock.iso(start)}
+        )
+    )
+    runner.advance(once=False)
+    assert runner.cursor == start.timestamp()
+    streams.append(
+        streams.day_path(temp_root / "state/utterances/dictation", start.date()),
+        {"id": "dic-held", "start": clock.iso(start), "end": clock.iso(end)},
+    )
+    status.write_text(json.dumps({"mode": "idle", "since": clock.iso()}))
+    # No follow notification is delivered; advance must read the mask itself.
+    runner.advance(once=False)
+    assert not list((temp_root / "state/utterances/ambient").glob("*.jsonl"))
+
+
+def test_capture_guard_and_idle_close(temp_root, monkeypatch):
+    _start, end = setup_audio(temp_root, channel="mic")
+    runner = ChannelRunner("mic", Speech())
+    monkeypatch.setattr(clock, "wall", lambda: end.timestamp() + 0.1)
+    runner.advance(once=False)
+    assert runner.cursor is not None
+    assert runner.cursor <= end.timestamp() - 1.1
+    monkeypatch.setattr(clock, "wall", lambda: end.timestamp() + DICTATION_GUARD + 1)
+    runner.advance(once=False)
+    assert runner.cursor is not None
+    assert runner.cursor <= end.timestamp()
+    runner.last_advance -= 4
+    runner.advance(once=False)
+    assert abs(runner.last_covered - end.timestamp()) < 0.001
+
+
+def test_zero_hole_separates_speech(temp_root, monkeypatch):
+    start, _ = setup_audio(temp_root)
+    path = audio.hour_file(temp_root / "state", "sys", start)
+    speech = np.full(16000, 3000, dtype="<i2").tobytes()
+    path.write_bytes(speech + bytes(32000) + speech)
+    monkeypatch.setattr(Vad, "probability", lambda self, pcm: 0.9)
+    ChannelRunner("sys", Speech()).advance(once=True)
+    rows = streams.read_day(
+        streams.day_path(temp_root / "state/utterances/ambient", start.date())
+    )
+    assert len(rows) == 2
+    assert clock.parse_iso(rows[0]["end"]) <= start + timedelta(seconds=1.024)
+    assert clock.parse_iso(rows[1]["start"]) >= start + timedelta(seconds=1.98)
+
+
+def test_hour_of_zeros_skips_model(temp_root, monkeypatch):
+    start, _ = setup_audio(temp_root, "silence")
+    path = audio.hour_file(temp_root / "state", "sys", start)
+    with path.open("wb") as handle:
+        handle.truncate(3600 * 32000)
+
+    def no_inference(self, pcm):
+        pytest.fail("zeros reached the model")
+
+    monkeypatch.setattr(Vad, "probability", no_inference)
+    ChannelRunner("sys", Speech()).advance(once=True)
+    assert not list((temp_root / "state/utterances/ambient").glob("*.jsonl"))
+
+
+@pytest.mark.looptime(False)
+async def test_channels_advance_independently(temp_root, monkeypatch):
+    import threading
+
+    from odsod_daemon.components.segmentation.runner import run
+
+    setup_audio(temp_root)
+    sys_started = threading.Event()
+
+    def advance(self, *, once):
+        if self.channel == "mic":
+            assert sys_started.wait(timeout=1), "sys waited behind mic"
+        else:
+            sys_started.set()
+
+    monkeypatch.setattr(ChannelRunner, "advance", advance)
+    await run(Speech(), once=True)
+
+
+async def test_health_heartbeat_preserves_faults(temp_root, monkeypatch):
+    from odsod_daemon.components.segmentation.runner import _heartbeat
+    from odsod_daemon.lib import healthfile
+
+    file = healthfile.HealthFile(temp_root / "run/health/pipeline.json", "pipeline")
+    file.set("inference-unreachable", "down", key="whisper")
+    file.rewrite()
+    slept = []
+
+    class StopHeartbeat(Exception):
+        pass
+
+    async def sleep(seconds):
+        slept.append(seconds)
+        raise StopHeartbeat
+
+    monkeypatch.setattr(clock, "sleep", sleep)
+    with pytest.raises(StopHeartbeat):
+        await _heartbeat()
+    assert slept == [60]
+    faults = json.loads(file.path.read_text())["faults"]
+    assert [f["key"] for f in faults] == ["whisper"]

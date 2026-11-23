@@ -180,3 +180,42 @@ async def test_battery_loopback_waits(temp_root, monkeypatch):
     with pytest.raises(HostUnavailable, match="battery"):
         await run(Speech(), once=True)
     assert not list((temp_root / "state/asr").glob("**/*.jsonl"))
+
+
+async def test_battery_tailnet_sends_request(temp_root, monkeypatch):
+    start, end = setup_audio(temp_root)
+    conf_path = temp_root / "config/config.json"
+    conf = json.loads(conf_path.read_text())
+    conf["common"]["inference"]["whisper_url"] = (
+        "http://100.64.1.2:8178/v1/audio/transcriptions"
+    )
+    conf_path.write_text(json.dumps(conf))
+    monkeypatch.setattr(
+        "odsod_daemon.components.transcription.worker.power.on_mains", lambda: False
+    )
+    called = []
+
+    async def transcribe(self, audio, **kwargs):
+        called.append(self.url)
+        return inference.WhisperResponse(text="Hej", language="swedish")
+
+    monkeypatch.setattr(inference.WhisperClient, "transcribe", transcribe)
+    streams.append(
+        streams.day_path(temp_root / "state/utterances/ambient", start.date()),
+        utterance(start, end),
+    )
+    await run(Speech(), once=True)
+    assert called == [conf["common"]["inference"]["whisper_url"]]
+
+
+@pytest.mark.parametrize(
+    "exception,kind",
+    [
+        (httpx.ConnectTimeout("connect"), "host"),
+        (httpx.ReadError("reset"), "host"),
+        (httpx.ReadTimeout("accepted"), "input"),
+        (ValueError("bad reply"), "reject"),
+    ],
+)
+def test_transport_faults(exception, kind):
+    assert fault_kind(exception) == kind
