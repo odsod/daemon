@@ -6,4 +6,8 @@ Writes: state/bench/<case-id>/.
 ADR: docs/adr/0019-bench.md
 """
 
+from odsod_daemon.components.bench.setups import Bench as CONFIG_MODEL
+
 SUBSYSTEM = "bench"
+
+__all__ = ["CONFIG_MODEL"]
