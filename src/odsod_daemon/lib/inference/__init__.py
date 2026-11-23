@@ -162,6 +162,7 @@ class LlamaClient:
             ],
             "max_tokens": max_tokens,
             "temperature": temperature,
+            "chat_template_kwargs": {"enable_thinking": False},
         }
         async with httpx.AsyncClient(timeout=self.timeout_s) as client:
             response = await client.post(self.url, json=payload)
