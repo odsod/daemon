@@ -54,6 +54,15 @@ def check(directory: Path) -> None:
         raise TargetUnavailable("not a directory")
 
 
+def writable(directory: Path) -> bool:
+    """True if the target is a directory that this process can write into."""
+    try:
+        check(directory)
+    except TargetUnavailable:
+        return False
+    return os.access(directory, os.W_OK | os.X_OK)
+
+
 def _sync(directory: Path) -> None:
     fd = os.open(directory, os.O_RDONLY | os.O_DIRECTORY)
     try:

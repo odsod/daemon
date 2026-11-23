@@ -118,6 +118,11 @@ class Publisher:
                 since=self.since[target.name],
                 types=target.types,
             )
+            if not items and deliver.writable(target.dir):
+                # A target that is back clears its fault with no delivery.
+                self.retry_at.pop(target.name, None)
+                if self.health.clear(FAULT, key=target.name):
+                    self.health.rewrite()
             for item in items:
                 try:
                     size, digest = deliver.copy(item.path, target.dir)

@@ -39,6 +39,10 @@ mise run build
 - 2026-11-23: Step 3 done. `tests/test_publish.py` copies a finished
   transcript once and a second run copies nothing. `mise run build`: 532
   passed.
+- 2026-11-23: Fix: a scan with nothing pending for a target now clears its
+  `target-missing` fault when the target directory is present and writable.
+  Before, only a delivery cleared it, so a fault could stay with no document
+  left to deliver.
 
 ## Decisions to confirm
 

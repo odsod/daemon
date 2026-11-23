@@ -82,3 +82,27 @@ def test_full_target_shows_its_reason(
     scan(publisher(settings, now), now)
 
     assert "`full`" in faults(temp_root)[0]["message"]
+
+
+def test_fault_clears_when_target_returns_with_nothing_pending(
+    temp_root, fake_clock
+) -> None:
+    directory = temp_root / "target"
+    now = fake_clock.now
+    source = finish(temp_root, "day.md", "transcripts", now)
+    settings = publishing(temp_root, [target("vault", directory)], retry_s=30)
+    pub = publisher(settings, now)
+    scan(pub, now)
+    assert [fault["key"] for fault in faults(temp_root)] == ["vault"]
+
+    source.unlink()
+    directory.mkdir(mode=0o500)
+    fake_clock.advance(seconds=30)
+    scan(pub, fake_clock.now)
+    assert [fault["key"] for fault in faults(temp_root)] == ["vault"]
+
+    directory.chmod(0o700)
+    fake_clock.advance(seconds=30)
+    scan(pub, fake_clock.now)
+    assert faults(temp_root) == []
+    assert deliveries(temp_root, "vault") == []
