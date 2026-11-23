@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1000" viewBox="0 0 1400 1000"><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1b1b1b"/></marker></defs><rect width="1400" height="1000" fill="#f7f5ee"/><text x="700.0" y="38" font-family="Courier New, Courier, monospace" font-size="18" font-weight="normal" text-anchor="middle" fill="#1b1b1b" >OD-ADR-0002</text>
+<text x="700.0" y="64" font-family="Courier New, Courier, monospace" font-size="20" font-weight="normal" text-anchor="middle" fill="#1b1b1b" >ODSOD-DAEMON SCHEMATIC</text>
+<text x="700.0" y="100" font-family="Courier New, Courier, monospace" font-size="18" font-weight="normal" text-anchor="middle" fill="#1b1b1b" >SYSTEM CONFIGURATION</text>
+<line x1="40" y1="116" x2="1360" y2="116" stroke="#1b1b1b" stroke-width="2"/>
+<rect x="40" y="205" width="170" height="90" rx="0" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.5" stroke-dasharray="7 5"/>
+<text x="125.0" y="246.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="21" font-weight="bold" text-anchor="middle" fill="#1b1b1b" >KEYBOARDS</text>
+<text x="125.0" y="268.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="normal" text-anchor="middle" fill="#6b6b6b" >/dev/input</text>
+<rect x="300" y="195" width="210" height="110" rx="0" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="3"/>
+<text x="405.0" y="246.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="21" font-weight="bold" text-anchor="middle" fill="#1b1b1b" >KEYS</text>
+<text x="405.0" y="268.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="normal" text-anchor="middle" fill="#1b1b1b" >DEVICE LEVEL</text>
+<circle cx="300" cy="195" r="17" fill="#1b1b1b"/>
+<text x="300" y="201.8" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" font-weight="bold" text-anchor="middle" fill="#f7f5ee" >A</text>
+<rect x="620" y="185" width="340" height="130" rx="0" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="3"/>
+<text x="790.0" y="246.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="21" font-weight="bold" text-anchor="middle" fill="#1b1b1b" >SESSION</text>
+<text x="790.0" y="268.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="normal" text-anchor="middle" fill="#1b1b1b" >DICTATION · TRAY · SHORTCUTS</text>
+<circle cx="620" cy="185" r="17" fill="#1b1b1b"/>
+<text x="620" y="191.8" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" font-weight="bold" text-anchor="middle" fill="#f7f5ee" >D</text>
+<rect x="1110" y="205" width="250" height="90" rx="0" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.5" stroke-dasharray="7 5"/>
+<text x="1235.0" y="246.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="21" font-weight="bold" text-anchor="middle" fill="#1b1b1b" >KDE PLASMA</text>
+<text x="1235.0" y="268.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="normal" text-anchor="middle" fill="#6b6b6b" >APPLICATIONS</text>
+<path d="M210,250 L300,250" fill="none" stroke="#f7f5ee" stroke-width="7"/>
+<path d="M210,250 L300,250" fill="none" stroke="#1b1b1b" stroke-width="2" stroke-dasharray="2 5" marker-end="url(#arrow)"/>
+<text x="255" y="240" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#1b1b1b" letter-spacing="0.5">EVDEV</text>
+<path d="M510,250 L620,250" fill="none" stroke="#f7f5ee" stroke-width="7"/>
+<path d="M510,250 L620,250" fill="none" stroke="#1b1b1b" stroke-width="2" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+<text x="565" y="240" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#1b1b1b" letter-spacing="0.5">SOCKET</text>
+<path d="M960,250 L1110,250" fill="none" stroke="#f7f5ee" stroke-width="7"/>
+<path d="M960,250 L1110,250" fill="none" stroke="#1b1b1b" stroke-width="2" stroke-dasharray="2 5" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+<text x="1035" y="240" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#1b1b1b" letter-spacing="0.5">D-BUS</text>
+<path d="M405,195 L405,135 L1235,135 L1235,205" fill="none" stroke="#f7f5ee" stroke-width="7"/>
+<path d="M405,195 L405,135 L1235,135 L1235,205" fill="none" stroke="#1b1b1b" stroke-width="2" stroke-dasharray="2 5" marker-end="url(#arrow)"/>
+<text x="820" y="128" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#1b1b1b" letter-spacing="0.5">UINPUT: REMAPPED KEYS, PASTE</text>
+<rect x="40" y="360" width="170" height="100" rx="0" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.5" stroke-dasharray="7 5"/>
+<text x="125.0" y="396.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="21" font-weight="bold" text-anchor="middle" fill="#1b1b1b" >PIPEWIRE</text>
+<text x="125.0" y="418.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="normal" text-anchor="middle" fill="#6b6b6b" >MIC, SYSTEM</text>
+<text x="125.0" y="440.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="normal" text-anchor="middle" fill="#6b6b6b" >AUDIO</text>
+<rect x="300" y="360" width="210" height="100" rx="0" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="3"/>
+<text x="405.0" y="406.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="21" font-weight="bold" text-anchor="middle" fill="#1b1b1b" >CAPTURE</text>
+<text x="405.0" y="428.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="normal" text-anchor="middle" fill="#1b1b1b" >ALWAYS ON</text>
+<circle cx="300" cy="360" r="17" fill="#1b1b1b"/>
+<text x="300" y="366.8" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" font-weight="bold" text-anchor="middle" fill="#f7f5ee" >B</text>
+<path d="M620,357 L620,473 A170.0,12 0 0 0 960,473 L960,357" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
+<ellipse cx="790.0" cy="357" rx="170.0" ry="12" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
+<text x="790.0" y="393" font-family="Courier New, Courier, monospace" font-size="18" font-weight="bold" text-anchor="middle" fill="#1b1b1b" >STATE/</text>
+<text x="790.0" y="415" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="normal" text-anchor="middle" fill="#1b1b1b" >AUDIO BUFFER · STREAMS</text>
+<text x="790.0" y="437" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="normal" text-anchor="middle" fill="#1b1b1b" >DOCUMENTS</text>
+<path d="M210,410 L300,410" fill="none" stroke="#f7f5ee" stroke-width="7"/>
+<path d="M210,410 L300,410" fill="none" stroke="#1b1b1b" stroke-width="2" stroke-dasharray="2 5" marker-end="url(#arrow)"/>
+<text x="255" y="400" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#1b1b1b" letter-spacing="0.5">PCM</text>
+<path d="M510,410 L620,410" fill="none" stroke="#f7f5ee" stroke-width="7"/>
+<path d="M510,410 L620,410" fill="none" stroke="#1b1b1b" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="565" y="400" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#1b1b1b" letter-spacing="0.5">AUDIO</text>
+<path d="M790,315 L790,345" fill="none" stroke="#f7f5ee" stroke-width="7"/>
+<path d="M790,315 L790,345" fill="none" stroke="#1b1b1b" stroke-width="2" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+<text x="800" y="336" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="start" fill="#1b1b1b" letter-spacing="0.5">UTTERANCES, TEXT</text>
+<rect x="300" y="530" width="660" height="190" rx="0" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="3"/>
+<text x="630.0" y="632.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="21" font-weight="bold" text-anchor="middle" fill="#1b1b1b" ></text>
+<circle cx="300" cy="530" r="17" fill="#1b1b1b"/>
+<text x="300" y="536.8" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" font-weight="bold" text-anchor="middle" fill="#f7f5ee" >C</text>
+<text x="326" y="558" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="start" fill="#1b1b1b" letter-spacing="0.5">PIPELINE</text>
+<rect x="320" y="578" width="145" height="46" rx="0" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.5"/>
+<text x="392.5" y="608.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#1b1b1b" >SEGMENTATION</text>
+<rect x="483" y="578" width="145" height="46" rx="0" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.5"/>
+<text x="555.5" y="608.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#1b1b1b" >TRANSCRIPTION</text>
+<path d="M465,601.0 L483,601.0" fill="none" stroke="#f7f5ee" stroke-width="6.5"/>
+<path d="M465,601.0 L483,601.0" fill="none" stroke="#1b1b1b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<rect x="646" y="578" width="145" height="46" rx="0" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.5"/>
+<text x="718.5" y="608.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#1b1b1b" >CLEANUP</text>
+<path d="M628,601.0 L646,601.0" fill="none" stroke="#f7f5ee" stroke-width="6.5"/>
+<path d="M628,601.0 L646,601.0" fill="none" stroke="#1b1b1b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<rect x="809" y="578" width="145" height="46" rx="0" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.5"/>
+<text x="881.5" y="608.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#1b1b1b" >TRANSCRIPT</text>
+<path d="M791,601.0 L809,601.0" fill="none" stroke="#f7f5ee" stroke-width="6.5"/>
+<path d="M791,601.0 L809,601.0" fill="none" stroke="#1b1b1b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<rect x="320" y="652" width="145" height="46" rx="0" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.5"/>
+<text x="392.5" y="682.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#1b1b1b" >SIGNALS</text>
+<rect x="483" y="652" width="145" height="46" rx="0" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.5"/>
+<text x="555.5" y="682.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#1b1b1b" >INTERACTIONS</text>
+<path d="M465,675.0 L483,675.0" fill="none" stroke="#f7f5ee" stroke-width="6.5"/>
+<path d="M465,675.0 L483,675.0" fill="none" stroke="#1b1b1b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<rect x="646" y="652" width="145" height="46" rx="0" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.5"/>
+<text x="718.5" y="682.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#1b1b1b" >PUBLISH</text>
+<path d="M628,675.0 L646,675.0" fill="none" stroke="#f7f5ee" stroke-width="6.5"/>
+<path d="M628,675.0 L646,675.0" fill="none" stroke="#1b1b1b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<path d="M790,485 L790,530" fill="none" stroke="#f7f5ee" stroke-width="7"/>
+<path d="M790,485 L790,530" fill="none" stroke="#1b1b1b" stroke-width="2" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+<text x="800" y="512" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="start" fill="#1b1b1b" letter-spacing="0.5">READ, WRITE</text>
+<rect x="40" y="640" width="170" height="90" rx="0" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.5" stroke-dasharray="7 5"/>
+<text x="125.0" y="681.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="21" font-weight="bold" text-anchor="middle" fill="#1b1b1b" >BROWSER</text>
+<text x="125.0" y="703.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="normal" text-anchor="middle" fill="#6b6b6b" >MEETINGS (CDP)</text>
+<path d="M210,685 L320,685" fill="none" stroke="#f7f5ee" stroke-width="7"/>
+<path d="M210,685 L320,685" fill="none" stroke="#1b1b1b" stroke-width="2" stroke-dasharray="2 5" marker-end="url(#arrow)"/>
+<rect x="1110" y="640" width="250" height="90" rx="0" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.5" stroke-dasharray="7 5"/>
+<text x="1235.0" y="681.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="21" font-weight="bold" text-anchor="middle" fill="#1b1b1b" >TARGET DIRS</text>
+<text x="1235.0" y="703.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="normal" text-anchor="middle" fill="#6b6b6b" >VAULT INBOX</text>
+<path d="M791,685 L1110,685" fill="none" stroke="#f7f5ee" stroke-width="7"/>
+<path d="M791,685 L1110,685" fill="none" stroke="#1b1b1b" stroke-width="2" stroke-dasharray="2 5" marker-end="url(#arrow)"/>
+<text x="1035" y="675" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#1b1b1b" letter-spacing="0.5">COPY</text>
+<rect x="300" y="780" width="660" height="64" rx="0" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.5" stroke-dasharray="7 5"/>
+<text x="630.0" y="808.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" font-weight="bold" text-anchor="middle" fill="#1b1b1b" >INFERENCE HOST</text>
+<text x="630.0" y="830.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="normal" text-anchor="middle" fill="#6b6b6b" >WHISPER-SERVER · LLAMA-SERVER</text>
+<path d="M630,720 L630,780" fill="none" stroke="#f7f5ee" stroke-width="7"/>
+<path d="M630,720 L630,780" fill="none" stroke="#1b1b1b" stroke-width="2" stroke-dasharray="2 5" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+<text x="640" y="756" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#1b1b1b" letter-spacing="0.5">HTTP</text>
+<text x="1110" y="345" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="start" fill="#1b1b1b" letter-spacing="0.5">DAEMONS</text>
+<line x1="1110" y1="353" x2="1360" y2="353" stroke="#1b1b1b" stroke-width="1.5"/>
+<circle cx="1124" cy="380" r="13" fill="#1b1b1b"/>
+<text x="1124" y="385.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#f7f5ee" >A</text>
+<text x="1150" y="385" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="start" fill="#1b1b1b" >KEYS</text>
+<text x="1150" y="404" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start" fill="#6b6b6b" >ROOT, FROM BOOT</text>
+<circle cx="1124" cy="434" r="13" fill="#1b1b1b"/>
+<text x="1124" y="439.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#f7f5ee" >B</text>
+<text x="1150" y="439" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="start" fill="#1b1b1b" >CAPTURE</text>
+<text x="1150" y="458" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start" fill="#6b6b6b" >NEVER STOPS</text>
+<circle cx="1124" cy="488" r="13" fill="#1b1b1b"/>
+<text x="1124" y="493.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#f7f5ee" >C</text>
+<text x="1150" y="493" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="start" fill="#1b1b1b" >PIPELINE</text>
+<text x="1150" y="512" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start" fill="#6b6b6b" >RESTARTS FREELY</text>
+<circle cx="1124" cy="542" r="13" fill="#1b1b1b"/>
+<text x="1124" y="547.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#f7f5ee" >D</text>
+<text x="1150" y="547" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="start" fill="#1b1b1b" >SESSION</text>
+<text x="1150" y="566" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start" fill="#6b6b6b" >GRAPHICAL SESSION</text>
+<text x="700.0" y="892" font-family="Courier New, Courier, monospace" font-size="19" font-weight="normal" text-anchor="middle" fill="#1b1b1b" >Figure 1-1.  Daemon Configuration</text>
+<line x1="40" y1="910" x2="1360" y2="910" stroke="#1b1b1b" stroke-width="2"/>
+<text x="700.0" y="938" font-family="Courier New, Courier, monospace" font-size="18" font-weight="normal" text-anchor="middle" fill="#1b1b1b" >HOST CONFIGURATION</text>
+<text x="40" y="976" font-family="Courier New, Courier, monospace" font-size="17" font-weight="normal" text-anchor="start" fill="#1b1b1b" >Host ____________</text>
+<text x="660.0" y="976" font-family="Courier New, Courier, monospace" font-size="17" font-weight="normal" text-anchor="middle" fill="#1b1b1b" >Basic Date 23 Nov 2026</text>
+<text x="960.0" y="976" font-family="Courier New, Courier, monospace" font-size="17" font-weight="normal" text-anchor="middle" fill="#1b1b1b" >Change Date ________</text>
+<text x="1360" y="976" font-family="Courier New, Courier, monospace" font-size="17" font-weight="normal" text-anchor="end" fill="#1b1b1b" >Page 1-1</text></svg>

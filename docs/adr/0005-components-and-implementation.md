@@ -112,9 +112,10 @@ tests/                # mirrors src/odsod_daemon; file-in, file-out fixtures
 
 ![Architecture](../diagrams/high-level-architecture.svg)
 
-Diagram source: [`high-level-architecture.py`](../diagrams/high-level-architecture.py).
-Regenerate with
-`uv run docs/diagrams/high-level-architecture.py docs/diagrams/high-level-architecture.svg`.
+Diagram source: [`high-level-architecture.py`](../diagrams/high-level-architecture.py),
+with the shared style in [`schematic.py`](../diagrams/schematic.py). The README
+shows the overview, [`overview.py`](../diagrams/overview.py). Regenerate with
+`uv run docs/diagrams/<name>.py docs/diagrams/<name>.svg`.
 
 Components fall into four domains. Daemons group them by lifecycle
 (ADR-0002 principle 13); domains group them by what they are about. Each

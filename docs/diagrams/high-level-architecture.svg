@@ -1,249 +1,258 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="2480" height="1440" viewBox="0 0 2480 1440"><defs><marker id="a-shared" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#444444"/></marker><marker id="a-ambient" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3a6ab0"/></marker><marker id="a-dictation" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4f8a2b"/></marker><marker id="a-batch" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d0701a"/></marker><marker id="a-os" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#8a8a8a"/></marker></defs><rect width="2480" height="1440" fill="white"/>
-<text x="40" y="42" font-family="Adwaita Sans" font-size="24" font-weight="bold" text-anchor="start" fill="#222" >odsod-daemon: high-level architecture (ADR-0002 to ADR-0008)</text>
-<text x="40" y="66" font-family="Adwaita Sans" font-size="14" font-weight="normal" text-anchor="start" fill="#555" >Arrows show data flow: writer to file, file to reader. Paths and formats: ADR-0003.</text>
-<rect x="20" y="90" width="2440" height="1090" rx="16" fill="none" stroke="#999" stroke-width="2" stroke-dasharray="10 6"/>
-<text x="40" y="114" font-family="Adwaita Sans" font-size="14" font-weight="bold" text-anchor="start" fill="#777" >EACH HOST</text>
-<rect x="35.0" y="383.0" width="190" height="74" rx="10" fill="#efefef" stroke="#8a8a8a" stroke-width="2" stroke-dasharray="6 4"/>
-<text x="130" y="407.0" font-family="Adwaita Sans" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >PipeWire</text>
-<text x="130" y="425.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >mics, outputs,</text>
-<text x="130" y="443.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >meeting capture streams</text>
-<rect x="485.0" y="173.0" width="150" height="74" rx="10" fill="#efefef" stroke="#8a8a8a" stroke-width="2" stroke-dasharray="6 4"/>
-<text x="560" y="197.0" font-family="Adwaita Sans" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >keyboards</text>
-<text x="560" y="215.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >/dev/input,</text>
-<text x="560" y="233.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >grabbed</text>
-<rect x="705.0" y="173.0" width="170" height="74" rx="10" fill="#fde4e1" stroke="#b5473a" stroke-width="2"/>
-<text x="790" y="197.0" font-family="Adwaita Sans" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >keys</text>
-<text x="790" y="215.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >remap; hold Alt;</text>
-<text x="790" y="233.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >Shift+Insert</text>
-<rect x="1590.0" y="173.0" width="180" height="74" rx="10" fill="#efefef" stroke="#8a8a8a" stroke-width="2" stroke-dasharray="6 4"/>
-<text x="1680" y="197.0" font-family="Adwaita Sans" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >KDE Plasma</text>
-<text x="1680" y="215.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >KWin script, tray,</text>
-<text x="1680" y="233.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >clipboard, apps</text>
-<rect x="35.0" y="723.0" width="190" height="74" rx="10" fill="#efefef" stroke="#8a8a8a" stroke-width="2" stroke-dasharray="6 4"/>
-<text x="130" y="747.0" font-family="Adwaita Sans" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >Chrome</text>
-<text x="130" y="765.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >Meet / Teams tabs</text>
-<text x="130" y="783.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >(DevTools Protocol)</text>
-<rect x="35.0" y="883.0" width="190" height="74" rx="10" fill="#efefef" stroke="#8a8a8a" stroke-width="2" stroke-dasharray="6 4"/>
-<text x="130" y="907.0" font-family="Adwaita Sans" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >Owner</text>
-<text x="130" y="925.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >odsodctl note,</text>
-<text x="130" y="943.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >odsodctl pin</text>
-<rect x="255.0" y="383.0" width="190" height="74" rx="10" fill="#d7f0ec" stroke="#2a8c7f" stroke-width="2"/>
-<text x="350" y="407.0" font-family="Adwaita Sans" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >capture</text>
-<text x="350" y="425.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >record mic + system</text>
-<text x="350" y="443.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >audio, never stops</text>
-<rect x="915.0" y="173.0" width="190" height="74" rx="10" fill="#e3f2d9" stroke="#4f8a2b" stroke-width="2"/>
-<text x="1010" y="197.0" font-family="Adwaita Sans" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >dictation</text>
-<text x="1010" y="215.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >mute meeting streams,</text>
-<text x="1010" y="233.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >clipboard, utterance</text>
-<rect x="1360.0" y="173.0" width="180" height="74" rx="10" fill="#e3f2d9" stroke="#4f8a2b" stroke-width="2"/>
-<text x="1450" y="197.0" font-family="Adwaita Sans" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >tray</text>
-<text x="1450" y="215.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >mode + health;</text>
-<text x="1450" y="233.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >pause stops capture</text>
-<rect x="1860.0" y="173.0" width="180" height="74" rx="10" fill="#e3f2d9" stroke="#4f8a2b" stroke-width="2"/>
-<text x="1950" y="197.0" font-family="Adwaita Sans" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >shortcuts</text>
-<text x="1950" y="215.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >global shortcuts,</text>
-<text x="1950" y="233.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >launch apps</text>
-<rect x="255.0" y="723.0" width="190" height="74" rx="10" fill="#dde8f7" stroke="#3a6ab0" stroke-width="2"/>
-<text x="350" y="747.0" font-family="Adwaita Sans" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >signals</text>
-<text x="350" y="765.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >meeting + speaker</text>
-<text x="350" y="783.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >events from browser</text>
-<rect x="255.0" y="891.5" width="190" height="57" rx="10" fill="#ece4f5" stroke="#7a5aa6" stroke-width="2"/>
-<text x="350" y="915.5" font-family="Adwaita Sans" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >note / pin CLI</text>
-<text x="350" y="933.5" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >append user events</text>
-<rect x="695.0" y="563.0" width="190" height="74" rx="10" fill="#dde8f7" stroke="#3a6ab0" stroke-width="2"/>
-<text x="790" y="587.0" font-family="Adwaita Sans" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >segmentation</text>
-<text x="790" y="605.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >VAD: audio to</text>
-<text x="790" y="623.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >utterances</text>
-<rect x="1135.0" y="563.0" width="190" height="74" rx="10" fill="#dde8f7" stroke="#3a6ab0" stroke-width="2"/>
-<text x="1230" y="587.0" font-family="Adwaita Sans" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >transcription</text>
-<text x="1230" y="605.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >one worker per</text>
-<text x="1230" y="623.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >ASR backend</text>
-<rect x="1281.0" y="553.0" width="50" height="20" rx="10" fill="#f1e6fb" stroke="#8a4fc4" stroke-width="1.5"/>
-<text x="1306.0" y="567.0" font-family="Adwaita Sans" font-size="11" font-weight="bold" text-anchor="middle" fill="#6a2fa4" >HTTP</text>
-<rect x="1575.0" y="571.5" width="190" height="57" rx="10" fill="#dde8f7" stroke="#3a6ab0" stroke-width="2"/>
-<text x="1670" y="595.5" font-family="Adwaita Sans" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >cleanup</text>
-<text x="1670" y="613.5" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >LLM + glossary</text>
-<rect x="1721.0" y="561.5" width="50" height="20" rx="10" fill="#f1e6fb" stroke="#8a4fc4" stroke-width="1.5"/>
-<text x="1746.0" y="575.5" font-family="Adwaita Sans" font-size="11" font-weight="bold" text-anchor="middle" fill="#6a2fa4" >HTTP</text>
-<rect x="2015.0" y="563.0" width="190" height="74" rx="10" fill="#dde8f7" stroke="#3a6ab0" stroke-width="2"/>
-<text x="2110" y="587.0" font-family="Adwaita Sans" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >transcript</text>
-<text x="2110" y="605.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >sole writer of</text>
-<text x="2110" y="623.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >the daily log</text>
-<rect x="1135.0" y="803.0" width="190" height="74" rx="10" fill="#dde8f7" stroke="#3a6ab0" stroke-width="2"/>
-<text x="1230" y="827.0" font-family="Adwaita Sans" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >interactions</text>
-<text x="1230" y="845.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >boundaries; diarize,</text>
-<text x="1230" y="863.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >names, summary (pass 2)</text>
-<rect x="1281.0" y="793.0" width="50" height="20" rx="10" fill="#f1e6fb" stroke="#8a4fc4" stroke-width="1.5"/>
-<text x="1306.0" y="807.0" font-family="Adwaita Sans" font-size="11" font-weight="bold" text-anchor="middle" fill="#6a2fa4" >HTTP</text>
-<rect x="1465.0" y="1023.0" width="190" height="74" rx="10" fill="#ece4f5" stroke="#7a5aa6" stroke-width="2"/>
-<text x="1560" y="1047.0" font-family="Adwaita Sans" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >bench</text>
-<text x="1560" y="1065.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >score backends</text>
-<text x="1560" y="1083.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >vs references</text>
-<path d="M480,390.0 L480,462.0 L1380,462.0 L1380,390.0 L550,390.0 L540,378.0 L480,378.0 Z" fill="#fff2cc" stroke="#b38600" stroke-width="2"/>
-<text x="500" y="418" font-family="Adwaita Mono" font-size="15" font-weight="bold" text-anchor="start" fill="#222" >state/audio/&lt;channel&gt;/</text>
-<text x="500" y="436" font-family="Adwaita Sans" font-size="13" font-weight="normal" text-anchor="start" fill="#222" >rolling raw audio, time = byte offset</text>
-<text x="500" y="453" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="start" fill="#555" >read by segmentation, transcription, interactions, bench</text>
-<path d="M910.0,568.5 L910.0,645.5 L1110.0,645.5 L1110.0,568.5 L980.0,568.5 L970.0,554.5 L910.0,554.5 Z" fill="#fff2cc" stroke="#b38600" stroke-width="2"/>
-<text x="1010" y="590.5" font-family="Adwaita Mono" font-size="14" font-weight="bold" text-anchor="middle" fill="#222" >state/utterances/</text>
-<text x="1010" y="608.5" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >ambient/ + dictation/;</text>
-<text x="1010" y="626.5" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >pending = no text yet</text>
-<path d="M1355.0,568.5 L1355.0,645.5 L1545.0,645.5 L1545.0,568.5 L1425.0,568.5 L1415.0,554.5 L1355.0,554.5 Z" fill="#fff2cc" stroke="#b38600" stroke-width="2"/>
-<text x="1450" y="590.5" font-family="Adwaita Mono" font-size="14" font-weight="bold" text-anchor="middle" fill="#222" >state/asr/</text>
-<text x="1450" y="608.5" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >raw ASR text</text>
-<text x="1450" y="626.5" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >per utterance</text>
-<path d="M1795.0,568.5 L1795.0,645.5 L1985.0,645.5 L1985.0,568.5 L1865.0,568.5 L1855.0,554.5 L1795.0,554.5 Z" fill="#fff2cc" stroke="#b38600" stroke-width="2"/>
-<text x="1890" y="590.5" font-family="Adwaita Mono" font-size="14" font-weight="bold" text-anchor="middle" fill="#222" >state/text/</text>
-<text x="1890" y="608.5" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >cleaned text</text>
-<text x="1890" y="626.5" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >per utterance</text>
-<path d="M475.0,808.5 L475.0,885.5 L665.0,885.5 L665.0,808.5 L545.0,808.5 L535.0,794.5 L475.0,794.5 Z" fill="#fff2cc" stroke="#b38600" stroke-width="2"/>
-<text x="570" y="830.5" font-family="Adwaita Mono" font-size="14" font-weight="bold" text-anchor="middle" fill="#222" >state/events/</text>
-<text x="570" y="848.5" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >append-only event</text>
-<text x="570" y="866.5" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >streams per source</text>
-<path d="M910.0,808.5 L910.0,885.5 L1110.0,885.5 L1110.0,808.5 L980.0,808.5 L970.0,794.5 L910.0,794.5 Z" fill="#fff2cc" stroke="#b38600" stroke-width="2"/>
-<text x="1010" y="830.5" font-family="Adwaita Mono" font-size="14" font-weight="bold" text-anchor="middle" fill="#222" >state/interactions/</text>
-<text x="1010" y="848.5" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >finished</text>
-<text x="1010" y="866.5" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >interactions</text>
-<path d="M1795.0,1028.5 L1795.0,1105.5 L1985.0,1105.5 L1985.0,1028.5 L1865.0,1028.5 L1855.0,1014.5 L1795.0,1014.5 Z" fill="#fff2cc" stroke="#b38600" stroke-width="2"/>
-<text x="1890" y="1050.5" font-family="Adwaita Mono" font-size="14" font-weight="bold" text-anchor="middle" fill="#222" >state/bench/</text>
-<text x="1890" y="1068.5" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >cases: audio slice,</text>
-<text x="1890" y="1086.5" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >hypotheses, reference</text>
-<path d="M1575.0,397.0 L1575.0,457.0 L1765.0,457.0 L1765.0,397.0 L1645.0,397.0 L1635.0,383.0 L1575.0,383.0 Z" fill="#fff2cc" stroke="#b38600" stroke-width="2"/>
-<text x="1670" y="419.0" font-family="Adwaita Mono" font-size="14" font-weight="bold" text-anchor="middle" fill="#222" >config/</text>
-<text x="1670" y="437.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >glossary, prompts</text>
-<path d="M1140.0,170.0 L1140.0,264.0 L1320.0,264.0 L1320.0,170.0 L1210.0,170.0 L1200.0,156.0 L1140.0,156.0 Z" fill="#fffaf0" stroke="#b38600" stroke-width="2" stroke-dasharray="6 4"/>
-<text x="1230" y="192.0" font-family="Adwaita Mono" font-size="14" font-weight="bold" text-anchor="middle" fill="#222" >run/status.json</text>
-<text x="1230" y="210.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >dictation mode;</text>
-<text x="1230" y="228.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >read by tray and</text>
-<text x="1230" y="246.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >odsodctl status</text>
-<path d="M2230.0,604.0 L2230.0,840.0 L2430.0,840.0 L2430.0,604.0 L2300.0,604.0 L2290.0,590.0 L2230.0,590.0 Z" fill="#fff2cc" stroke="#b38600" stroke-width="2"/>
-<text x="2330" y="626.0" font-family="Adwaita Mono" font-size="14" font-weight="bold" text-anchor="middle" fill="#222" >state/documents/</text>
-<text x="2330" y="644.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >transcripts/</text>
-<text x="2330" y="662.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >&lt;day&gt;-&lt;host&gt;.md</text>
-<text x="2330" y="680.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >daily log, pass 1</text>
-<text x="2330" y="698.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" ></text>
-<text x="2330" y="716.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >interactions/</text>
-<text x="2330" y="734.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >&lt;day&gt;-&lt;HHMM&gt;-&lt;host&gt;</text>
-<text x="2330" y="752.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >-&lt;slug&gt;.md</text>
-<text x="2330" y="770.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >transcript + summary,</text>
-<text x="2330" y="788.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >pass 2</text>
-<rect x="2235.0" y="923.0" width="190" height="74" rx="10" fill="#dde8f7" stroke="#3a6ab0" stroke-width="2"/>
-<text x="2330" y="947.0" font-family="Adwaita Sans" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >publish</text>
-<text x="2330" y="965.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >copy finished docs,</text>
-<text x="2330" y="983.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >write once</text>
-<rect x="2230.0" y="1063.0" width="200" height="74" rx="10" fill="#efefef" stroke="#8a8a8a" stroke-width="2" stroke-dasharray="6 4"/>
-<text x="2330" y="1087.0" font-family="Adwaita Sans" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >target dirs</text>
-<text x="2330" y="1105.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >from config, e.g. a</text>
-<text x="2330" y="1123.0" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >vault inbox</text>
-<path d="M225.0,420 L255.0,420" fill="none" stroke="white" stroke-width="7"/>
-<path d="M225.0,420 L255.0,420" fill="none" stroke="#8a8a8a" stroke-width="2.2" stroke-dasharray="3 4" marker-end="url(#a-os)"/>
-<path d="M445.0,420 L480,420" fill="none" stroke="white" stroke-width="7"/>
-<path d="M445.0,420 L480,420" fill="none" stroke="#444444" stroke-width="2.2" marker-end="url(#a-shared)"/>
-<path d="M790,462.0 L790,563.0" fill="none" stroke="white" stroke-width="7"/>
-<path d="M790,462.0 L790,563.0" fill="none" stroke="#444444" stroke-width="2.2" marker-end="url(#a-shared)"/>
-<path d="M1230,462.0 L1230,563.0" fill="none" stroke="white" stroke-width="7"/>
-<path d="M1230,462.0 L1230,563.0" fill="none" stroke="#444444" stroke-width="2.2" marker-end="url(#a-shared)"/>
-<path d="M1340,462.0 L1340,740 L1250,740 L1250,803.0" fill="none" stroke="white" stroke-width="7"/>
-<path d="M1340,462.0 L1340,740 L1250,740 L1250,803.0" fill="none" stroke="#d0701a" stroke-width="2.2" marker-end="url(#a-batch)"/>
-<path d="M1340,740 L1340,1060 L1465.0,1060" fill="none" stroke="white" stroke-width="7"/>
-<path d="M1340,740 L1340,1060 L1465.0,1060" fill="none" stroke="#444444" stroke-width="2.2" marker-end="url(#a-shared)"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="2480" height="1660" viewBox="0 0 2480 1660"><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1b1b1b"/></marker></defs><rect width="2480" height="1660" fill="#f7f5ee"/><text x="1240.0" y="38" font-family="Courier New, Courier, monospace" font-size="18" font-weight="normal" text-anchor="middle" fill="#1b1b1b" >OD-ADR-0005</text>
+<text x="1240.0" y="64" font-family="Courier New, Courier, monospace" font-size="20" font-weight="normal" text-anchor="middle" fill="#1b1b1b" >ODSOD-DAEMON SCHEMATIC</text>
+<text x="1240.0" y="100" font-family="Courier New, Courier, monospace" font-size="18" font-weight="normal" text-anchor="middle" fill="#1b1b1b" >DETAILED ARCHITECTURE</text>
+<line x1="40" y1="116" x2="2440" y2="116" stroke="#1b1b1b" stroke-width="2"/>
+<defs><marker id="a-shared" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1b1b1b"/></marker><marker id="a-ambient" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1b1b1b"/></marker><marker id="a-dictation" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1b1b1b"/></marker><marker id="a-batch" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1b1b1b"/></marker><marker id="a-os" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1b1b1b"/></marker></defs>
+<g transform="translate(0, 100)"><rect x="20" y="90" width="2440" height="1090" rx="16" fill="none" stroke="#6b6b6b" stroke-width="2" stroke-dasharray="10 6"/>
+<text x="40" y="114" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#6b6b6b" >EACH HOST</text>
+<rect x="35.0" y="383.0" width="190" height="74" rx="10" fill="#f7f5ee" stroke="#6b6b6b" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="130" y="407.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >PIPEWIRE</text>
+<text x="130" y="425.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >MICS, OUTPUTS,</text>
+<text x="130" y="443.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >MEETING CAPTURE STREAMS</text>
+<rect x="485.0" y="173.0" width="150" height="74" rx="10" fill="#f7f5ee" stroke="#6b6b6b" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="560" y="197.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >KEYBOARDS</text>
+<text x="560" y="215.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >/dev/input,</text>
+<text x="560" y="233.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >GRABBED</text>
+<rect x="705.0" y="173.0" width="170" height="74" rx="10" fill="#d9d6cc" stroke="#1b1b1b" stroke-width="2"/>
+<text x="790" y="197.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >KEYS</text>
+<text x="790" y="215.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >REMAP; HOLD ALT;</text>
+<text x="790" y="233.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >SHIFT+INSERT</text>
+<rect x="1590.0" y="173.0" width="180" height="74" rx="10" fill="#f7f5ee" stroke="#6b6b6b" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="1680" y="197.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >KDE PLASMA</text>
+<text x="1680" y="215.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >KWIN SCRIPT, TRAY,</text>
+<text x="1680" y="233.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >CLIPBOARD, APPS</text>
+<rect x="35.0" y="723.0" width="190" height="74" rx="10" fill="#f7f5ee" stroke="#6b6b6b" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="130" y="747.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >CHROME</text>
+<text x="130" y="765.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >Meet / Teams tabs</text>
+<text x="130" y="783.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >(DEVTOOLS PROTOCOL)</text>
+<rect x="35.0" y="883.0" width="190" height="74" rx="10" fill="#f7f5ee" stroke="#6b6b6b" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="130" y="907.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >OWNER</text>
+<text x="130" y="925.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >ODSODCTL NOTE,</text>
+<text x="130" y="943.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >ODSODCTL PIN</text>
+<rect x="255.0" y="383.0" width="190" height="74" rx="10" fill="#e4e1d8" stroke="#1b1b1b" stroke-width="2"/>
+<text x="350" y="407.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >CAPTURE</text>
+<text x="350" y="425.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >RECORD MIC + SYSTEM</text>
+<text x="350" y="443.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >AUDIO, NEVER STOPS</text>
+<rect x="915.0" y="173.0" width="190" height="74" rx="10" fill="#eeebe3" stroke="#1b1b1b" stroke-width="2"/>
+<text x="1010" y="197.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >DICTATION</text>
+<text x="1010" y="215.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >MUTE MEETING STREAMS,</text>
+<text x="1010" y="233.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >CLIPBOARD, UTTERANCE</text>
+<rect x="1360.0" y="173.0" width="180" height="74" rx="10" fill="#eeebe3" stroke="#1b1b1b" stroke-width="2"/>
+<text x="1450" y="197.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >TRAY</text>
+<text x="1450" y="215.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >MODE + HEALTH;</text>
+<text x="1450" y="233.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >PAUSE STOPS CAPTURE</text>
+<rect x="1860.0" y="173.0" width="180" height="74" rx="10" fill="#eeebe3" stroke="#1b1b1b" stroke-width="2"/>
+<text x="1950" y="197.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >SHORTCUTS</text>
+<text x="1950" y="215.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >GLOBAL SHORTCUTS,</text>
+<text x="1950" y="233.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >LAUNCH APPS</text>
+<rect x="255.0" y="723.0" width="190" height="74" rx="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
+<text x="350" y="747.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >SIGNALS</text>
+<text x="350" y="765.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >MEETING + SPEAKER</text>
+<text x="350" y="783.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >EVENTS FROM BROWSER</text>
+<rect x="255.0" y="891.5" width="190" height="57" rx="10" fill="#f7f5ee" stroke="#6b6b6b" stroke-width="2"/>
+<text x="350" y="915.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >note / pin CLI</text>
+<text x="350" y="933.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >APPEND USER EVENTS</text>
+<rect x="695.0" y="563.0" width="190" height="74" rx="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
+<text x="790" y="587.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >SEGMENTATION</text>
+<text x="790" y="605.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >VAD: AUDIO TO</text>
+<text x="790" y="623.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >UTTERANCES</text>
+<rect x="1135.0" y="563.0" width="190" height="74" rx="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
+<text x="1230" y="587.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >TRANSCRIPTION</text>
+<text x="1230" y="605.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >ONE WORKER PER</text>
+<text x="1230" y="623.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >ASR BACKEND</text>
+<rect x="1281.0" y="553.0" width="50" height="20" rx="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.5"/>
+<text x="1306.0" y="567.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" text-anchor="middle" fill="#1b1b1b" >HTTP</text>
+<rect x="1575.0" y="571.5" width="190" height="57" rx="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
+<text x="1670" y="595.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >CLEANUP</text>
+<text x="1670" y="613.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >LLM + GLOSSARY</text>
+<rect x="1721.0" y="561.5" width="50" height="20" rx="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.5"/>
+<text x="1746.0" y="575.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" text-anchor="middle" fill="#1b1b1b" >HTTP</text>
+<rect x="2015.0" y="563.0" width="190" height="74" rx="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
+<text x="2110" y="587.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >TRANSCRIPT</text>
+<text x="2110" y="605.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >SOLE WRITER OF</text>
+<text x="2110" y="623.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >THE DAILY LOG</text>
+<rect x="1135.0" y="803.0" width="190" height="74" rx="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
+<text x="1230" y="827.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >INTERACTIONS</text>
+<text x="1230" y="845.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >BOUNDARIES; DIARIZE,</text>
+<text x="1230" y="863.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >NAMES, SUMMARY (PASS 2)</text>
+<rect x="1281.0" y="793.0" width="50" height="20" rx="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.5"/>
+<text x="1306.0" y="807.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" text-anchor="middle" fill="#1b1b1b" >HTTP</text>
+<rect x="1465.0" y="1023.0" width="190" height="74" rx="10" fill="#f7f5ee" stroke="#6b6b6b" stroke-width="2"/>
+<text x="1560" y="1047.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >BENCH</text>
+<text x="1560" y="1065.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >SCORE BACKENDS</text>
+<text x="1560" y="1083.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >VS REFERENCES</text>
+<path d="M480,390.0 L480,462.0 L1380,462.0 L1380,390.0 L550,390.0 L540,378.0 L480,378.0 Z" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
+<text x="500" y="418" font-family="Courier New, Courier, monospace" font-size="15" font-weight="bold" text-anchor="start" fill="#222" >state/audio/&lt;channel&gt;/</text>
+<text x="500" y="436" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start" fill="#222" >ROLLING RAW AUDIO, TIME = BYTE OFFSET</text>
+<text x="500" y="453" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#555" >READ BY SEGMENTATION, TRANSCRIPTION, INTERACTIONS, BENCH</text>
+<path d="M910.0,568.5 L910.0,645.5 L1110.0,645.5 L1110.0,568.5 L980.0,568.5 L970.0,554.5 L910.0,554.5 Z" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
+<text x="1010" y="590.5" font-family="Courier New, Courier, monospace" font-size="14" font-weight="bold" text-anchor="middle" fill="#222" >state/utterances/</text>
+<text x="1010" y="608.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >ambient/ + dictation/;</text>
+<text x="1010" y="626.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >PENDING = NO TEXT YET</text>
+<path d="M1355.0,568.5 L1355.0,645.5 L1545.0,645.5 L1545.0,568.5 L1425.0,568.5 L1415.0,554.5 L1355.0,554.5 Z" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
+<text x="1450" y="590.5" font-family="Courier New, Courier, monospace" font-size="14" font-weight="bold" text-anchor="middle" fill="#222" >state/asr/</text>
+<text x="1450" y="608.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >RAW ASR TEXT</text>
+<text x="1450" y="626.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >PER UTTERANCE</text>
+<path d="M1795.0,568.5 L1795.0,645.5 L1985.0,645.5 L1985.0,568.5 L1865.0,568.5 L1855.0,554.5 L1795.0,554.5 Z" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
+<text x="1890" y="590.5" font-family="Courier New, Courier, monospace" font-size="14" font-weight="bold" text-anchor="middle" fill="#222" >state/text/</text>
+<text x="1890" y="608.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >CLEANED TEXT</text>
+<text x="1890" y="626.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >PER UTTERANCE</text>
+<path d="M475.0,808.5 L475.0,885.5 L665.0,885.5 L665.0,808.5 L545.0,808.5 L535.0,794.5 L475.0,794.5 Z" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
+<text x="570" y="830.5" font-family="Courier New, Courier, monospace" font-size="14" font-weight="bold" text-anchor="middle" fill="#222" >state/events/</text>
+<text x="570" y="848.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >APPEND-ONLY EVENT</text>
+<text x="570" y="866.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >STREAMS PER SOURCE</text>
+<path d="M910.0,808.5 L910.0,885.5 L1110.0,885.5 L1110.0,808.5 L980.0,808.5 L970.0,794.5 L910.0,794.5 Z" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
+<text x="1010" y="830.5" font-family="Courier New, Courier, monospace" font-size="14" font-weight="bold" text-anchor="middle" fill="#222" >state/interactions/</text>
+<text x="1010" y="848.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >FINISHED</text>
+<text x="1010" y="866.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >INTERACTIONS</text>
+<path d="M1795.0,1028.5 L1795.0,1105.5 L1985.0,1105.5 L1985.0,1028.5 L1865.0,1028.5 L1855.0,1014.5 L1795.0,1014.5 Z" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
+<text x="1890" y="1050.5" font-family="Courier New, Courier, monospace" font-size="14" font-weight="bold" text-anchor="middle" fill="#222" >state/bench/</text>
+<text x="1890" y="1068.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >CASES: AUDIO SLICE,</text>
+<text x="1890" y="1086.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >HYPOTHESES, REFERENCE</text>
+<path d="M1575.0,397.0 L1575.0,457.0 L1765.0,457.0 L1765.0,397.0 L1645.0,397.0 L1635.0,383.0 L1575.0,383.0 Z" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
+<text x="1670" y="419.0" font-family="Courier New, Courier, monospace" font-size="14" font-weight="bold" text-anchor="middle" fill="#222" >config/</text>
+<text x="1670" y="437.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >GLOSSARY, PROMPTS</text>
+<path d="M1140.0,170.0 L1140.0,264.0 L1320.0,264.0 L1320.0,170.0 L1210.0,170.0 L1200.0,156.0 L1140.0,156.0 Z" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="1230" y="192.0" font-family="Courier New, Courier, monospace" font-size="14" font-weight="bold" text-anchor="middle" fill="#222" >run/status.json</text>
+<text x="1230" y="210.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >DICTATION MODE;</text>
+<text x="1230" y="228.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >READ BY TRAY AND</text>
+<text x="1230" y="246.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >ODSODCTL STATUS</text>
+<path d="M2230.0,604.0 L2230.0,840.0 L2430.0,840.0 L2430.0,604.0 L2300.0,604.0 L2290.0,590.0 L2230.0,590.0 Z" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
+<text x="2330" y="626.0" font-family="Courier New, Courier, monospace" font-size="14" font-weight="bold" text-anchor="middle" fill="#222" >state/documents/</text>
+<text x="2330" y="644.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >transcripts/</text>
+<text x="2330" y="662.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >&lt;day&gt;-&lt;host&gt;.md</text>
+<text x="2330" y="680.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >DAILY LOG, PASS 1</text>
+<text x="2330" y="698.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" ></text>
+<text x="2330" y="716.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >interactions/</text>
+<text x="2330" y="734.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >&lt;day&gt;-&lt;HHMM&gt;-&lt;host&gt;</text>
+<text x="2330" y="752.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >-&lt;slug&gt;.md</text>
+<text x="2330" y="770.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >TRANSCRIPT + SUMMARY,</text>
+<text x="2330" y="788.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >PASS 2</text>
+<rect x="2235.0" y="923.0" width="190" height="74" rx="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
+<text x="2330" y="947.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >PUBLISH</text>
+<text x="2330" y="965.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >COPY FINISHED DOCS,</text>
+<text x="2330" y="983.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >WRITE ONCE</text>
+<rect x="2230.0" y="1063.0" width="200" height="74" rx="10" fill="#f7f5ee" stroke="#6b6b6b" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="2330" y="1087.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >TARGET DIRS</text>
+<text x="2330" y="1105.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >FROM CONFIG, E.G. A</text>
+<text x="2330" y="1123.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#333" >VAULT INBOX</text>
+<path d="M225.0,420 L255.0,420" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M225.0,420 L255.0,420" fill="none" stroke="#1b1b1b" stroke-width="1.8" stroke-dasharray="2 5" marker-end="url(#a-os)"/>
+<path d="M445.0,420 L480,420" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M445.0,420 L480,420" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#a-shared)"/>
+<path d="M790,462.0 L790,563.0" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M790,462.0 L790,563.0" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#a-shared)"/>
+<path d="M1230,462.0 L1230,563.0" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M1230,462.0 L1230,563.0" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#a-shared)"/>
+<path d="M1340,462.0 L1340,740 L1250,740 L1250,803.0" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M1340,462.0 L1340,740 L1250,740 L1250,803.0" fill="none" stroke="#1b1b1b" stroke-width="2.4" stroke-dasharray="10 6" marker-end="url(#a-batch)"/>
+<path d="M1340,740 L1340,1060 L1465.0,1060" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M1340,740 L1340,1060 L1465.0,1060" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#a-shared)"/>
 <circle cx="1340" cy="740" r="4" fill="#444"/>
-<path d="M885.0,600 L910.0,600" fill="none" stroke="white" stroke-width="7"/>
-<path d="M885.0,600 L910.0,600" fill="none" stroke="#3a6ab0" stroke-width="2.2" marker-end="url(#a-ambient)"/>
-<path d="M1110.0,600 L1135.0,600" fill="none" stroke="white" stroke-width="7"/>
-<path d="M1110.0,600 L1135.0,600" fill="none" stroke="#444444" stroke-width="2.2" marker-end="url(#a-shared)"/>
-<path d="M1325.0,600 L1355.0,600" fill="none" stroke="white" stroke-width="7"/>
-<path d="M1325.0,600 L1355.0,600" fill="none" stroke="#444444" stroke-width="2.2" marker-end="url(#a-shared)"/>
-<path d="M1545.0,600 L1575.0,600" fill="none" stroke="white" stroke-width="7"/>
-<path d="M1545.0,600 L1575.0,600" fill="none" stroke="#444444" stroke-width="2.2" marker-end="url(#a-shared)"/>
-<path d="M1670,457.0 L1670,571.5" fill="none" stroke="white" stroke-width="7"/>
-<path d="M1670,457.0 L1670,571.5" fill="none" stroke="#444444" stroke-width="2.2" marker-end="url(#a-shared)"/>
-<path d="M1765.0,600 L1795.0,600" fill="none" stroke="white" stroke-width="7"/>
-<path d="M1765.0,600 L1795.0,600" fill="none" stroke="#444444" stroke-width="2.2" marker-end="url(#a-shared)"/>
-<path d="M1985.0,600 L2015.0,600" fill="none" stroke="white" stroke-width="7"/>
-<path d="M1985.0,600 L2015.0,600" fill="none" stroke="#3a6ab0" stroke-width="2.2" marker-end="url(#a-ambient)"/>
-<path d="M2205.0,600 L2230.0,600" fill="none" stroke="white" stroke-width="7"/>
-<path d="M2205.0,600 L2230.0,600" fill="none" stroke="#3a6ab0" stroke-width="2.2" marker-end="url(#a-ambient)"/>
-<path d="M635.0,210 L705.0,210" fill="none" stroke="white" stroke-width="7"/>
-<path d="M635.0,210 L705.0,210" fill="none" stroke="#8a8a8a" stroke-width="2.2" stroke-dasharray="3 4" marker-end="url(#a-os)"/>
-<path d="M875.0,210 L915.0,210" fill="none" stroke="white" stroke-width="7"/>
-<path d="M875.0,210 L915.0,210" fill="none" stroke="#4f8a2b" stroke-width="2.2" marker-end="url(#a-dictation)"/>
-<text x="900" y="202" font-family="Adwaita Sans" font-size="12" font-weight="bold" text-anchor="middle" fill="#4f8a2b" >socket</text>
-<path d="M980,247.0 L980,557" fill="none" stroke="white" stroke-width="7"/>
-<path d="M980,247.0 L980,557" fill="none" stroke="#4f8a2b" stroke-width="2.2" marker-end="url(#a-dictation)"/>
-<text x="972" y="520" font-family="Adwaita Sans" font-size="12" font-weight="bold" text-anchor="end" fill="#4f8a2b" >dictation utterances</text>
-<path d="M1105.0,210 L1140.0,210" fill="none" stroke="white" stroke-width="7"/>
-<path d="M1105.0,210 L1140.0,210" fill="none" stroke="#4f8a2b" stroke-width="2.2" marker-end="url(#a-dictation)"/>
-<path d="M1320.0,210 L1360.0,210" fill="none" stroke="white" stroke-width="7"/>
-<path d="M1320.0,210 L1360.0,210" fill="none" stroke="#4f8a2b" stroke-width="2.2" marker-end="url(#a-dictation)"/>
-<path d="M1540.0,210 L1590.0,210" fill="none" stroke="white" stroke-width="7"/>
-<path d="M1540.0,210 L1590.0,210" fill="none" stroke="#8a8a8a" stroke-width="2.2" stroke-dasharray="3 4" marker-end="url(#a-os)"/>
-<path d="M1770.0,210 L1860.0,210" fill="none" stroke="white" stroke-width="7"/>
-<path d="M1770.0,210 L1860.0,210" fill="none" stroke="#8a8a8a" stroke-width="2.2" stroke-dasharray="3 4" marker-end="url(#a-os)"/>
-<text x="1815" y="202" font-family="Adwaita Sans" font-size="12" font-weight="bold" text-anchor="middle" fill="#8a8a8a" >D-Bus</text>
-<path d="M970,173.0 L970,120 L110,120 L110,383.0" fill="none" stroke="white" stroke-width="7"/>
-<path d="M970,173.0 L970,120 L110,120 L110,383.0" fill="none" stroke="#8a8a8a" stroke-width="2.2" stroke-dasharray="3 4" marker-end="url(#a-os)"/>
-<text x="500" y="112" font-family="Adwaita Sans" font-size="12" font-weight="bold" text-anchor="middle" fill="#8a8a8a" >mute meeting capture streams while dictating</text>
-<path d="M1890,554.5 L1890,300 L1040,300 L1040,247.0" fill="none" stroke="white" stroke-width="7"/>
-<path d="M1890,554.5 L1890,300 L1040,300 L1040,247.0" fill="none" stroke="#4f8a2b" stroke-width="2.2" marker-end="url(#a-dictation)"/>
-<text x="1880" y="292" font-family="Adwaita Sans" font-size="12" font-weight="bold" text-anchor="end" fill="#4f8a2b" >dictated text</text>
-<path d="M830,173.0 L830,150 L1680,150 L1680,173.0" fill="none" stroke="white" stroke-width="7"/>
-<path d="M830,173.0 L830,150 L1680,150 L1680,173.0" fill="none" stroke="#8a8a8a" stroke-width="2.2" stroke-dasharray="3 4" marker-end="url(#a-os)"/>
-<text x="1300" y="142" font-family="Adwaita Sans" font-size="12" font-weight="bold" text-anchor="middle" fill="#8a8a8a" >remapped keys + paste chord (uinput)</text>
-<path d="M225.0,760 L255.0,760" fill="none" stroke="white" stroke-width="7"/>
-<path d="M225.0,760 L255.0,760" fill="none" stroke="#8a8a8a" stroke-width="2.2" stroke-dasharray="3 4" marker-end="url(#a-os)"/>
-<path d="M445.0,760 L475.0,820" fill="none" stroke="white" stroke-width="7"/>
-<path d="M445.0,760 L475.0,820" fill="none" stroke="#444444" stroke-width="2.2" marker-end="url(#a-shared)"/>
-<path d="M445.0,920 L475.0,860" fill="none" stroke="white" stroke-width="7"/>
-<path d="M445.0,920 L475.0,860" fill="none" stroke="#444444" stroke-width="2.2" marker-end="url(#a-shared)"/>
-<path d="M610,885.5 L610,1130 L2110,1130 L2110,637.0" fill="none" stroke="white" stroke-width="7"/>
-<path d="M610,885.5 L610,1130 L2110,1130 L2110,637.0" fill="none" stroke="#3a6ab0" stroke-width="2.2" marker-end="url(#a-ambient)"/>
-<text x="2090" y="1120" font-family="Adwaita Sans" font-size="12" font-weight="bold" text-anchor="end" fill="#3a6ab0" >notes, pins, meetings to the daily log</text>
-<path d="M1070,645.5 L1070,760 L1200,760 L1200,803.0" fill="none" stroke="white" stroke-width="7"/>
-<path d="M1070,645.5 L1070,760 L1200,760 L1200,803.0" fill="none" stroke="#d0701a" stroke-width="2.2" marker-end="url(#a-batch)"/>
-<path d="M1135.0,840 L1110.0,840" fill="none" stroke="white" stroke-width="7"/>
-<path d="M1135.0,840 L1110.0,840" fill="none" stroke="#d0701a" stroke-width="2.2" marker-end="url(#a-batch)"/>
-<path d="M530,885.5 L530,1000 L1200,1000 L1200,877.0" fill="none" stroke="white" stroke-width="7"/>
-<path d="M530,885.5 L530,1000 L1200,1000 L1200,877.0" fill="none" stroke="#d0701a" stroke-width="2.2" marker-end="url(#a-batch)"/>
-<text x="1180" y="990" font-family="Adwaita Sans" font-size="12" font-weight="bold" text-anchor="end" fill="#d0701a" >meetings, pins, speakers</text>
-<path d="M1325.0,840 L2230,840" fill="none" stroke="white" stroke-width="7"/>
-<path d="M1325.0,840 L2230,840" fill="none" stroke="#d0701a" stroke-width="2.2" marker-end="url(#a-batch)"/>
-<path d="M2330,840.0 L2330,923.0" fill="none" stroke="white" stroke-width="7"/>
-<path d="M2330,840.0 L2330,923.0" fill="none" stroke="#444444" stroke-width="2.2" marker-end="url(#a-shared)"/>
-<path d="M2330,997.0 L2330,1063.0" fill="none" stroke="white" stroke-width="7"/>
-<path d="M2330,997.0 L2330,1063.0" fill="none" stroke="#8a8a8a" stroke-width="2.2" stroke-dasharray="3 4" marker-end="url(#a-os)"/>
-<path d="M1450,645.5 L1450,1000 L1530,1000 L1530,1023.0" fill="none" stroke="white" stroke-width="7"/>
-<path d="M1450,645.5 L1450,1000 L1530,1000 L1530,1023.0" fill="none" stroke="#444444" stroke-width="2.2" marker-end="url(#a-shared)"/>
-<path d="M1655.0,1060 L1795.0,1060" fill="none" stroke="white" stroke-width="7"/>
-<path d="M1655.0,1060 L1795.0,1060" fill="none" stroke="#444444" stroke-width="2.2" marker-end="url(#a-shared)"/>
-<rect x="900" y="1220" width="1100" height="90" rx="12" fill="#f6effc" stroke="#8a4fc4" stroke-width="2" stroke-dasharray="10 6"/>
-<text x="1450" y="1252" font-family="Adwaita Sans" font-size="15" font-weight="bold" text-anchor="middle" fill="#6a2fa4" >INFERENCE HOST (desktop GPU)</text>
-<text x="1450" y="1276" font-family="Adwaita Sans" font-size="13" font-weight="normal" text-anchor="middle" fill="#222" >whisper-server (ASR) and llama-server (LLM), reached over HTTP via Tailscale</text>
-<text x="1450" y="1296" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#555" >no broker: each host serves its own dictation first; across hosts, first come first served</text>
-<text x="1450" y="1206" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="middle" fill="#6a2fa4" >components with an HTTP badge call these servers</text>
-<text x="40" y="1215" font-family="Adwaita Sans" font-size="14" font-weight="bold" text-anchor="start" fill="#777" >LEGEND</text>
-<rect x="40" y="1233" width="34" height="22" rx="5" fill="#fde4e1" stroke="#b5473a" stroke-width="2"/>
-<text x="84" y="1249" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="start" fill="#222" >odsod-daemon-keys.service (system, root, C)</text>
-<rect x="40" y="1279" width="34" height="22" rx="5" fill="#d7f0ec" stroke="#2a8c7f" stroke-width="2"/>
-<text x="84" y="1295" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="start" fill="#222" >odsod-daemon-capture.service (always on)</text>
-<rect x="40" y="1325" width="34" height="22" rx="5" fill="#e3f2d9" stroke="#4f8a2b" stroke-width="2"/>
-<text x="84" y="1341" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="start" fill="#222" >odsod-daemon-session.service: dictation, tray, shortcuts</text>
-<rect x="40" y="1371" width="34" height="22" rx="5" fill="#dde8f7" stroke="#3a6ab0" stroke-width="2"/>
-<text x="84" y="1387" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="start" fill="#222" >odsod-daemon-pipeline.service (restartable)</text>
-<rect x="460" y="1233" width="34" height="22" rx="5" fill="#ece4f5" stroke="#7a5aa6" stroke-width="2"/>
-<text x="504" y="1249" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="start" fill="#222" >command (on demand)</text>
-<rect x="460" y="1279" width="34" height="22" rx="5" fill="#fff2cc" stroke="#b38600" stroke-width="2"/>
-<text x="504" y="1295" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="start" fill="#222" >file interface (state/ = $XDG_STATE_HOME/odsod-daemon)</text>
-<rect x="460" y="1325" width="34" height="22" rx="5" fill="#fffaf0" stroke="#b38600" stroke-width="2" stroke-dasharray="5 3"/>
-<text x="504" y="1341" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="start" fill="#222" >runtime file (run/ = $XDG_RUNTIME_DIR/odsod-daemon, tmpfs)</text>
-<rect x="460" y="1371" width="34" height="22" rx="5" fill="#efefef" stroke="#8a8a8a" stroke-width="2" stroke-dasharray="5 3"/>
-<text x="504" y="1387" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="start" fill="#222" >outside odsod-daemon</text>
-<line x1="2050" y1="1245" x2="2090" y2="1245" stroke="#444444" stroke-width="2.2" marker-end="url(#a-shared)"/>
-<text x="2100" y="1249" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="start" fill="#222" >data flow, shared</text>
-<line x1="2050" y1="1275" x2="2090" y2="1275" stroke="#3a6ab0" stroke-width="2.2" marker-end="url(#a-ambient)"/>
-<text x="2100" y="1279" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="start" fill="#222" >ambient (pass 1)</text>
-<line x1="2050" y1="1305" x2="2090" y2="1305" stroke="#4f8a2b" stroke-width="2.2" marker-end="url(#a-dictation)"/>
-<text x="2100" y="1309" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="start" fill="#222" >dictation</text>
-<line x1="2270" y1="1245" x2="2310" y2="1245" stroke="#d0701a" stroke-width="2.2" marker-end="url(#a-batch)"/>
-<text x="2320" y="1249" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="start" fill="#222" >batch (pass 2)</text>
-<line x1="2270" y1="1275" x2="2310" y2="1275" stroke="#8a8a8a" stroke-width="2.2" stroke-dasharray="3 4" marker-end="url(#a-os)"/>
-<text x="2320" y="1279" font-family="Adwaita Sans" font-size="12" font-weight="normal" text-anchor="start" fill="#222" >OS / device interface</text></svg>
+<path d="M885.0,600 L910.0,600" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M885.0,600 L910.0,600" fill="none" stroke="#1b1b1b" stroke-width="2.4" marker-end="url(#a-ambient)"/>
+<path d="M1110.0,600 L1135.0,600" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M1110.0,600 L1135.0,600" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#a-shared)"/>
+<path d="M1325.0,600 L1355.0,600" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M1325.0,600 L1355.0,600" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#a-shared)"/>
+<path d="M1545.0,600 L1575.0,600" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M1545.0,600 L1575.0,600" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#a-shared)"/>
+<path d="M1670,457.0 L1670,571.5" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M1670,457.0 L1670,571.5" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#a-shared)"/>
+<path d="M1765.0,600 L1795.0,600" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M1765.0,600 L1795.0,600" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#a-shared)"/>
+<path d="M1985.0,600 L2015.0,600" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M1985.0,600 L2015.0,600" fill="none" stroke="#1b1b1b" stroke-width="2.4" marker-end="url(#a-ambient)"/>
+<path d="M2205.0,600 L2230.0,600" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M2205.0,600 L2230.0,600" fill="none" stroke="#1b1b1b" stroke-width="2.4" marker-end="url(#a-ambient)"/>
+<path d="M635.0,210 L705.0,210" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M635.0,210 L705.0,210" fill="none" stroke="#1b1b1b" stroke-width="1.8" stroke-dasharray="2 5" marker-end="url(#a-os)"/>
+<path d="M875.0,210 L915.0,210" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M875.0,210 L915.0,210" fill="none" stroke="#1b1b1b" stroke-width="3.6" marker-end="url(#a-dictation)"/>
+<text x="895" y="188" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#1b1b1b" >SOCKET</text>
+<path d="M980,247.0 L980,557" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M980,247.0 L980,557" fill="none" stroke="#1b1b1b" stroke-width="3.6" marker-end="url(#a-dictation)"/>
+<text x="972" y="520" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="end" fill="#1b1b1b" >DICTATION UTTERANCES</text>
+<path d="M1105.0,210 L1140.0,210" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M1105.0,210 L1140.0,210" fill="none" stroke="#1b1b1b" stroke-width="3.6" marker-end="url(#a-dictation)"/>
+<path d="M1320.0,210 L1360.0,210" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M1320.0,210 L1360.0,210" fill="none" stroke="#1b1b1b" stroke-width="3.6" marker-end="url(#a-dictation)"/>
+<path d="M1540.0,210 L1590.0,210" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M1540.0,210 L1590.0,210" fill="none" stroke="#1b1b1b" stroke-width="1.8" stroke-dasharray="2 5" marker-end="url(#a-os)"/>
+<path d="M1770.0,210 L1860.0,210" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M1770.0,210 L1860.0,210" fill="none" stroke="#1b1b1b" stroke-width="1.8" stroke-dasharray="2 5" marker-end="url(#a-os)"/>
+<text x="1815" y="202" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#1b1b1b" >D-BUS</text>
+<path d="M970,173.0 L970,120 L110,120 L110,383.0" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M970,173.0 L970,120 L110,120 L110,383.0" fill="none" stroke="#1b1b1b" stroke-width="1.8" stroke-dasharray="2 5" marker-end="url(#a-os)"/>
+<text x="500" y="112" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#1b1b1b" >MUTE MEETING CAPTURE STREAMS WHILE DICTATING</text>
+<path d="M1890,554.5 L1890,300 L1040,300 L1040,247.0" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M1890,554.5 L1890,300 L1040,300 L1040,247.0" fill="none" stroke="#1b1b1b" stroke-width="3.6" marker-end="url(#a-dictation)"/>
+<text x="1880" y="292" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="end" fill="#1b1b1b" >DICTATED TEXT</text>
+<path d="M830,173.0 L830,150 L1680,150 L1680,173.0" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M830,173.0 L830,150 L1680,150 L1680,173.0" fill="none" stroke="#1b1b1b" stroke-width="1.8" stroke-dasharray="2 5" marker-end="url(#a-os)"/>
+<text x="1300" y="142" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#1b1b1b" >REMAPPED KEYS + PASTE CHORD (UINPUT)</text>
+<path d="M225.0,760 L255.0,760" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M225.0,760 L255.0,760" fill="none" stroke="#1b1b1b" stroke-width="1.8" stroke-dasharray="2 5" marker-end="url(#a-os)"/>
+<path d="M445.0,760 L475.0,820" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M445.0,760 L475.0,820" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#a-shared)"/>
+<path d="M445.0,920 L475.0,860" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M445.0,920 L475.0,860" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#a-shared)"/>
+<path d="M610,885.5 L610,1130 L2110,1130 L2110,637.0" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M610,885.5 L610,1130 L2110,1130 L2110,637.0" fill="none" stroke="#1b1b1b" stroke-width="2.4" marker-end="url(#a-ambient)"/>
+<text x="2090" y="1120" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="end" fill="#1b1b1b" >NOTES, PINS, MEETINGS TO THE DAILY LOG</text>
+<path d="M1070,645.5 L1070,760 L1200,760 L1200,803.0" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M1070,645.5 L1070,760 L1200,760 L1200,803.0" fill="none" stroke="#1b1b1b" stroke-width="2.4" stroke-dasharray="10 6" marker-end="url(#a-batch)"/>
+<path d="M1135.0,840 L1110.0,840" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M1135.0,840 L1110.0,840" fill="none" stroke="#1b1b1b" stroke-width="2.4" stroke-dasharray="10 6" marker-end="url(#a-batch)"/>
+<path d="M530,885.5 L530,1000 L1200,1000 L1200,877.0" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M530,885.5 L530,1000 L1200,1000 L1200,877.0" fill="none" stroke="#1b1b1b" stroke-width="2.4" stroke-dasharray="10 6" marker-end="url(#a-batch)"/>
+<text x="1180" y="990" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="end" fill="#1b1b1b" >MEETINGS, PINS, SPEAKERS</text>
+<path d="M1325.0,840 L2230,840" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M1325.0,840 L2230,840" fill="none" stroke="#1b1b1b" stroke-width="2.4" stroke-dasharray="10 6" marker-end="url(#a-batch)"/>
+<path d="M2330,840.0 L2330,923.0" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M2330,840.0 L2330,923.0" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#a-shared)"/>
+<path d="M2330,997.0 L2330,1063.0" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M2330,997.0 L2330,1063.0" fill="none" stroke="#1b1b1b" stroke-width="1.8" stroke-dasharray="2 5" marker-end="url(#a-os)"/>
+<path d="M1450,645.5 L1450,1000 L1530,1000 L1530,1023.0" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M1450,645.5 L1450,1000 L1530,1000 L1530,1023.0" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#a-shared)"/>
+<path d="M1655.0,1060 L1795.0,1060" fill="none" stroke="#f7f5ee" stroke-width="8"/>
+<path d="M1655.0,1060 L1795.0,1060" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#a-shared)"/>
+<rect x="900" y="1220" width="1100" height="90" rx="0" fill="none" stroke="#1b1b1b" stroke-width="2" stroke-dasharray="10 6"/>
+<text x="1450" y="1252" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#222" >INFERENCE HOST (DESKTOP GPU)</text>
+<text x="1450" y="1276" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="middle" fill="#222" >WHISPER-SERVER (ASR) AND LLAMA-SERVER (LLM), REACHED OVER HTTP VIA TAILSCALE</text>
+<text x="1450" y="1296" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#555" >NO BROKER: EACH HOST SERVES ITS OWN DICTATION FIRST; ACROSS HOSTS, FIRST COME FIRST SERVED</text>
+<text x="1450" y="1206" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#222" >COMPONENTS WITH AN HTTP BADGE CALL THESE SERVERS</text>
+<text x="40" y="1215" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#777" >LEGEND</text>
+<rect x="40" y="1233" width="34" height="22" rx="5" fill="#d9d6cc" stroke="#1b1b1b" stroke-width="2"/>
+<text x="84" y="1249" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#222" >KEYS DAEMON (SYSTEM, ROOT, C)</text>
+<rect x="40" y="1279" width="34" height="22" rx="5" fill="#e4e1d8" stroke="#1b1b1b" stroke-width="2"/>
+<text x="84" y="1295" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#222" >CAPTURE DAEMON (ALWAYS ON)</text>
+<rect x="40" y="1325" width="34" height="22" rx="5" fill="#eeebe3" stroke="#1b1b1b" stroke-width="2"/>
+<text x="84" y="1341" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#222" >SESSION DAEMON: DICTATION, TRAY, SHORTCUTS</text>
+<rect x="40" y="1371" width="34" height="22" rx="5" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
+<text x="84" y="1387" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#222" >PIPELINE DAEMON (RESTARTABLE)</text>
+<rect x="510" y="1233" width="34" height="22" rx="5" fill="#f7f5ee" stroke="#6b6b6b" stroke-width="2"/>
+<text x="554" y="1249" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#222" >COMMAND (ON DEMAND)</text>
+<rect x="510" y="1279" width="34" height="22" rx="5" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
+<text x="554" y="1295" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#222" >file interface (state/ = $XDG_STATE_HOME/odsod-daemon)</text>
+<rect x="510" y="1325" width="34" height="22" rx="5" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2" stroke-dasharray="5 3"/>
+<text x="554" y="1341" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#222" >runtime file (run/ = $XDG_RUNTIME_DIR/odsod-daemon, tmpfs)</text>
+<rect x="510" y="1371" width="34" height="22" rx="5" fill="#f7f5ee" stroke="#6b6b6b" stroke-width="2" stroke-dasharray="5 3"/>
+<text x="554" y="1387" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#222" >OUTSIDE ODSOD-DAEMON</text>
+<line x1="2050" y1="1245" x2="2090" y2="1245" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#a-shared)"/>
+<text x="2100" y="1249" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#222" >DATA FLOW, SHARED</text>
+<line x1="2050" y1="1275" x2="2090" y2="1275" stroke="#1b1b1b" stroke-width="2.4" marker-end="url(#a-ambient)"/>
+<text x="2100" y="1279" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#222" >AMBIENT (PASS 1)</text>
+<line x1="2050" y1="1305" x2="2090" y2="1305" stroke="#1b1b1b" stroke-width="3.6" marker-end="url(#a-dictation)"/>
+<text x="2100" y="1309" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#222" >DICTATION</text>
+<line x1="2270" y1="1245" x2="2310" y2="1245" stroke="#1b1b1b" stroke-width="2.4" stroke-dasharray="10 6" marker-end="url(#a-batch)"/>
+<text x="2320" y="1249" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#222" >BATCH (PASS 2)</text>
+<line x1="2270" y1="1275" x2="2310" y2="1275" stroke="#1b1b1b" stroke-width="1.8" stroke-dasharray="2 5" marker-end="url(#a-os)"/>
+<text x="2320" y="1279" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#222" >OS / device interface</text></g>
+<text x="1240.0" y="1552" font-family="Courier New, Courier, monospace" font-size="19" font-weight="normal" text-anchor="middle" fill="#1b1b1b" >Figure 1-2.  Components, Files and Flows</text>
+<line x1="40" y1="1570" x2="2440" y2="1570" stroke="#1b1b1b" stroke-width="2"/>
+<text x="1240.0" y="1598" font-family="Courier New, Courier, monospace" font-size="18" font-weight="normal" text-anchor="middle" fill="#1b1b1b" >HOST CONFIGURATION</text>
+<text x="40" y="1636" font-family="Courier New, Courier, monospace" font-size="17" font-weight="normal" text-anchor="start" fill="#1b1b1b" >Host ____________</text>
+<text x="1200.0" y="1636" font-family="Courier New, Courier, monospace" font-size="17" font-weight="normal" text-anchor="middle" fill="#1b1b1b" >Basic Date 23 Nov 2026</text>
+<text x="1500.0" y="1636" font-family="Courier New, Courier, monospace" font-size="17" font-weight="normal" text-anchor="middle" fill="#1b1b1b" >Change Date ________</text>
+<text x="2440" y="1636" font-family="Courier New, Courier, monospace" font-size="17" font-weight="normal" text-anchor="end" fill="#1b1b1b" >Page 1-2</text></svg>

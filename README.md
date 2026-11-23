@@ -1,5 +1,7 @@
 # daemon
 
+![odsod-daemon system configuration](docs/diagrams/overview.svg)
+
 My personal daemon: long-running services on my hosts that handle input,
 audio and text. Built for one system: Fedora, KDE Plasma on Wayland, PipeWire
 and systemd.

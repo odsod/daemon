@@ -1,30 +1,44 @@
-"""High-level architecture diagram for ADR-0002. Writes arch.svg."""
+"""Detailed architecture diagram for ADR-0005, in the schematic style.
+
+Usage: uv run docs/diagrams/high-level-architecture.py docs/diagrams/high-level-architecture.svg
+"""
 
 import sys
 from xml.sax.saxutils import escape
 
+import schematic
+from schematic import GRAY, INK, PAPER, Page
+
 W, H = 2480, 1440
-SANS = "Adwaita Sans"
-MONO = "Adwaita Mono"
+SANS = schematic.SANS
+MONO = schematic.MONO
 
 STYLE = {
-    "keys": ("#fde4e1", "#b5473a"),
-    "capture": ("#d7f0ec", "#2a8c7f"),
-    "session": ("#e3f2d9", "#4f8a2b"),
-    "pipeline": ("#dde8f7", "#3a6ab0"),
-    "cli": ("#ece4f5", "#7a5aa6"),
-    "store": ("#fff2cc", "#b38600"),
-    "run": ("#fffaf0", "#b38600"),
-    "vault": ("#ffe3b3", "#9a6200"),
-    "ext": ("#efefef", "#8a8a8a"),
+    "keys": ("#d9d6cc", INK),
+    "capture": ("#e4e1d8", INK),
+    "session": ("#eeebe3", INK),
+    "pipeline": (PAPER, INK),
+    "cli": (PAPER, GRAY),
+    "store": (PAPER, INK),
+    "run": (PAPER, INK),
+    "vault": (PAPER, INK),
+    "ext": (PAPER, GRAY),
 }
 FLOW = {
-    "shared": "#444444",
-    "ambient": "#3a6ab0",
-    "dictation": "#4f8a2b",
-    "batch": "#d0701a",
-    "os": "#8a8a8a",
+    "shared": INK,
+    "ambient": INK,
+    "dictation": INK,
+    "batch": INK,
+    "os": INK,
 }
+FLOW_DASH = {
+    "shared": "",
+    "ambient": "",
+    "dictation": "",
+    "batch": schematic.DASH["dashed"],
+    "os": "",
+}
+FLOW_WIDTH = {"shared": 1.6, "ambient": 2.4, "dictation": 3.6, "batch": 2.4, "os": 1.8}
 
 out = []
 boxes = {}
@@ -41,6 +55,8 @@ def text(
     fill="#222",
     style="",
 ):
+    if family == SANS and not any(c in s for c in "/<$"):
+        s = s.upper()
     out.append(
         f'<text x="{x}" y="{y}" font-family="{family}" font-size="{size}" '
         f'font-weight="{weight}" text-anchor="{anchor}" fill="{fill}" {style}>{escape(s)}</text>'
@@ -78,10 +94,10 @@ def box(key, cx, cy, kind, title, lines=(), path=None, w=190, h=None, badge=None
     if badge:
         bx, by = x + w - 44, y - 10
         out.append(
-            f'<rect x="{bx}" y="{by}" width="50" height="20" rx="10" fill="#f1e6fb" '
-            f'stroke="#8a4fc4" stroke-width="1.5"/>'
+            f'<rect x="{bx}" y="{by}" width="50" height="20" rx="10" fill="{PAPER}" '
+            f'stroke="{INK}" stroke-width="1.5"/>'
         )
-        text(bx + 25, by + 14, badge, 11, "bold", fill="#6a2fa4")
+        text(bx + 25, by + 14, badge, 11, "bold", fill=INK)
 
 
 def edge(key, side, offset=0):
@@ -98,11 +114,12 @@ def edge(key, side, offset=0):
 def line(points, flow="shared", dashed=False, label=None, lpos=None, lanchor="middle"):
     color = FLOW[flow]
     d = " ".join(f"{'M' if i == 0 else 'L'}{x},{y}" for i, (x, y) in enumerate(points))
-    dash = ' stroke-dasharray="3 4"' if dashed else ""
-    # white halo so crossings read as pass-overs
-    out.append(f'<path d="{d}" fill="none" stroke="white" stroke-width="7"/>')
+    pattern = schematic.DASH["dotted"] if dashed else FLOW_DASH[flow]
+    dash = f' stroke-dasharray="{pattern}"' if pattern else ""
+    # paper halo so crossings read as pass-overs
+    out.append(f'<path d="{d}" fill="none" stroke="{PAPER}" stroke-width="8"/>')
     out.append(
-        f'<path d="{d}" fill="none" stroke="{color}" stroke-width="2.2"{dash} '
+        f'<path d="{d}" fill="none" stroke="{color}" stroke-width="{FLOW_WIDTH[flow]}"{dash} '
         f'marker-end="url(#a-{flow})"/>'
     )
     if label:
@@ -111,28 +128,11 @@ def line(points, flow="shared", dashed=False, label=None, lpos=None, lanchor="mi
 
 
 # ---------------------------------------------------------------- frame
-out.append(f'<rect width="{W}" height="{H}" fill="white"/>')
-text(
-    40,
-    42,
-    "odsod-daemon: high-level architecture (ADR-0002 to ADR-0008)",
-    24,
-    "bold",
-    anchor="start",
-)
-text(
-    40,
-    66,
-    "Arrows show data flow: writer to file, file to reader. Paths and formats: ADR-0003.",
-    14,
-    anchor="start",
-    fill="#555",
-)
 out.append(
     '<rect x="20" y="90" width="2440" height="1090" rx="16" fill="none" '
-    'stroke="#999" stroke-width="2" stroke-dasharray="10 6"/>'
+    'stroke="#6b6b6b" stroke-width="2" stroke-dasharray="10 6"/>'
 )
-text(40, 114, "EACH HOST", 14, "bold", anchor="start", fill="#777")
+text(40, 114, "EACH HOST", 14, "bold", anchor="start", fill=GRAY)
 
 # ---------------------------------------------------------------- external
 box("pw", 130, 420, "ext", "PipeWire", ["mics, outputs,", "meeting capture streams"])
@@ -167,8 +167,24 @@ box(
     "dictation",
     ["mute meeting streams,", "clipboard, utterance"],
 )
-box("indicator", 1450, 210, "session", "tray", ["mode + health;", "pause stops capture"], w=180)
-box("shortcuts", 1950, 210, "session", "shortcuts", ["global shortcuts,", "launch apps"], w=180)
+box(
+    "indicator",
+    1450,
+    210,
+    "session",
+    "tray",
+    ["mode + health;", "pause stops capture"],
+    w=180,
+)
+box(
+    "shortcuts",
+    1950,
+    210,
+    "session",
+    "shortcuts",
+    ["global shortcuts,", "launch apps"],
+    w=180,
+)
 box(
     "signals",
     350,
@@ -226,7 +242,14 @@ out.append(
 )
 text(ax0 + 20, ay - 2, "state/audio/<channel>/", 15, "bold", MONO, anchor="start")
 text(ax0 + 20, ay + 16, "rolling raw audio, time = byte offset", 13, anchor="start")
-text(ax0 + 20, ay + 33, "read by segmentation, transcription, interactions, bench", 12, anchor="start", fill="#555")
+text(
+    ax0 + 20,
+    ay + 33,
+    "read by segmentation, transcription, interactions, bench",
+    12,
+    anchor="start",
+    fill="#555",
+)
 
 box(
     "jobs",
@@ -293,13 +316,31 @@ box(
     715,
     "store",
     "",
-    ["transcripts/", "<day>-<host>.md", "daily log, pass 1", "", "interactions/", "<day>-<HHMM>-<host>", "-<slug>.md", "transcript + summary,", "pass 2"],
+    [
+        "transcripts/",
+        "<day>-<host>.md",
+        "daily log, pass 1",
+        "",
+        "interactions/",
+        "<day>-<HHMM>-<host>",
+        "-<slug>.md",
+        "transcript + summary,",
+        "pass 2",
+    ],
     path="state/documents/",
     w=200,
     h=250,
 )
 box("publish", 2330, 960, "pipeline", "publish", ["copy finished docs,", "write once"])
-box("targets", 2330, 1100, "ext", "target dirs", ["from config, e.g. a", "vault inbox"], w=200)
+box(
+    "targets",
+    2330,
+    1100,
+    "ext",
+    "target dirs",
+    ["from config, e.g. a", "vault inbox"],
+    w=200,
+)
 
 # ---------------------------------------------------------------- edges
 # capture
@@ -312,9 +353,7 @@ line([(1340, ay + ah / 2), (1340, 740), (1250, 740), edge("reproc", "t", 20)], "
 line([(1340, 740), (1340, 1060), edge("bench", "l")])
 out.append('<circle cx="1340" cy="740" r="4" fill="#444"/>')
 # ambient spine
-line(
-    [edge("seg", "r"), edge("jobs", "l")], "ambient"
-)
+line([edge("seg", "r"), edge("jobs", "l")], "ambient")
 line([edge("jobs", "r"), edge("asrw", "l")])
 line([edge("asrw", "r"), edge("asr", "l")])
 line([edge("asr", "r"), edge("cleanup", "l")])
@@ -324,7 +363,12 @@ line([edge("text", "r"), edge("transcript", "l")], "ambient")
 line([edge("transcript", "r"), edge("docs", "l", -115)], "ambient")
 # dictation
 line([edge("kbd", "r"), edge("input", "l")], "os", True)
-line([edge("input", "r"), edge("session", "l")], "dictation", label="socket", lpos=(900, 202))
+line(
+    [edge("input", "r"), edge("session", "l")],
+    "dictation",
+    label="socket",
+    lpos=(895, 188),
+)
 line(
     [edge("session", "b", -30), (980, 557)],
     "dictation",
@@ -390,10 +434,10 @@ line([edge("bench", "r"), edge("benchs", "l")])
 
 # ---------------------------------------------------------------- inference host
 out.append(
-    '<rect x="900" y="1220" width="1100" height="90" rx="12" fill="#f6effc" stroke="#8a4fc4" '
+    '<rect x="900" y="1220" width="1100" height="90" rx="0" fill="none" stroke="#1b1b1b" '
     'stroke-width="2" stroke-dasharray="10 6"/>'
 )
-text(1450, 1252, "INFERENCE HOST (desktop GPU)", 15, "bold", fill="#6a2fa4")
+text(1450, 1252, "INFERENCE HOST (desktop GPU)", 15, "bold")
 text(
     1450,
     1276,
@@ -407,16 +451,16 @@ text(
     12,
     fill="#555",
 )
-text(1450, 1206, "components with an HTTP badge call these servers", 12, fill="#6a2fa4")
+text(1450, 1206, "components with an HTTP badge call these servers", 12)
 
 # ---------------------------------------------------------------- legend
 lx, ly = 40, 1215
 text(lx, ly, "LEGEND", 14, "bold", anchor="start", fill="#777")
 items = [
-    ("keys", "odsod-daemon-keys.service (system, root, C)"),
-    ("capture", "odsod-daemon-capture.service (always on)"),
-    ("session", "odsod-daemon-session.service: dictation, tray, shortcuts"),
-    ("pipeline", "odsod-daemon-pipeline.service (restartable)"),
+    ("keys", "keys daemon (system, root, C)"),
+    ("capture", "capture daemon (always on)"),
+    ("session", "session daemon: dictation, tray, shortcuts"),
+    ("pipeline", "pipeline daemon (restartable)"),
     ("cli", "command (on demand)"),
     ("store", "file interface (state/ = $XDG_STATE_HOME/odsod-daemon)"),
     ("run", "runtime file (run/ = $XDG_RUNTIME_DIR/odsod-daemon, tmpfs)"),
@@ -424,7 +468,7 @@ items = [
 ]
 for i, (k, label) in enumerate(items):
     col, row = divmod(i, 4)
-    x, y = lx + col * 420, ly + 18 + row * 46
+    x, y = lx + col * 470, ly + 18 + row * 46
     f, s = STYLE[k]
     dash = ' stroke-dasharray="5 3"' if k in ("ext", "run") else ""
     out.append(
@@ -440,9 +484,10 @@ flows = [
 ]
 for i, (k, dashed, label) in enumerate(flows):
     x, y = lx + 2010 + (i // 3) * 220, ly + 30 + (i % 3) * 30
-    dash = ' stroke-dasharray="3 4"' if dashed else ""
+    pattern = schematic.DASH["dotted"] if dashed else FLOW_DASH[k]
+    dash = f' stroke-dasharray="{pattern}"' if pattern else ""
     out.append(
-        f'<line x1="{x}" y1="{y}" x2="{x + 40}" y2="{y}" stroke="{FLOW[k]}" stroke-width="2.2"{dash} marker-end="url(#a-{k})"/>'
+        f'<line x1="{x}" y1="{y}" x2="{x + 40}" y2="{y}" stroke="{FLOW[k]}" stroke-width="{FLOW_WIDTH[k]}"{dash} marker-end="url(#a-{k})"/>'
     )
     text(x + 50, y + 4, label, 12, anchor="start")
 
@@ -451,8 +496,10 @@ defs = "".join(
     f'orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="{c}"/></marker>'
     for k, c in FLOW.items()
 )
-svg = (
-    f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">'
-    f"<defs>{defs}</defs>" + "\n".join(out) + "</svg>"
-)
-open(sys.argv[1] if len(sys.argv) > 1 else "arch.svg", "w").write(svg)
+page = Page(W, H + 220)
+page.header("DETAILED ARCHITECTURE", doc="OD-ADR-0005")
+page.add(f"<defs>{defs}</defs>")
+page.add('<g transform="translate(0, 100)">' + "\n".join(out) + "</g>")
+page.footer("Figure 1-2.  Components, Files and Flows", "1-2")
+with open(sys.argv[1] if len(sys.argv) > 1 else "arch.svg", "w") as f:
+    f.write(page.svg())
