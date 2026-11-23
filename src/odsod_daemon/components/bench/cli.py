@@ -44,6 +44,15 @@ class AcceptResult(BaseModel):
     cases: dict[str, Review] = Field(default_factory=dict)
 
 
+class RunResult(BaseModel):
+    setup: str
+    fingerprint: str
+    ran: int
+    ok: int
+    empty: int
+    failed: int
+
+
 def _bench() -> setups.Bench:
     try:
         return config.section("bench", setups.Bench)
@@ -190,6 +199,54 @@ def accept_command(
         as_json=as_json,
         text=lambda value: "\n".join(
             f"{case_id}: {review.state}" for case_id, review in value.cases.items()
+        ),
+    )
+
+
+@app.command("run")
+def run_command(
+    name: str = typer.Argument(...),
+    kind: str | None = typer.Option(None, "--kind"),
+    limit: int | None = typer.Option(None, "--limit"),
+    retry_failed: bool = typer.Option(False, "--retry-failed"),
+    isolated: bool = typer.Option(False, "--isolated"),
+    as_json: bool = typer.Option(False, "--json"),
+) -> None:
+    """Run one setup over the cases with a reference."""
+    from odsod_daemon.components.bench import runner
+
+    section = _bench()
+    try:
+        setup = section.setup(name)
+    except KeyError as error:
+        typer.echo(error.args[0], err=True)
+        raise typer.Exit(1) from error
+    try:
+        summary = runner.run(
+            paths.roots(),
+            setup,
+            kind=kind,
+            limit=limit,
+            retry_failed=retry_failed,
+            isolated=isolated,
+        )
+    except (ValueError, RuntimeError) as error:
+        typer.echo(str(error), err=True)
+        raise typer.Exit(1) from error
+    result = RunResult(
+        setup=summary.setup,
+        fingerprint=summary.fingerprint,
+        ran=summary.ran,
+        ok=summary.ok,
+        empty=summary.empty,
+        failed=summary.failed,
+    )
+    cli.emit(
+        result,
+        as_json=as_json,
+        text=lambda value: (
+            f"{value.setup}: ran {value.ran} cases "
+            f"({value.ok} ok, {value.empty} empty, {value.failed} failed)"
         ),
     )
 
