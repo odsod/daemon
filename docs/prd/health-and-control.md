@@ -24,6 +24,13 @@
   first in this order wins: Error, Dictating, Warning, Paused, Mic muted,
   Running. Dictating is the owner's own action and lasts seconds, so it
   shows over a Warning.
+- Warning causes: the backlog grows, the inference host is out of reach, a
+  target is missing or full, a meeting mute failed, the mic gives only
+  silence, or a meeting tab shows no speaking indicator for 5 min. Error
+  is for faults that stop recording, dictation or a service.
+- A host runs a dev install → the tray shows a separate dev mark and
+  `odsodctl status` shows `dev`. It is not a Warning, so the dev host does
+  not live in Warning (owner decision, 2026-11-23).
 - Owner opens the tray → sees the reason for a Warning or an Error in plain
   words, since when, and the command that fixes it. The menu has Pause or
   Resume.
@@ -33,15 +40,18 @@
   SSH.
 - Every tray action has an `odsodctl` command: `pause`, `resume`. Other
   PRDs add commands, such as `dictation last`, `transcript`, `note`, `pin`,
-  `shortcuts`, `bench` and `version`. Each command takes `--json` for
-  agents.
+  `shortcuts`, `bench` and `version`. Each command that queries or controls
+  the system takes `--json` for agents. Long-running and setup commands do
+  not.
 - `odsodctl status` exits with 0 for OK, 1 for Warning, 2 for Error and 3
-  when it cannot tell.
+  when it cannot tell. Running, Paused, Dictating and Mic muted are OK.
 - Generic service control stays with systemd: an agent restarts a service
-  with `systemctl --user restart odsod-daemon-<service>`. Each Warning and
-  Error names that command when it is the fix.
+  with `systemctl --user restart odsod-daemon-<service>`, or
+  `sudo systemctl restart odsod-daemon-keys` for the keys service. Each
+  Warning and Error names the right command when it is the fix.
 - Desktop notifications come only for events that need the owner now: a
-  failed dictation, a failed paste, and a new Error. An Error notifies once
+  failed dictation, a failed paste, a new Error, and a service that fails
+  for good. An Error notifies once
   per cause, never again while it lasts.
 - Untranscribed audio older than 10 min → Warning, with the backlog size.
 
@@ -49,8 +59,10 @@
 
 - A service crashes again and again until systemd gives up → Error that
   names the service.
-- The session service is down → no tray icon. `odsodctl status` reports
-  the session service as down.
+- The session service is down → the tray stays and shows Error.
+  `odsodctl status` reports the session service as down.
+- Any service fails for good → one desktop notification names it and the
+  fix, also when the tray itself is gone.
 - The inference host is out of reach → the backlog grows, and the tray shows
   Warning. Recording goes on.
 
@@ -71,7 +83,7 @@ to confirm. Detection times for silent mics and stalls are in the
 5. **AC-5** Each tray action has an `odsodctl` command with the same effect.
    _Check: system test._
 6. **AC-6** The only desktop notifications are failed dictations, failed
-   pastes and new Errors. An Error that lasts 1 h gives one notification.
+   pastes, new Errors and services that fail for good. An Error that lasts 1 h gives one notification.
    _Check: system test._
 7. **AC-7** A service that reaches its restart limit shows Error naming that
    service at most 10 s later. _Check: system test._
@@ -79,18 +91,28 @@ to confirm. Detection times for silent mics and stalls are in the
    10 s later. _Check: system test._
 9. **AC-9** Untranscribed audio older than 10 min shows Warning with the
    backlog size. _Check: system test._
-10. **AC-10** Every `odsodctl` command with `--json` prints one JSON
-    document that holds all fields of its text output. _Check: system
+10. **AC-10** Every query or control command of `odsodctl` takes `--json`
+    and then prints one JSON document that holds all fields of its text
+    output. Long-running and setup commands are exempt. _Check: system
     test._
 11. **AC-11** `odsodctl status` exits with 0 (OK), 1 (Warning), 2 (Error)
-    or 3 (unknown), in the convention of Nagios plugins. _Check: system
-    test._
+    or 3 (unknown), in the convention of Nagios plugins. Running, Paused,
+    Dictating and Mic muted exit with 0. _Check: system test._
 12. **AC-12** When several states apply, the tray and `odsodctl status`
     show the first in the order Error, Dictating, Warning, Paused, Mic
     muted, Running. _Check: system test._
 13. **AC-13** Each Warning and Error that a service restart fixes names the
-    `systemctl --user restart` command for that service. _Check: system
+    restart command for that service: `systemctl --user restart` for user
+    services, `sudo systemctl restart` for the keys service. _Check: system
     test._
+14. **AC-14** A service that fails for good gives one desktop notification
+    that names it and the fix, at most 30 s later, also with the tray
+    service down. _Check: system test._
+15. **AC-15** With a dev install, the tray shows the dev mark and
+    `odsodctl status` shows `dev` and exits as for the same state without
+    it. _Check: system test._
+16. **AC-16** With the session service down, the tray shows Error at most
+    10 s later. _Check: system test._
 
 ## Boundaries
 
@@ -99,8 +121,10 @@ to confirm. Detection times for silent mics and stalls are in the
 - What each recording problem is, and when it is detected → the
   `ambient-recording` PRD.
 - Other Warning causes: a failed meeting mute (`dictation`), the inference
-  host out of reach (`live-transcript`), a missing target
-  (`interactions-and-publishing`), a dev install (`install-and-upgrade`).
+  host out of reach (`live-transcript`), a missing target (`publishing`),
+  documents waiting over 24 h (`interactions`), a mic that gives only
+  silence (`ambient-recording`).
+- The dev mark → the `install-and-upgrade` PRD.
 - Dictation failures and their notifications → the `dictation` PRD.
 - The keys service and Left Alt without a session → the `keyboard` PRD.
 - `odsodctl note` and `odsodctl pin` → the `live-transcript` PRD.

@@ -33,11 +33,13 @@
 - Owner or an agent pauses (tray or `odsodctl pause`) → recording stops, and
   the tray and `odsodctl status` show Paused. A pause has no timer. Resume
   (tray or `odsodctl resume`), a logout, a reboot or the start of the next
-  local day starts recording again.
+  local day starts recording again. An install, an upgrade or a dev deploy
+  keeps the pause.
 - Owner runs `odsodctl status` → sees whether recording runs, and when the
   newest audio was written.
-- Audio stays on the host for 14 days, then is deleted. Transcripts and
-  documents stay. Audio in a bench case stays until the case is deleted
+- Audio stays on the host for 14 days, then is deleted, also while
+  recording is paused or stopped, or the owner is logged out. Transcripts
+  and documents stay. Audio in a bench case stays until the case is deleted
   (`benchmarking`).
 - Meetings never notice the recorder: no change in call sound or device mode.
 
@@ -45,13 +47,16 @@
 
 - Recording crashes or stalls → it restarts by itself. The owner sees nothing
   unless it keeps failing; then the tray shows Error.
-- The mic delivers only digital silence, and the owner did not mute it → the
-  tray shows Error.
+- The mic delivers only digital silence, and the owner did not mute it in
+  KDE → the tray shows Warning: "mic gives only silence (hardware switch?)".
+  A hardware mute switch gives the same signal, so it is not an Error.
 - The mic in use disappears → recording moves to another available mic.
 - The inference host or the pipeline is down → recording goes on. Text
   catches up from the stored audio later.
 - No graphical session (a host reached over SSH) → recording goes on.
   `odsodctl status` shows its state.
+- The clock steps, or the host resumes from suspend → audio times stay
+  right, so dictation and speaker names use the right audio.
 
 ## Acceptance criteria
 
@@ -71,7 +76,8 @@ host for 14 days, which the owner accepts.
    _Check: system test._
 6. **AC-6** Resume, from the tray or `odsodctl resume`, starts recording
    again in at most 5 s. _Check: system test._
-7. **AC-7** Audio older than 14 days is gone at most 1 h later. Transcripts
+7. **AC-7** Audio older than 14 days is gone at most 1 h later, also while
+   recording is paused or stopped, or the owner is logged out. Transcripts
    and documents stay. _Check: system test._
 8. **AC-8** With headphones, sound played on the host is only in system
    audio, and the owner's voice is only in mic audio. _Check: manual._
@@ -81,18 +87,18 @@ host for 14 days, which the owner accepts.
     recording on or off, and a Bluetooth headset stays in stereo mode.
     _Check: manual._
 11. **AC-11** Recording uses at most 2% of one CPU core on average and at
-    most 5.6 GB of disk per day. _Check: bench._
+    most 5.6 GB of disk per day. _Check: manual._
 12. **AC-12** Digital silence on a mic that the owner did not mute, for 60 s,
-    shows Error in the tray at most 70 s after it starts. _Check: system
-    test._
+    shows Warning ("mic gives only silence") in the tray at most 70 s after
+    it starts, and no Error. _Check: system test._
 13. **AC-13** If audio stops advancing, recording restarts in at most 60 s.
     If it does not recover, the tray shows Error in at most 2 min. _Check:
     system test._
 14. **AC-14** One hour with the inference host down leaves no gap in the
     audio. _Check: system test._
-15. **AC-15** Only the owner's user account can read recorded audio. Audio
-    leaves the host only in requests to the configured inference host.
-    _Check: manual._
+15. **AC-15** Only the owner's user account can read recorded audio.
+    Ambient audio leaves the host only in requests to the configured
+    inference host, over localhost or the tailnet. _Check: manual._
 16. **AC-16** After the owner plugs in a mic or picks another input,
     recording captures that mic in at most 5 s. When the mic in use
     disappears, recording captures another available mic in at most 5 s.
@@ -101,6 +107,11 @@ host for 14 days, which the owner accepts.
     most 5 s, and shows no Error. _Check: system test._
 18. **AC-18** A pause still on at 00:00 local time ends then. Recording
     starts again in at most 5 s. _Check: system test._
+19. **AC-19** An install, an upgrade or a dev deploy during a pause keeps
+    the pause: no audio is recorded until resume. _Check: system test._
+20. **AC-20** After 24 h of recording, a resume from suspend, or a 1 s step
+    of the clock, the audio of a given time differs from that time by at
+    most 200 ms. _Check: system test._
 
 ## Boundaries
 
@@ -108,7 +119,7 @@ host for 14 days, which the owner accepts.
 
 - The daily transcript, notes and pins → the `live-transcript` PRD.
 - Interaction documents, speaker names and summaries → the
-  `interactions-and-publishing` PRD.
+  `interactions` PRD.
 - Dictation, which uses the same audio → the `dictation` PRD.
 - The meeting's echo in the mic: recording keeps the raw mic, and the
   transcript PRDs remove duplicate text.

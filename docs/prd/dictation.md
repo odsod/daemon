@@ -31,10 +31,17 @@
 - Owner presses another key during dictation → dictation is cancelled,
   nothing is pasted, and the app gets Alt and that key.
 - Owner dictates during a meeting → the meeting hears nothing from the owner
-  until the release. The owner's voice is still recorded.
+  from the moment the tray shows Dictating until the release. Words in the
+  first 350 ms, before the threshold, can reach the call (owner decision,
+  2026-11-23). The owner's voice is still recorded.
+- A dictation is not part of the meeting: it never appears in the meeting's
+  document or summary.
 - After the paste → the owner's clipboard holds what it held before. The
   dictated text is not in the clipboard history.
-- Dictation goes ahead of all other transcription work on the host.
+- Dictation goes ahead of all other transcription work on the host, and
+  also when another host runs long batch work on the inference host.
+- Recording is paused, or no inference host is reachable → Left Alt is a
+  plain Alt, with no dictation. The tray shows why.
 
 ### When something fails
 
@@ -42,8 +49,10 @@
 - The keys service is down → no dictation, and the tray shows Error.
 - Muting the meeting fails → dictation still works, and the tray shows
   Warning.
-- A crash during dictation → the meeting hears the owner again once the
-  session service restarts.
+- A crash during dictation → the meeting hears the owner again within 10 s,
+  also when the session service does not come back.
+- Cleanup of the text is slow → the raw speech-to-text text is pasted, with
+  no cleanup, rather than nothing.
 - The inference host does not answer in 10 s → nothing is pasted, and a
   desktop notification says that dictation failed. Text that arrives later
   never touches the clipboard. The owner or an agent gets it with
@@ -76,8 +85,8 @@ targets for the owner to confirm.
 9. **AC-9** Another key during dictation pastes nothing, and the app gets
    Alt and the key. _Check: system test._
 10. **AC-10** In a Meet or Teams call, the other side hears nothing from the
-    owner during dictation, and hears the owner again at most 1 s after the
-    release. _Check: manual._
+    owner from the moment the tray shows Dictating, and hears the owner again
+    at most 1 s after the release. _Check: manual._
 11. **AC-11** Ambient recording of the mic has no gap during dictation.
     _Check: system test._
 12. **AC-12** At most 1 s after the paste, the clipboard holds its earlier
@@ -92,7 +101,8 @@ targets for the owner to confirm.
 16. **AC-16** If muting the meeting fails, dictation still pastes and the
     tray shows Warning. _Check: system test._
 17. **AC-17** After a crash during dictation, the meeting hears the owner
-    again at most 10 s later. _Check: system test._
+    again at most 10 s later, also when the session service does not
+    restart. _Check: system test._
 18. **AC-18** If no text arrives in 10 s, a desktop notification says that
     dictation failed. Text that arrives later is never pasted and never
     touches the clipboard. _Check: system test._
@@ -100,6 +110,15 @@ targets for the owner to confirm.
     dictation, also when it arrived late. _Check: system test._
 20. **AC-20** If the paste fails, the text stays on the clipboard and a
     desktop notification says so at most 1 s later. _Check: system test._
+21. **AC-21** AC-3 holds while another host runs a batch summary on the
+    inference host. _Check: system test._
+22. **AC-22** When cleanup gives no text in time, the raw speech-to-text text
+    is pasted, and the 2 s target of AC-3 still holds. _Check: system test._
+23. **AC-23** While recording is paused, or no inference host is reachable,
+    Left Alt held alone gives no dictation and acts as a plain Alt. The tray
+    shows the reason. _Check: system test._
+24. **AC-24** A dictation made during a meeting appears in no interaction
+    document or summary. _Check: system test._
 
 ## Boundaries
 

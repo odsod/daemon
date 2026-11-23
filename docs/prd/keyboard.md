@@ -28,6 +28,8 @@
 - Left Alt tapped → an Alt tap, as before. Left Alt with another key → the
   Alt chord (`Alt+Tab` works). Left Alt held alone past the hold threshold
   → dictation starts, and no app sees the Alt.
+- Left Alt with a mouse click, drag or scroll → the app gets Alt with it
+  (Alt+click, Alt+drag). It never starts dictation.
 - Another key during dictation → dictation is cancelled, and the app gets
   Alt and that key.
 - Right Alt is always AltGr, for Swedish symbols. It never starts
@@ -42,6 +44,9 @@
   shows Error while dictation is unavailable.
 - The session service is down → Left Alt works as a plain Alt. Remaps still
   work.
+- The keys service misbehaves without a crash (keys lost or stuck) → the
+  owner holds both Shift keys and Esc for 3 s, and gets the plain keyboard
+  back.
 
 ## Acceptance criteria
 
@@ -80,7 +85,14 @@ Other numbers are proposed targets for the owner to confirm.
     most 1 s and no key stays down. The remaps return in at most 5 s after
     a crash. _Check: system test._
 15. **AC-15** Keys with no remap reach the app at most 1 ms later than
-    without the keys service. _Check: bench._
+    without the keys service, measured inside the service from read to
+    write. _Check: system test._
+16. **AC-16** Left Alt held with a mouse button press, drag or scroll gives
+    the app Alt with that mouse event, and never starts dictation, also when
+    held past 350 ms. _Check: system test._
+17. **AC-17** Both Shift keys and Esc held for 3 s give back the plain
+    keyboard at most 1 s later, with no key left down. _Check: system
+    test._
 
 ## Boundaries
 
