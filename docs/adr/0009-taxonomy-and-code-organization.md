@@ -17,6 +17,11 @@ Proposed
   ([ADR-0002](0002-high-level-architecture.md), goal "Agent-coded"). The
   owner and agents must find all code for a component from its name alone.
 - The list of components will change. The structure must not.
+- Components alone are too small a unit to design in isolation. Several
+  components share one job, such as segmentation, transcription and cleanup.
+  Services group by lifecycle, not by design, so they are the wrong unit
+  too. Without a unit between daemon and component, each design question
+  touches the whole system, and the code drifts toward a tangle.
 - An earlier draft of [ADR-0005](0005-components-and-implementation.md)
   sorted code by layer (`contracts/`, `files/`, `clients/`, `components/`)
   and by language (`keys/`, `kwin/`). One component was then spread over
@@ -28,14 +33,20 @@ This ADR defines the code layout. ADR-0005 refers to it.
 
 ### Taxonomy
 
-| Term          | Is                                                                                   | In the repo                                              | At runtime                                             |
-| ------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------- | ------------------------------------------------------ |
-| **daemon**    | The whole system: one repo, one install, one CLI                                     | The repo, the package `odsod_daemon`, the CLI `odsodctl` | All services together                                  |
-| **service**   | One systemd unit, so one process. Runs one or more components that share a lifecycle | `services/<service>.py`                                  | `odsod-daemon-<service>.service`                       |
-| **component** | One job with one contract                                                            | `components/<component>/`                                | Inside a service, or alone: `odsodctl run <component>` |
-| **command**   | A component that runs on demand and has no service                                   | `components/<command>/`                                  | `odsodctl <command>`                                   |
+| Term          | Is                                                                                   | In the repo                                                                    | At runtime                                             |
+| ------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ | ------------------------------------------------------ |
+| **daemon**    | The whole system: one repo, one install, one CLI                                     | The repo, the package `odsod_daemon`, the CLI `odsodctl`                       | All services together                                  |
+| **subsystem** | Components that are designed together, with one ADR and one seam to the rest         | A column in the component table; `SUBSYSTEM` in each component's `__init__.py` | No runtime form                                        |
+| **service**   | One systemd unit, so one process. Runs one or more components that share a lifecycle | `services/<service>.py`                                                        | `odsod-daemon-<service>.service`                       |
+| **component** | One job with one contract                                                            | `components/<component>/`                                                      | Inside a service, or alone: `odsodctl run <component>` |
+| **command**   | A component that runs on demand and has no service                                   | `components/<command>/`                                                        | `odsodctl <command>`                                   |
 
-- Each component runs in exactly one service or is a command.
+- Each component belongs to exactly one subsystem, and runs in exactly one
+  service or is a command.
+- Subsystems and services are independent groupings. A subsystem can span
+  services (control: the tray service and commands). A service can hold
+  several subsystems (pipeline: speech, transcript, signals, interactions,
+  publishing).
 - A service component may also expose read-only `odsodctl` subcommands from
   its own folder, such as `odsodctl transcript`, `odsodctl shortcuts` and
   `odsodctl dictation last`. They read the component's files and never run
@@ -45,6 +56,45 @@ This ADR defines the code layout. ADR-0005 refers to it.
   `services/` and no component code.
 - Names are unique across components and services. The one exception is a
   service that runs a single component of the same name, such as `capture`.
+
+### Subsystems
+
+| Subsystem    | Components                                         | ADR                                           |
+| ------------ | -------------------------------------------------- | --------------------------------------------- |
+| runtime      | `lib/`, `services/`, `cli.py` (not components)     | [ADR-0010](0010-contracts-and-runtime.md)     |
+| keys         | keys                                               | [ADR-0007](0007-keys-service.md)              |
+| capture      | capture, retention                                 | [ADR-0011](0011-capture.md)                   |
+| speech       | segmentation, transcription, cleanup               | [ADR-0012](0012-speech.md)                    |
+| dictation    | dictation, unmute-stale                            | [ADR-0013](0013-dictation.md)                 |
+| signals      | signals                                            | [ADR-0014](0014-signals.md)                   |
+| transcript   | transcript, note, pin                              | [ADR-0015](0015-transcript.md)                |
+| interactions | interactions                                       | [ADR-0016](0016-interactions.md)              |
+| publishing   | publish                                            | [ADR-0017](0017-publishing.md)                |
+| control      | health, status, pause, resume, tray, notify-failed | [ADR-0018](0018-control.md)                   |
+| bench        | bench                                              | [ADR-0019](0019-bench.md)                     |
+| shortcuts    | shortcuts                                          | [ADR-0008](0008-shortcuts-and-kwin-script.md) |
+| operations   | install, version                                   | [ADR-0006](0006-installation.md)              |
+
+Subsystem rules:
+
+1. **One ADR per subsystem.** It is the design unit. Its ADR names its
+   components, what it writes, what it reads, its outside dependencies, its
+   failure modes and its tests. Anyone can design or change a subsystem
+   from its own ADR plus the contracts it reads.
+2. **The seam is the contract.** A component imports another subsystem's
+   code only through that component's `contract.py`. Inside one subsystem,
+   components may import each other's internals. An architecture test
+   checks this in `mise run build` ([ADR-0010](0010-contracts-and-runtime.md)).
+3. **Each outside system has one subsystem.** PipeWire is in capture, the
+   browser in signals, KWin in shortcuts, the kernel input devices in keys.
+   Clients that several subsystems need, such as the inference host, are in
+   `lib/` with no business logic.
+4. **Admission to `lib/` is by subsystem.** Code that two components of one
+   subsystem need stays in that subsystem. It moves to `lib/` only when two
+   subsystems need it (rule 7 below).
+5. **The detailed architecture diagram draws one frame per subsystem.** A
+   new subsystem, its table row, its ADR and its diagram frame go in the
+   same commit.
 
 ### Tiers
 
@@ -66,7 +116,7 @@ Each component folder has the same shape:
 
 ```
 components/<component>/
-├── __init__.py      job, reads, writes, ADR link; exports run(config)
+├── __init__.py      job, SUBSYSTEM, reads, writes, ADR link; exports run(config)
 ├── contract.py      models of everything this component writes
 ├── …                internals, free form
 ├── <non-Python>/    C source, KWin script, prompts, unit templates it owns
@@ -79,13 +129,16 @@ components/<component>/
    behavior in `components/`, mechanism in `lib/`. Each file is exactly one
    kind. Split a file that mixes two.
 2. **Dependencies go one way:** `cli` → `services` → `components` → `lib`.
-   The only link between components is an import of another component's
-   `contract.py`, to read what it writes. `lib/` imports no component.
+   Across subsystems, the only link between components is an import of
+   another component's `contract.py`, to read what it writes. `lib/`
+   imports no component.
    import-linter enforces this rule in `mise run build`.
 3. **Folder names are architecture names.** A component folder has the name
    in the ADR-0005 component table and on the diagram. A service file has the
    name of its unit. A new component folder, its table row and its diagram box
    go in the same commit. No other map of the code exists.
+   Python folder names use underscores where the architecture name has a
+   hyphen: `notify-failed` lives in `components/notify_failed/`.
 4. **Same shape everywhere.** The entry point, the contract and the tests are
    always in the same place. Only internals vary.
 5. **A component owns all of its parts, in any language.** C, JavaScript,
@@ -99,7 +152,7 @@ components/<component>/
    covers the keys socket and D-Bus messages. A change to a contract model is
    a change to the interface.
 7. **Admission to `lib/`.** Code moves to `lib/` only when two or more
-   components need it and it makes no business decision. Until then, it stays
+   subsystems need it and it makes no business decision. Until then, it stays
    in its component. Shared code that makes decisions shows a wrong border
    between components.
 8. **Two test levels.**
@@ -161,7 +214,9 @@ Tests:
 
 | Change                                   | What moves                                                          |
 | ---------------------------------------- | ------------------------------------------------------------------- |
-| New component                            | New folder, table row and diagram box                               |
+| New component                            | New folder, table row and diagram box, in an existing subsystem     |
+| New subsystem                            | New ADR, table row and diagram frame                                |
+| Component moves to another subsystem     | Its `SUBSYSTEM` value, the two ADRs and the diagram; no path change |
 | Component splits or merges               | Its folders; contracts show who reads what                          |
 | Component moves to another service       | One line in `services/`                                             |
 | A helper is needed by a second component | It moves to `lib/` under rule 7                                     |
@@ -187,8 +242,15 @@ More components make the list in `components/` longer and never add a level.
 
 - Rejected: no rule attaches to a domain, so the folders are only labels.
   Domain borders are judgment calls, and a new domain for a component would
-  change its path and every import. The domain stays a column in the
-  component table.
+  change its path and every import. Subsystems replace domains.
+
+### Folders by subsystem (`components/<subsystem>/<component>/`)
+
+- The code tree would show the subsystems.
+- Rejected: most subsystems hold one component, so paths repeat a name
+  (`capture/capture/`). A component that moves to another subsystem would
+  change its path and every import. The `SUBSYSTEM` value, the component
+  table and the import-linter config show the grouping with no extra level.
 
 ### Folders by service
 
@@ -236,7 +298,10 @@ More components make the list in `components/` longer and never add a level.
 
 ## Consequences
 
-- Each path tells its tier and its component.
+- Each path tells its tier and its component. Its subsystem is one lookup
+  away, in its `__init__.py` or the component table.
+- Each subsystem can be designed, reviewed and built from its own ADR and
+  the contracts it reads.
 - The other ADRs and the diagrams say "service" where they said "daemon" for
   a process.
 - The flat list of components gets long. It stays sorted and one level deep.
