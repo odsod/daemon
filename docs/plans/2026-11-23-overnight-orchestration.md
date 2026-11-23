@@ -142,5 +142,7 @@ New brief over the closed one: `/tmp/agent-team/recorder-always-on/brief.md`.
   terminals; `jj workspace list` shows only this workspace.
 
 ## Progress log
+- 2026-11-23 23:20: second round: live end-to-end run, known issues, cross-plan
+  review fixes, decisions triage and the shortcuts plan. See the roadmap.
 
 ## Decisions to confirm

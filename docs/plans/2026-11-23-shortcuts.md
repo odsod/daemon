@@ -1,6 +1,6 @@
 # Plan: shortcuts (built with fakes, not shipped)
 
-- Status: Draft
+- Status: Done 2026-11-23
 - Depends on: [python-scaffold](2026-11-23-python-scaffold.md)
 - Design: [ADR-0008](../adr/0008-shortcuts-and-kwin-script.md),
   [ADR-0009](../adr/0009-taxonomy-and-code-organization.md),
