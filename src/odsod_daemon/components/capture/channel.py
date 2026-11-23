@@ -189,12 +189,13 @@ class ChannelLoop:
                 placement = self.anchor.place(arrival)
                 if placement.dropped:
                     continue
-                prev_end = self.writer.end() if first else None
+                prev_end = self.writer.end() if not self.wrote_audio else None
                 self.writer.write(placement.start, block)
                 if first:
-                    if resumed is not None:
-                        self._gap(placement.start, resumed)
-                    self.sink.start(self.name, placement.start, prev_end)
+                    if not self.wrote_audio:
+                        self.sink.start(self.name, placement.start, prev_end)
+                    else:
+                        self._gap(placement.start, resumed or "stall")
                     first = False
                     self.wrote_audio = True
                 elif placement.hole >= GAP_THRESHOLD_S:
@@ -213,7 +214,7 @@ class ChannelLoop:
 
     def _gap(self, audio_start: float, reason: str) -> None:
         """Write the hole from the old audio end to a restarted process."""
-        if self.audio_end is None or audio_start <= self.audio_end:
+        if self.audio_end is None or audio_start - self.audio_end < GAP_THRESHOLD_S:
             return
         self.sink.gap(self.name, self.audio_end, audio_start, reason)
 

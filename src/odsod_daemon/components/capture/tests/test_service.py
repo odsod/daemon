@@ -97,17 +97,22 @@ async def test_stall_restarts_pw_record_and_writes_a_gap(
 ) -> None:
     fake_pw.script("mic", feed_blocks(5), feed_blocks(10))
     fake_pw.script("sys", feed_blocks(30))
-    await run_capture(tmp_path, seconds=1.5, fake_pw=fake_pw, fake_source=fake_source)
+    await run_capture(
+        tmp_path,
+        seconds=2.5,
+        fake_pw=fake_pw,
+        fake_source=fake_source,
+        settings=config(stall_restart_s=1.2),
+    )
     assert fake_pw.spawns.count("mic") == 2
     starts = records_of(tmp_path, "start", "mic")
-    assert len(starts) == 2
+    assert len(starts) == 1
     first_end = _seconds(starts[0]["audio_start"]) + 0.5
     gaps = records_of(tmp_path, "gap", "mic")
     assert len(gaps) == 1
     assert gaps[0]["reason"] == "stall"
     assert _seconds(gaps[0]["start"]) == pytest.approx(first_end)
-    assert gaps[0]["end"] == starts[1]["audio_start"]
-    assert starts[1]["prev_end"] == gaps[0]["start"]
+    assert _seconds(gaps[0]["end"]) - first_end >= 1.0
 
 
 async def test_capture_stalled_after_sixty_seconds_without_audio(
@@ -237,14 +242,25 @@ async def test_restart_start_has_prev_end_from_the_file_size(
     assert coverage(tmp_path, "mic", starts) == pytest.approx(2.0, abs=0.01)
 
 
+@pytest.mark.parametrize("suspend_s", [0.0, 5.0])
 async def test_suspend_restarts_and_writes_a_gap(
     tmp_path: Path,
     virtual_wall: float,
     fake_pw: FakePwRecord,
     fake_source: FakeSource,
     monkeypatch: pytest.MonkeyPatch,
+    suspend_s: float,
 ) -> None:
     offset = {"value": 0.0}
+    monkeypatch.setattr(
+        clock,
+        "wall",
+        lambda: (
+            WALL_BASE
+            + asyncio.get_running_loop().time()
+            + (suspend_s if offset["value"] else 0.0)
+        ),
+    )
     monkeypatch.setattr(
         clock,
         "boottime",
@@ -253,8 +269,8 @@ async def test_suspend_restarts_and_writes_a_gap(
     monkeypatch.setattr(
         clock, "monotonic", lambda: 1_000.0 + asyncio.get_running_loop().time()
     )
-    fake_pw.script("mic", feed_blocks(5), feed_blocks(20))
-    fake_pw.script("sys", feed_blocks(5), feed_blocks(20))
+    fake_pw.script("mic", feed_blocks(1), feed_blocks(20))
+    fake_pw.script("sys", feed_blocks(1), feed_blocks(20))
 
     async def bump() -> None:
         await clock.sleep(0.5)
@@ -271,9 +287,13 @@ async def test_suspend_restarts_and_writes_a_gap(
     await bumper
     assert fake_pw.spawns.count("mic") == 2
     gaps = records_of(tmp_path, "gap", "mic")
-    assert [gap["reason"] for gap in gaps] == ["suspend"]
-    assert _seconds(gaps[0]["start"]) == pytest.approx(0.4, abs=0.05)
-    assert _seconds(gaps[0]["end"]) > _seconds(gaps[0]["start"])
+    assert len(records_of(tmp_path, "start", "mic")) == 1
+    if suspend_s:
+        assert [gap["reason"] for gap in gaps] == ["suspend"]
+        assert _seconds(gaps[0]["start"]) == pytest.approx(0.0, abs=0.05)
+        assert _seconds(gaps[0]["end"]) - _seconds(gaps[0]["start"]) >= 1.0
+    else:
+        assert gaps == []
 
 
 def test_stream_arguments_set_the_app_and_node_names() -> None:
@@ -324,3 +344,64 @@ def test_health_file_holds_the_service_name(tmp_path: Path) -> None:
     document = healthfile.HealthFile(path, "capture").rewrite()
     assert documents.read_json(path)["service"] == "capture"
     assert document.faults == []
+
+
+@pytest.mark.parametrize("eof", [False, True])
+@pytest.mark.parametrize("restart_s", [0.3, 1.2])
+async def test_restart_records_only_holes_of_at_least_one_second(
+    tmp_path: Path,
+    virtual_wall: float,
+    fake_pw: FakePwRecord,
+    fake_source: FakeSource,
+    eof: bool,
+    restart_s: float,
+) -> None:
+    fake_pw.script("mic", feed_blocks(5, eof=eof), feed_blocks(10))
+    fake_pw.script("sys", feed_blocks(40))
+    await run_capture(
+        tmp_path,
+        seconds=2.5,
+        fake_pw=fake_pw,
+        fake_source=fake_source,
+        settings=config(stall_restart_s=restart_s),
+    )
+    assert len(records_of(tmp_path, "start", "mic")) == 1
+    gaps = records_of(tmp_path, "gap", "mic")
+    assert len(gaps) == (1 if restart_s >= 1.0 else 0)
+    if gaps:
+        assert gaps[0]["reason"] == "stall"
+        assert _seconds(gaps[0]["start"]) == pytest.approx(0.4)
+        assert _seconds(gaps[0]["end"]) - _seconds(gaps[0]["start"]) >= 1.0
+
+
+async def test_watchdog_stops_after_a_backward_wall_clock_step(
+    tmp_path: Path,
+    virtual_wall: float,
+    fake_pw: FakePwRecord,
+    fake_source: FakeSource,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pings: list[float] = []
+    monkeypatch.setattr(clock, "monotonic", lambda: asyncio.get_running_loop().time())
+    monkeypatch.setattr(clock, "boottime", lambda: clock.monotonic())
+    monkeypatch.setattr(
+        clock,
+        "wall",
+        lambda: WALL_BASE + clock.monotonic() - (100 if clock.monotonic() >= 3 else 0),
+    )
+    monkeypatch.setattr(
+        systemd,
+        "sd_notify",
+        lambda state: pings.append(clock.monotonic()) or True,
+    )
+    for name in ("mic", "sys"):
+        fake_pw.script(name, feed_blocks(20))  # type: ignore[arg-type]
+    await run_capture(
+        tmp_path,
+        seconds=10,
+        fake_pw=fake_pw,
+        fake_source=fake_source,
+        settings=config(stall_restart_s=20, stall_error_s=60),
+    )
+    assert pings
+    assert max(pings) < 7.0

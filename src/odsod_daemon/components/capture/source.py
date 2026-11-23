@@ -7,6 +7,7 @@ import contextlib
 import json
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
+from enum import Enum, auto
 
 from odsod_daemon.lib import clock
 
@@ -20,6 +21,10 @@ POLL_S = 60.0
 class SourceState:
     name: str | None
     muted: bool
+
+
+class _ReadTimeout(Enum):
+    EXPIRED = auto()
 
 
 class PactlError(RuntimeError):
@@ -65,7 +70,7 @@ async def watch(on_state: OnState, stopping: asyncio.Event) -> None:
                 line = await _readline(process, stopping, POLL_S)
                 if line is None:
                     break
-                if "source" in line or "server" in line:
+                if line is _ReadTimeout.EXPIRED or "source" in line or "server" in line:
                     await _report(on_state)
         finally:
             await _stop(process)
@@ -100,7 +105,7 @@ async def _call(*args: str) -> str:
 
 async def _readline(
     process: asyncio.subprocess.Process, stopping: asyncio.Event, timeout_s: float
-) -> str | None:
+) -> str | _ReadTimeout | None:
     assert process.stdout is not None
     reading = asyncio.create_task(process.stdout.readline())
     waiting = asyncio.create_task(stopping.wait())
@@ -115,8 +120,10 @@ async def _readline(
             if not task.done():
                 task.cancel()
         await asyncio.gather(reading, waiting, return_exceptions=True)
-    if not done or waiting in done:
+    if waiting in done:
         return None
+    if not done:
+        return _ReadTimeout.EXPIRED
     line = reading.result()
     return line.decode("utf-8", "replace").rstrip() if line else None
 

@@ -78,7 +78,7 @@ class Recorder(channel_module.Sink):
         self._append(CaptureStop(ts=clock.iso(), channel=channel, reason="shutdown"))
 
     def block(self, channel: Channel, block: bytes, start: float) -> None:
-        self.last_block[channel] = clock.wall()
+        self.last_block[channel] = clock.monotonic()
         if channel == "mic":
             self.mic.block(block, start)
 
@@ -166,7 +166,7 @@ async def run(
                     faults.append(Active(checks.CAPTURE_STALLED, start, key=name))
             faults.extend(mic.faults(now))
             health.flush(faults, now)
-            if checks.watchdog_ok(recorder.last_block, now):
+            if checks.watchdog_ok(recorder.last_block, clock.monotonic()):
                 systemd.sd_notify("WATCHDOG=1")
             if await _sleep(stopping, TICK_S):
                 return

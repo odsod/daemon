@@ -38,7 +38,7 @@ class MicCheck:
         return self._zero_since
 
     def block(self, block: bytes, start: float) -> None:
-        if not all_zero(block):
+        if self._mute_since is not None or not all_zero(block):
             self._zero_since = None
         elif self._zero_since is None:
             self._zero_since = start
@@ -46,8 +46,9 @@ class MicCheck:
     def set_muted(self, muted: bool, now: float) -> None:
         if muted and self._mute_since is None:
             self._mute_since = now
-        elif not muted:
+        elif not muted and self._mute_since is not None:
             self._mute_since = None
+            self._zero_since = None
 
     def faults(self, now: float) -> list[Active]:
         active: list[Active] = []

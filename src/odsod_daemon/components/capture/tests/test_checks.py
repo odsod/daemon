@@ -41,7 +41,12 @@ def test_muted_source_shows_mic_muted_and_no_silent_fault() -> None:
         mic.block(ZERO, start=index * 0.1)
     assert mic.faults(now=30.0) == [checks.Active(checks.MIC_MUTED, since=1.0)]
     mic.set_muted(False, now=31.0)
-    assert mic.faults(now=31.0) == [checks.Active(checks.MIC_SILENT, since=0.0)]
+    assert mic.zero_since is None
+    assert mic.faults(now=31.0) == []
+    mic.block(ZERO, start=31.0)
+    mic.set_muted(False, now=35.0)
+    assert mic.faults(now=40.9) == []
+    assert mic.faults(now=41.0) == [checks.Active(checks.MIC_SILENT, since=31.0)]
 
 
 def test_stall_start_is_the_later_of_audio_end_and_service_start() -> None:
@@ -63,3 +68,15 @@ def test_mic_fault_since_keeps_the_first_zero_block() -> None:
     mic.block(ZERO, start=2.0)
     mic.block(ZERO, start=2.1)
     assert mic.faults(now=3.0) == [checks.Active(checks.MIC_SILENT, since=2.0)]
+
+
+def test_unmute_discards_zeros_from_before_and_during_mute() -> None:
+    mic = checks.MicCheck(silent_s=60)
+    mic.block(ZERO, start=0)
+    mic.set_muted(True, now=10)
+    mic.block(ZERO, start=70)
+    mic.set_muted(False, now=80)
+    assert mic.faults(now=80) == []
+    mic.block(ZERO, start=81)
+    assert mic.faults(now=140.9) == []
+    assert mic.faults(now=141) == [checks.Active(checks.MIC_SILENT, since=81)]

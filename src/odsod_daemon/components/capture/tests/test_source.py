@@ -10,6 +10,8 @@ from pathlib import Path
 import pytest
 
 from odsod_daemon.components.capture import source
+from odsod_daemon.components.capture.tests.helpers import FakeProcess
+from odsod_daemon.lib import clock
 
 BIN = Path(__file__).parent / "bin"
 
@@ -71,3 +73,37 @@ async def test_watch_reports_the_new_mute_after_a_source_event(
         await asyncio.wait_for(task, 5)
     assert seen[0].muted is False
     assert any(state.muted for state in seen)
+
+
+async def test_poll_keeps_subscription_open_for_the_next_mute_event(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    stopping = asyncio.Event()
+    seen: list[source.SourceState] = []
+    spawned: list[FakeProcess] = []
+
+    async def feed(reader: asyncio.StreamReader) -> None:
+        await clock.sleep(60.1)
+        reader.feed_data(b"Event 'change' on source #1\n")
+
+    async def spawn(*args: object, **kwargs: object) -> FakeProcess:
+        process = FakeProcess(feed)
+        spawned.append(process)
+        return process
+
+    async def read_default() -> source.SourceState:
+        return source.SourceState("fake_mic", muted=clock.monotonic() >= 60.1)
+
+    def on_state(state: source.SourceState) -> None:
+        seen.append(state)
+        if state.muted:
+            stopping.set()
+
+    monkeypatch.setattr(asyncio, "create_subprocess_exec", spawn)
+    monkeypatch.setattr(source, "read_default", read_default)
+    monkeypatch.setattr(clock, "monotonic", lambda: asyncio.get_running_loop().time())
+    async with clock.timeout(61):
+        await source.watch(on_state, stopping)
+    assert [state.muted for state in seen] == [False, False, True]
+    assert len(spawned) == 1
+    assert spawned[0].terminated
