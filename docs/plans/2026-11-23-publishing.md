@@ -36,6 +36,9 @@ mise run build
   31 component tests pass.
 - 2026-11-23: Step 2 done. `--once` drains and exits 0; `publish` runs in
   `services/pipeline.py`.
+- 2026-11-23: Step 3 done. `tests/test_publish.py` copies a finished
+  transcript once and a second run copies nothing. `mise run build`: 532
+  passed.
 
 ## Decisions to confirm
 
