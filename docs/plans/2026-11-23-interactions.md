@@ -64,6 +64,27 @@ mise run build
   and one finished record after two drains, plus malformed/schema/HTTP
   failures. System-test Ruff and Pyright pass.
 
+- 2026-11-23: Step 5 first smoke: 8179 produced one document, one ok and
+  one finished record from six generated Swedish lines. The overview was
+  English, but point text was Swedish, so the AC-5 smoke check failed.
+  Made English explicit for the title, overview and every point. Temporary
+  root and HOME were deleted.
+
+- 2026-11-23: Step 5 repeat smoke passed against local 8179: one document,
+  one `ok` interaction, one `finished` record, six speech lines. Title:
+  "Database Migration to PostgreSQL" (four words). Summary: two English
+  overview sentences and six English points under Decided, Problem and Next.
+  Swedish transcript stayed unchanged. Front matter: type, id, host, start,
+  end, timezone, meeting, participants and title. Participants: Oscar and
+  Others; meeting: null; timezone: Europe/Stockholm with +01:00 times.
+  Setup: default plus the rendered-prompt SHA-256. Temporary root and HOME
+  were deleted after both smoke runs.
+
+- 2026-11-23: Done when passed after the prompt correction: component
+  pytest 26 passed; system pytest `-k interactions` 4 passed; `mise run
+  build` 453 passed, 1 timing test deselected. Lint, formatting, types,
+  import rules and C compilation passed. Plan Status left unchanged.
+
 ## Decisions to confirm
 
 - Front matter uses JSON syntax, which is valid YAML. The public

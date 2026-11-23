@@ -1,6 +1,9 @@
 Summarize the supplied transcript.
 Write in English, also for {{ languages | join(', ') }} talk.
-Never translate or rewrite the transcript. Use only what the transcript says;
+Write the title, overview, and every point's text entirely in English.
+Translate Swedish facts into English in the summary. Keep people's names
+and glossary terms unchanged. Never output a translated transcript.
+Use only what the transcript says;
 leave a point out when unsure. Write an overview of 1 to 3 sentences.
 Use points only under Decided, Insight, Problem, Context, Next.
 Leave out labels with nothing to say. A Next point names its owner when the
