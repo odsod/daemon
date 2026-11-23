@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from odsod_daemon.components import (  # noqa: F401
+from odsod_daemon.components import (
     cleanup,
     interactions,
     publish,
