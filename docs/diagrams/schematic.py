@@ -21,6 +21,7 @@ BASIC_DATE = "23 Nov 2026"
 HEAVY = 3.4
 THIN = 1.6
 DASHED = "11 6"
+DASH_DOT = "18 5 3 5"
 
 
 class Page:
@@ -135,6 +136,15 @@ class Page:
         # title centered on the drum, so a flow at y + h / 2 meets it
         self.text(x + w / 2, y + h / 2 + 6, title, 17, "bold", MONO)
         self.lines(x + w / 2, y + h / 2 + 30, rows, 13)
+
+    def boundary(self, points, label, lx, ly):
+        """Boundary of odsod-daemon, the whole system: dash-dot outline."""
+        d = " ".join(f"{x},{y}" for x, y in points)
+        self.add(
+            f'<polygon points="{d}" fill="none" stroke="{INK}" stroke-width="1.8" '
+            f'stroke-dasharray="{DASH_DOT}"/>'
+        )
+        self.text(lx, ly, label, 13, "bold", anchor="start")
 
     def frame(self, x, y, w, h, letter, name):
         """Boundary of one service: thin dashed frame with a filled letter."""
