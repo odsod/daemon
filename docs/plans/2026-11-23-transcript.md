@@ -55,6 +55,11 @@ mise run build
   stdin notes, optional pin text, day selection, and JSON. Pipeline-down
   notes replay into the day file. All 52 component checks and pyright pass.
 
+- 2026-11-23: Drain mode uses the same writer flush, without followers
+  or waits. Ready lines and eligible finishes drain; mic lines stay held
+  until coverage or the hold limit permits them. All 54 component checks,
+  ruff, and pyright pass.
+
 ## Decisions to confirm
 
 - Mic text shorter than three normalized tokens is never dropped. This

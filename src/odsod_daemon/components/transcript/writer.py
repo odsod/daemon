@@ -180,9 +180,10 @@ async def _follow(path: Path, wake: asyncio.Event) -> None:
 
 
 async def run(settings: TranscriptConfig, *, once: bool = False) -> None:
-    if once:
-        raise ValueError("transcript drain mode is not built yet")
     writer = Writer(settings)
+    if once:
+        writer.flush()
+        return
     wake = asyncio.Event()
     watched_day = None
     watchers: list[asyncio.Task] = []
