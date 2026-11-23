@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from types import ModuleType
 from typing import Any
 
-from odsod_daemon.lib import clock, config, systemd
+from odsod_daemon.lib import clock, config, healthfile, paths, systemd
 
 
 class ComponentNotBuilt(RuntimeError):
@@ -81,6 +81,10 @@ async def run_service(spec: ServiceSpec, *, once: bool = False) -> None:
             await run_prepared(item, once=True)
         return
 
+    health = paths.roots().run / f"health/{spec.name}.json"
+    if health.exists():
+        # Faults of the previous run void at start; components set them again.
+        healthfile.HealthFile(health, spec.name).rewrite_empty()
     started = [asyncio.Event() for _ in prepared]
     owns_watchdog = any(
         getattr(module, "WATCHDOG_OWNER", False) for module in spec.components

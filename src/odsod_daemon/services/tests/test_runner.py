@@ -170,3 +170,21 @@ async def test_once_drains_in_component_order() -> None:
         once=True,
     )
     assert seen == ["upstream", "downstream"]
+
+
+async def test_service_start_voids_old_faults(temp_root: Path) -> None:
+    """ADR-0003: a restart rebuilds from files; old faults do not survive it."""
+    from odsod_daemon.lib import documents, healthfile, paths
+
+    path = paths.roots().run / "health/test.json"
+    old = healthfile.HealthFile(path, "test")
+    old.set("target-missing", "gone", key="vault")
+    old.rewrite()
+    service = asyncio.create_task(
+        run_service(ServiceSpec("test", [blocking_component()]))
+    )
+    await asyncio.sleep(0.1)
+    service.cancel()
+    with suppress(asyncio.CancelledError):
+        await service
+    assert documents.read_json(path)["faults"] == []

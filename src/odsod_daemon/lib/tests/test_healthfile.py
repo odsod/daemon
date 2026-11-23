@@ -55,3 +55,25 @@ def test_unreadable_file_starts_empty(tmp_path: Path) -> None:
     path.write_text("not json", encoding="utf-8")
     health = healthfile.HealthFile(path, "tray")
     assert health.faults == []
+
+
+def test_two_writers_keep_each_others_faults(tmp_path):
+    """ADR-0010: clearing one key never clears another, across writers."""
+    path = tmp_path / "pipeline.json"
+    cached = healthfile.HealthFile(path, "pipeline")
+    other = healthfile.HealthFile(path, "pipeline")
+    other.set("inference-unreachable", "down", key="whisper")
+    other.rewrite()
+    cached.set("target-missing", "gone", key="vault")
+    cached.set("target-missing", "gone", key="nas")
+    cached.rewrite()
+    codes = {(f["code"], f["key"]) for f in documents.read_json(path)["faults"]}
+    assert codes == {
+        ("inference-unreachable", "whisper"),
+        ("target-missing", "vault"),
+        ("target-missing", "nas"),
+    }
+    assert cached.clear("target-missing", key="vault")
+    cached.rewrite()
+    codes = {(f["code"], f["key"]) for f in documents.read_json(path)["faults"]}
+    assert codes == {("inference-unreachable", "whisper"), ("target-missing", "nas")}
