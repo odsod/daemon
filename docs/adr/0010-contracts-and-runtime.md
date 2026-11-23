@@ -231,7 +231,7 @@ Mic muted as `mic-muted`.
 | `healthfile` | Set and clear faults of this service by `(code, key)`; rewrite the file                                                |
 | `inference`  | Async clients for whisper-server and llama-server; URL check; `reachable(url, timeout)`; `is_loopback(url)`; fakes     |
 | `systemd`    | Unit states over D-Bus, user and system bus (`ActiveState`, `SubState`, `Result`, `StateChangeTimestamp`); `sd_notify` |
-| `power`      | `on_mains()` from `/sys/class/power_supply`                                                                            |
+| `power`      | `on_mains()` from `/sys/class/power_supply`. Device batteries (scope `Device`, such as a pen or a mouse) do not count  |
 | `textmatch`  | `overlap(a, b)`: token overlap of two texts, 0.0 to 1.0. Each caller keeps its own threshold                           |
 | `cli`        | `--json` output: one result model renders as text or JSON                                                              |
 
@@ -247,6 +247,10 @@ Mic muted as `mic-muted`.
   would break `dictation` AC-3, which crosses three streams. The target is
   20 ms. CI checks p95 under 100 ms over 1,000 appends, in a test marked
   `timing`. bench and the owner measure the real dictation latency.
+- `power.on_mains()` is False only when a battery with a scope other than
+  `Device` reports `Discharging` and no `Mains` supply is online. No supply,
+  or only device batteries, gives True. A desktop with a pen battery is on
+  mains.
 - `clock`: components never call `time.time`, `time.monotonic`,
   `datetime.now` or `asyncio.wait_for` with a raw number. They use
   `lib.clock`, so tests control all time.

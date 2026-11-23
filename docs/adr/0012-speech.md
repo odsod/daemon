@@ -155,8 +155,8 @@ Per channel (`mic`, `sys`) one task reads new audio and runs the cutter.
 
 - **Model:** Silero VAD v5, ONNX, 16 kHz
   (source: `https://github.com/snakers4/silero-vad`, file
-  `src/silero_vad/data/silero_vad.onnx`). The repo pins the file by its
-  SHA-256, written into `vad.py` when the file is added. Inputs: `input`
+  `src/silero_vad/data/silero_vad.onnx`, from a v5 release tag). The repo
+  pins the file by its tag and SHA-256, written into `vad.py` when the file is added. Inputs: `input`
   (float32, shape 1 × 576: 64 samples of context from the end of the
   previous frame, then 512 new samples), `state` (float32, 2 × 1 × 128,
   zeros at start) and `sr` (int64, 16000). Outputs: the speech probability
@@ -337,6 +337,10 @@ The worker tells host faults from input faults:
 
 #### Drain mode (`--once`)
 
+- `odsodctl run segmentation --once` reads each channel's audio to the end
+  of its files, as if capture had stopped there: coverage ends at the last
+  sample, and an open utterance closes at that end. Dictation masks from
+  existing records apply; it does not wait for the dictation guard.
 - `odsodctl run transcription --once` and `odsodctl run cleanup --once`
   drain the pending work of that component, then exit 0
   ([ADR-0010](0010-contracts-and-runtime.md)).

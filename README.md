@@ -18,6 +18,7 @@ owner uses one CLI, `odsodctl`.
   [ADR-0010](docs/adr/0010-contracts-and-runtime.md).
 - The detailed diagram:
   [`high-level-architecture.svg`](docs/diagrams/high-level-architecture.svg).
+- The order of work: [`docs/plans/`](docs/plans/README.md).
 - The research behind the design:
   [`docs/research/`](docs/research/alternatives.md).
 

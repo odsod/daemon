@@ -163,6 +163,11 @@ Expected units:
 | `odsod-daemon-tray.service`     | user   | `graphical-session.target` is active                                 | `systemctl --user restart odsod-daemon-tray`     |
 | `odsod-daemon-keys.service`     | system | Always                                                               | `sudo systemctl restart odsod-daemon-keys`       |
 
+- Only shipped services are expected. `install.contract.SERVICES` lists
+  the services this build ships, and install renders units only for them
+  ([ADR-0006](0006-installation.md)). A unit whose service is not in the
+  list is reported as `expected: false` and raises no Error. A shipped
+  unit that is missing or down still gives Error.
 - Session and tray are not expected without a graphical session, such as a
   host reached over SSH with nobody logged in on screen. `status` then
   reports them as `expected: false` and raises no Error

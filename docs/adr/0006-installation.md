@@ -167,13 +167,15 @@ Steps, each printed as `[n/7] <step>`:
    the changed ones (atomic). Remove `odsod-daemon-*` units on disk that no
    template renders any more.
 4. **Reload.** If any unit file changed, run `systemctl --user daemon-reload`.
-5. **Enable.** `systemctl --user enable odsod-daemon.target
-   odsod-daemon-resume.timer odsod-daemon-retention.timer
-   odsod-daemon-capture.service odsod-daemon-session.service
-   odsod-daemon-tray.service odsod-daemon-login.service`. This is
-   idempotent. Capture, session, tray and the login one-shot are
-   `WantedBy=graphical-session.target`, not part of `odsod-daemon.target`,
-   so they need their own enable (`install-and-upgrade` AC-1).
+5. **Enable.** `systemctl --user enable` the target, the timers and every
+   rendered unit that has an `[Install]` section: `odsod-daemon.target`,
+   `odsod-daemon-resume.timer`, `odsod-daemon-retention.timer`,
+   `odsod-daemon-capture.service`, `odsod-daemon-session.service`,
+   `odsod-daemon-tray.service` and `odsod-daemon-login.service`, when
+   rendered. This is idempotent. Capture, session, tray and the login
+   one-shot are `WantedBy=graphical-session.target`, not part of
+   `odsod-daemon.target`, so they need their own enable
+   (`install-and-upgrade` AC-1).
 6. **Restart.** Only what changed:
    - the candidate differs from `current` in source or commit, or the
      install is a dev deploy: all Python services;
@@ -207,6 +209,12 @@ Steps, each printed as `[n/7] <step>`:
   run did not reach (`install-and-upgrade` AC-10, AC-15).
 
 #### Unit templates
+
+- `install.contract.SERVICES` lists the services this build ships. Render,
+  enable and restart act only on their units, and control expects only
+  their units ([ADR-0018](0018-control.md)). A build that adds a service
+  adds it to the list in the same commit. The build grows one subsystem at
+  a time, so a partial build stays healthy.
 
 Rendered into `~/.config/systemd/user/`. The values below are the
 design; ADR-0004 fixes the unit set.
@@ -350,10 +358,11 @@ run = 'sudo "$(command -v odsodctl)" install --system'
    recorder. Compare until the new transcript meets `live-transcript` AC-1
    and AC-10.
    - The Go recorder needs whisper-server with server-side VAD (`--vad`).
-     The daemon needs it without (ADR-0012). Until the Go recorder stops,
-     the `machine` repo runs a second whisper-server without `--vad` on
-     another port, and the daemon's `whisper_url` points at it. The second
-     unit goes away with the Go recorder.
+     The daemon needs it without (ADR-0012). The `machine` repo drops
+     `--vad` from the one whisper-server. A Go recorder that still uses it
+     runs without server-side VAD until it stops. A second server does not
+     fit in the GPU memory next to llama-server (owner decision,
+     2026-11-23).
    - Both inference servers listen on the tailnet address only, not
      `0.0.0.0` (ADR-0002). llama-server runs with `--parallel 2`, so
      dictation cleanup never waits behind a batch summary (ADR-0002,
