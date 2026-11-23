@@ -105,4 +105,5 @@ class ReportRow(BaseModel):
     unit: Literal["%", "ms"]
     target: float | None
     criterion: str
+    label: str = ""
     detail: dict[str, float] = {}

@@ -15,6 +15,7 @@ from types import ModuleType
 import typer
 from pydantic import BaseModel
 
+from odsod_daemon.components.bench.cli import app as bench_app
 from odsod_daemon.components.install.cli import app as install_app
 from odsod_daemon.components.note.cli import app as note_app
 from odsod_daemon.components.notify_failed.cli import app as notify_failed_app
@@ -48,6 +49,7 @@ app.add_typer(config_app, name="config")
 app.add_typer(note_app, name="note")
 app.add_typer(pin_app, name="pin")
 app.add_typer(transcript_app, name="transcript")
+app.add_typer(bench_app, name="bench")
 
 # Each component plan enables its own line below.
 app.add_typer(notify_failed_app, name="notify-failed")
@@ -61,8 +63,7 @@ app.add_typer(status_app, name="status")
 app.add_typer(retention_app, name="retention")
 # from odsod_daemon.components.shortcuts.cli import app as shortcuts_app
 # app.add_typer(shortcuts_app, name="shortcuts")
-# from odsod_daemon.components.bench.cli import app as bench_app
-# app.add_typer(bench_app, name="bench")
+app.add_typer(bench_app, name="bench")
 app.add_typer(install_app, name="install")
 
 app.add_typer(version_app, name="version")

@@ -1,11 +1,13 @@
 import json
+import os
+import subprocess
 import wave
 from datetime import timedelta
 from pathlib import Path
 
 from typer.testing import CliRunner
 
-from odsod_daemon.components.bench import cases, setups
+from odsod_daemon.components.bench import cases, sandbox, setups
 from odsod_daemon.components.bench.cli import app
 from odsod_daemon.components.bench.contract import Live
 from odsod_daemon.components.bench.tests.conftest import (
@@ -16,7 +18,6 @@ from odsod_daemon.components.bench.tests.conftest import (
     config,
     write_audio,
 )
-from odsod_daemon.components.retention.cli import app as retention_app
 from odsod_daemon.lib import audio, clock, paths
 
 BENCH = {
@@ -206,7 +207,13 @@ def test_retention_keeps_case_audio(bench_root):
     directory = cases.write_case(roots, candidate)
     assert (directory / "audio.wav").exists()
 
-    runner = CliRunner()
-    assert runner.invoke(retention_app, []).exit_code == 0
+    completed = subprocess.run(
+        [sandbox.console_script(), "retention"],
+        env={**os.environ},
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
     assert not audio.hour_file(bench_root / "state", "mic", start).exists()
     assert (directory / "audio.wav").exists()

@@ -251,4 +251,20 @@ def run_command(
     )
 
 
+@app.command("report")
+def report_command(
+    setup: str | None = typer.Option(None, "--setup"),
+    as_json: bool = typer.Option(False, "--json"),
+) -> None:
+    """Score the saved results per measure, group and setup."""
+    from odsod_daemon.components.bench import report
+
+    result = report.report(paths.roots(), setup=setup)
+    cli.emit(
+        result,
+        as_json=as_json,
+        text=lambda value: report.render(value.rows),
+    )
+
+
 __all__ = ["app"]
