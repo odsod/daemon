@@ -50,20 +50,6 @@ app.add_typer(pin_app, name="pin")
 app.add_typer(transcript_app, name="transcript")
 
 # Each component plan enables its own line below.
-# app.add_typer(note_app, name="note")
-# app.add_typer(notify_failed_app, name="notify-failed")
-# app.add_typer(pause_app, name="pause")
-# app.add_typer(pin_app, name="pin")
-# app.add_typer(resume_app, name="resume")
-# app.add_typer(status_app, name="status")
-# app.add_typer(transcript_app, name="transcript")
-# from odsod_daemon.components.note.cli import app as note_app
-# from odsod_daemon.components.notify_failed.cli import app as notify_failed_app
-# from odsod_daemon.components.pause.cli import app as pause_app
-# from odsod_daemon.components.pin.cli import app as pin_app
-# from odsod_daemon.components.resume.cli import app as resume_app
-# from odsod_daemon.components.status.cli import app as status_app
-# from odsod_daemon.components.transcript.cli import app as transcript_app
 app.add_typer(notify_failed_app, name="notify-failed")
 app.add_typer(pause_app, name="pause")
 app.add_typer(resume_app, name="resume")
