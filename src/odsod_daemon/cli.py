@@ -15,6 +15,7 @@ from types import ModuleType
 import typer
 from pydantic import BaseModel
 
+from odsod_daemon.components.retention.cli import app as retention_app
 from odsod_daemon.lib import cli as output
 from odsod_daemon.lib import config
 from odsod_daemon.services import SERVICES
@@ -55,8 +56,7 @@ app.add_typer(config_app, name="config")
 # app.add_typer(dictation_app, name="dictation")
 # from odsod_daemon.components.unmute_stale.cli import app as unmute_stale_app
 # app.add_typer(unmute_stale_app, name="unmute-stale")
-# from odsod_daemon.components.retention.cli import app as retention_app
-# app.add_typer(retention_app, name="retention")
+app.add_typer(retention_app, name="retention")
 # from odsod_daemon.components.shortcuts.cli import app as shortcuts_app
 # app.add_typer(shortcuts_app, name="shortcuts")
 # from odsod_daemon.components.bench.cli import app as bench_app
