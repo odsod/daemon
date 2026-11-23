@@ -1,0 +1,7 @@
+# Esc gives Caps Lock, also on repeat. AC-3.
+0 in key KEY_ESC down
+0 out key KEY_CAPSLOCK down
+50 in key KEY_ESC repeat
+50 out key KEY_CAPSLOCK repeat
+100 in key KEY_ESC up
+100 out key KEY_CAPSLOCK up

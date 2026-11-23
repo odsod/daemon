@@ -1,0 +1,11 @@
+# Space with a key after 150 ms gives Meta and that key. AC-5.
+0 in key KEY_SPACE down
+200 in key KEY_A down
+200 out key KEY_LEFTMETA down
+200 out key KEY_A down
+250 in key KEY_A repeat
+250 out key KEY_A repeat
+300 in key KEY_A up
+300 out key KEY_A up
+300 out key KEY_LEFTMETA up
+400 in key KEY_SPACE up

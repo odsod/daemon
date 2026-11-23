@@ -1,0 +1,9 @@
+# A key tapped inside the Space window resolves the layer as Meta. AC-5.
+0 in key KEY_SPACE down
+100 in key KEY_A down
+120 in key KEY_A up
+120 out key KEY_LEFTMETA down
+120 out key KEY_A down
+120 out key KEY_A up
+120 out key KEY_LEFTMETA up
+200 in key KEY_SPACE up

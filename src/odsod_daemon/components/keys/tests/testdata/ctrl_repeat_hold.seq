@@ -1,0 +1,7 @@
+# A held Caps Lock repeats Ctrl, and a late release gives no Esc.
+0 in key KEY_CAPSLOCK down
+0 out key KEY_LEFTCTRL down
+300 in key KEY_CAPSLOCK repeat
+300 out key KEY_LEFTCTRL repeat
+500 in key KEY_CAPSLOCK up
+500 out key KEY_LEFTCTRL up

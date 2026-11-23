@@ -1,0 +1,9 @@
+# A key released during the Space window, pressed before it, passes through.
+0 in key KEY_A down
+0 out key KEY_A down
+100 in key KEY_SPACE down
+200 in key KEY_A up
+200 out key KEY_A up
+300 in key KEY_SPACE up
+300 out key KEY_SPACE down
+300 out key KEY_SPACE up

@@ -1,0 +1,11 @@
+# Freeze: Esc does not interrupt a pending Caps Lock tap.
+0 in key KEY_CAPSLOCK down
+0 out key KEY_LEFTCTRL down
+100 in key KEY_ESC down
+100 out key KEY_CAPSLOCK down
+120 in key KEY_ESC up
+120 out key KEY_CAPSLOCK up
+200 in key KEY_CAPSLOCK up
+200 out key KEY_LEFTCTRL up
+200 out key KEY_ESC down
+200 out key KEY_ESC up

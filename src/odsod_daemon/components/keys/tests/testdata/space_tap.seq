@@ -1,0 +1,9 @@
+# Space tapped, with a key pressed during the tap, gives a space first. AC-4.
+0 in key KEY_SPACE down
+100 in key KEY_A down
+200 in key KEY_SPACE up
+200 out key KEY_SPACE down
+200 out key KEY_SPACE up
+200 out key KEY_A down
+250 in key KEY_A up
+250 out key KEY_A up

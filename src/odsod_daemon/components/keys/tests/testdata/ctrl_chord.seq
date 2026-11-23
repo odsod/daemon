@@ -1,0 +1,9 @@
+# Caps Lock with another key gives Ctrl and the key, and no Esc. AC-2.
+0 in key KEY_CAPSLOCK down
+0 out key KEY_LEFTCTRL down
+100 in key KEY_A down
+100 out key KEY_A down
+150 in key KEY_A up
+150 out key KEY_A up
+200 in key KEY_CAPSLOCK up
+200 out key KEY_LEFTCTRL up

@@ -1,0 +1,13 @@
+# Two keys pressed during the Space tap come after the space, in order. AC-4.
+0 in key KEY_SPACE down
+50 in key KEY_A down
+100 in key KEY_B down
+200 in key KEY_SPACE up
+200 out key KEY_SPACE down
+200 out key KEY_SPACE up
+200 out key KEY_A down
+200 out key KEY_B down
+250 in key KEY_A up
+250 out key KEY_A up
+260 in key KEY_B up
+260 out key KEY_B up
