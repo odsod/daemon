@@ -1,5 +1,10 @@
 # Alternatives: open-source dictation and meeting tools
 
+> Point-in-time study (2026-11-22 and 2026-11-23). ADR-0005 to ADR-0009
+> supersede the decisions and names here. For example, the keys service
+> replaced `ydotool`, and `reprocessing` is now `interactions`. Read the
+> ADRs for the current design.
+
 Source study of eight open-source tools, done on 2026-11-22, plus the
 closed-source Vibe Typer, studied from its binary on 2026-11-23. Each tool has
 a note in this directory. Every claim in an open-source note cites a file and

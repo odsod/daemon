@@ -23,7 +23,7 @@ Proposed
 | Root      | Location                                             | Synced            | Content                                |
 | --------- | ---------------------------------------------------- | ----------------- | -------------------------------------- |
 | `state/`  | `$XDG_STATE_HOME/odsod-daemon/`, mode `0700`         | No                | Audio, streams, documents, bench cases |
-| `run/`    | `$XDG_RUNTIME_DIR/odsod-daemon/` (tmpfs)             | No                | Live status, mute record               |
+| `run/`    | `$XDG_RUNTIME_DIR/odsod-daemon/` (tmpfs)             | No                | Live status, health, mute, pause flag  |
 | `config/` | `$XDG_CONFIG_HOME/odsod-daemon/`                     | No                | Config, glossary, prompts              |
 | targets   | Directories set in config, for example a vault inbox | Not by the daemon | Copies of finished documents           |
 
@@ -57,13 +57,29 @@ dictation socket ([ADR-0007](0007-keys-service.md)).
 
 ### Pending work is derived, not queued
 
-- A consumer's pending work is every input ID that has no output ID yet.
-- At startup, a consumer reads today's outputs to rebuild its set of done IDs
-  in memory. No cursor files, no job files, no claim and no lease.
+- A consumer's pending work is every input ID in the pending window that has
+  no output ID yet.
+- The pending window is the audio retention period (14 days). Older inputs
+  are never pending, because their audio is gone.
+- At startup, a consumer reads its outputs for the whole pending window to
+  rebuild its set of done IDs in memory. No cursor files, no job files, no
+  claim and no lease.
+- An output record goes in the day file of its write time, not of its input.
+  It carries the input ID. A backlog that crosses UTC midnight is then done
+  once.
+- Each output record has an outcome:
+  - `ok`: the work is done.
+  - `empty`: the work is done and gave nothing, such as no speech.
+  - `expired`: the input's audio is gone. The work can never be done.
+  - `failed`: the work failed for good, such as a rejected request, or the
+    retries for an external fault ran out.
+- A record with any outcome makes its input done. External faults, such as an
+  unreachable inference host, get bounded retries before `failed`. Only inputs
+  with no record are pending.
 - The transcription worker takes pending dictation utterances first, then
   ambient ones, oldest first.
-- The interactions batch pass sends a request only when no dictation or ambient utterance is
-  pending.
+- The interactions batch pass sends a request only when no dictation or
+  ambient utterance is pending.
 
 ### Audio
 
@@ -77,36 +93,61 @@ dictation socket ([ADR-0007](0007-keys-service.md)).
   any time range with no index.
 - When capture was not running, it seeks past the gap. The file has a hole
   that reads as silence and uses no disk.
-- File size tells readers how far the audio goes.
-- Capture deletes hour files older than the retention period (14 days,
-  about 77 GB per host) when it opens a new hour.
+- Capture never writes backward. If the wall clock goes back, capture waits
+  until the expected offset passes the end of the file
+  ([ADR-0005](0005-components-and-implementation.md)).
+- File size tells readers how far the audio goes. A reader that needs a time
+  range waits until the file covers its end.
+- Audio is kept for the retention period: 14 days, about 77 GB per host.
 
 ### Paths
 
-| Path                                                               | Kind                  | Writer                                | Readers                                          |
-| ------------------------------------------------------------------ | --------------------- | ------------------------------------- | ------------------------------------------------ |
-| `state/audio/<channel>/<hour>Z.pcm`                                | Audio                 | capture                               | segmentation, transcription, interactions, bench |
-| `state/events/<source>/<day>.jsonl`                                | Stream                | one source each: `signals`, `user`    | transcript, interactions                         |
-| `state/utterances/ambient/<day>.jsonl`                             | Stream                | segmentation                          | transcription, interactions                      |
-| `state/utterances/dictation/<day>.jsonl`                           | Stream                | dictation                             | transcription                                    |
-| `state/asr/<backend>/<day>.jsonl`                                  | Stream                | transcription worker for that backend | cleanup, bench                                   |
-| `state/text/<day>.jsonl`                                           | Stream                | cleanup                               | transcript, dictation                            |
-| `state/interactions/<day>.jsonl`                                   | Stream                | interactions                          | interactions                                     |
-| `state/bench/<case-id>/`                                           | Documents             | bench                                 | bench                                            |
-| `run/status.json`                                                  | Document              | dictation                             | tray, `odsodctl status`                          |
-| `run/muted.json`                                                   | Document              | dictation                             | dictation (after a restart)                      |
-| `config/config.json`, glossary, prompts                            | Documents             | owner                                 | all                                              |
-| `state/documents/transcripts/<local-day>-<host>.md`                | Markdown, append-only | transcript                            | publish                                          |
-| `state/documents/interactions/<local-day>-<HHMM>-<host>-<slug>.md` | Document              | interactions                          | publish                                          |
-| `state/published/<target>/<day>.jsonl`                             | Stream                | publish                               | publish                                          |
-| `<target dir>/<document name>`                                     | Document copy         | publish                               | third parties                                    |
+| Path                                                               | Kind                  | Writer                                 | Readers                               |
+| ------------------------------------------------------------------ | --------------------- | -------------------------------------- | ------------------------------------- |
+| `state/audio/<channel>/<hour>Z.pcm`                                | Audio                 | capture                                | segmentation, transcription, bench    |
+| `state/events/<source>/<day>.jsonl`                                | Stream                | one each: `signals`, `user`, `capture` | transcript, interactions              |
+| `state/utterances/ambient/<day>.jsonl`                             | Stream                | segmentation                           | transcription, interactions           |
+| `state/utterances/dictation/<day>.jsonl`                           | Stream                | dictation                              | transcription, segmentation           |
+| `state/asr/<backend>/<day>.jsonl`                                  | Stream                | transcription worker for that backend  | cleanup, bench                        |
+| `state/text/<day>.jsonl`                                           | Stream                | cleanup                                | transcript, dictation, interactions   |
+| `state/interactions/<day>.jsonl`                                   | Stream                | interactions                           | interactions                          |
+| `state/bench/<case-id>/`                                           | Documents             | bench                                  | bench                                 |
+| `run/status.json`                                                  | Document              | dictation                              | tray, `odsodctl status`               |
+| `run/health/<service>.json`                                        | Document              | that service                           | tray, `odsodctl status`               |
+| `run/paused`                                                       | Document              | `odsodctl pause`, `odsodctl resume`    | capture unit, tray, `odsodctl status` |
+| `state/install/previous-commit`                                    | Document              | `odsodctl install`                     | `odsodctl status`                     |
+| `run/muted.json`                                                   | Document              | dictation                              | `odsodctl unmute-stale`, dictation    |
+| `config/config.json`, glossary, prompts                            | Documents             | owner                                  | all                                   |
+| `state/documents/transcripts/<local-day>-<host>.md`                | Markdown, append-only | transcript                             | publish                               |
+| `state/documents/interactions/<local-day>-<HHMM>-<host>-<slug>.md` | Document              | interactions                           | publish                               |
+| `state/published/<target>/<day>.jsonl`                             | Stream                | publish                                | publish                               |
+| `<target dir>/<document name>`                                     | Document copy         | publish                                | third parties                         |
 
 - `events/user/` takes appends from several CLI calls. Each call appends one
-  short line with `O_APPEND`, which is atomic on a local filesystem.
+  short line with `O_APPEND`, which is atomic on a local filesystem. Notes,
+  pins and pause intents go here.
+- `events/capture/` holds capture's start, stop and gap records. With the
+  pause intents in `events/user/`, `transcript` gives each recording gap its
+  cause.
+- `run/health/<service>.json` holds the active faults of one service, each
+  with its `since` time. The service is its sole writer. `lib/health` merges
+  these files with the systemd unit states, so the tray and a one-shot
+  `odsodctl status` show the same state. `run/status.json` holds only the
+  dictation mode.
+- `run/paused` exists while the owner has paused recording. The capture unit
+  does not start while it exists. Resume, logout and the daily resume timer
+  remove it ([ADR-0004](0004-orchestration-with-systemd.md)).
+- `state/install/previous-commit` holds the commit that ran before the last
+  upgrade, so a failed upgrade names the rollback command
+  ([ADR-0006](0006-installation.md)).
+- `state/interactions/` holds one record per finished interaction: its range
+  and outcome (`ok` with the document name, or `skipped` for greetings and
+  noise).
 - `run/muted.json` lists the capture streams that dictation muted. It is
-  empty when nothing is muted. After a crash, dictation reads it at start and
-  unmutes those streams, so a crash never leaves the meeting deaf to the
-  owner. tmpfs clears it at reboot, when the streams are gone too.
+  empty when nothing is muted. When the session service stops for any
+  reason, `odsodctl unmute-stale` reads it and unmutes those streams, so a
+  crash never leaves the meeting deaf to the owner. tmpfs clears it at
+  reboot, when the streams are gone too.
 - Utterance records hold the ID, channel, start and end. Readers cut the audio
   themselves.
 - Component ADRs define the fields of each stream.
@@ -122,14 +163,23 @@ dictation socket ([ADR-0007](0007-keys-service.md)).
   The consumer can move, edit or delete the copy.
 - The daemon never reads from a target. `state/published/<target>/` records
   what it delivered. Pending = finished documents with no delivery record.
-- An interaction document is finished when `interactions` writes it. A daily
-  transcript is finished when its local day ends.
+- The rename is the commit point. `publish` writes the delivery record right
+  after it. A crash between the two delivers that copy once more after the
+  restart. This is accepted: the vault's ingest agent merges duplicates.
+- An interaction document is finished when `interactions` writes it.
+- A daily transcript is finished when its local day has ended and none of
+  that day's utterances is pending. At the latest, it is finished 48 h after
+  the day ended. Then `transcript` writes an `untranscribed: <range>` gap
+  line for each utterance still pending, and the transcript is final.
 - Document names include the host, so targets that sync across hosts get no
   name clashes.
 
 ### Retention
 
-- Audio expires after the retention period. Capture deletes it.
+- Audio expires after the retention period. `odsodctl retention`, run by
+  `odsod-daemon-retention.timer` each hour and at login, deletes it. It does
+  not depend on capture running, so a paused or stopped host keeps no old
+  audio.
 - Streams and documents stay. They are small text.
 - Bench cases stay until deleted, with their audio. Each case directory is
   self-contained: the audio slice, the ASR text, the reference, its review
@@ -176,10 +226,11 @@ dictation socket ([ADR-0007](0007-keys-service.md)).
 
 - `ls state/` shows the whole pipeline. `jq` answers most questions.
 - Restarts need no recovery step. Each component rebuilds from its files.
-- A consumer reads today's output at startup. That is cheap for one day of
+- A consumer reads 14 days of its output at startup. That is a few MB of
   text.
 - Raw audio uses about 5.5 GB per day before deletion.
-- Daily transcripts reach targets only after the local day ends. Read the live
-  log in `state/documents/transcripts/`.
+- Daily transcripts reach targets only after the local day ends and its
+  backlog is done, at most 48 h later. Read the live log with
+  `odsodctl transcript`.
 - Daily stream files split at UTC midnight, not local midnight. Readers that
   need a local day read two files.

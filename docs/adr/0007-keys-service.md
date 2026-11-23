@@ -38,6 +38,9 @@ Proposed
 - `odsod-keys` moves into this repo as `odsod-daemon-keys`. It keeps all its
   current remapping.
 - It adds two jobs: the **dictation key** and **paste injection**.
+- It also reads pointer devices (mice, touchpads), without a grab. Pointer
+  events still reach the apps directly. The service only needs to know when
+  a button or wheel event happens.
 - No other process reads `/dev/input` or writes `/dev/uinput`.
 
 ### Dictation key: Left Alt held alone
@@ -45,6 +48,10 @@ Proposed
 - Left Alt down: the service holds the press back.
 - Another key before the hold threshold: the service sends Alt and the key, as
   a normal chord (`Alt+Tab` works).
+- A pointer button or wheel event while Left Alt is held counts as another
+  key: the service sends Alt at once, and no dictation starts. Alt+click,
+  Alt+drag and Alt+scroll work. During dictation, it cancels the dictation
+  and sends Alt.
 - Released before the threshold: the service sends an Alt tap, as today.
 - Held alone past the threshold, with a client connected: dictation starts.
   The Alt press never reaches an application, so no menu bar opens.
@@ -52,7 +59,9 @@ Proposed
 - Another key during dictation: dictation is cancelled, and the service sends
   Alt and the key as a late chord.
 - No client connected: Left Alt behaves as a plain Alt. The keyboard never
-  depends on the session service.
+  depends on the session service. The session service disconnects on
+  purpose while recording is paused or no inference host is reachable
+  ([ADR-0004](0004-orchestration-with-systemd.md)).
 - Right Alt (AltGr) is never a dictation key, because Swedish symbols need it.
 - The threshold is a constant in the code: 350 ms, the same as the
   remapper's tap window. The owner tunes it from use.
@@ -93,6 +102,27 @@ Proposed
   keeps state across a reconnect.
 - A new message type, or a change to one, needs an ADR. `components/keys/contract.py`
   holds the Python model of each message.
+
+### Code shape and tests
+
+- The C code has two parts:
+  - a pure state machine: input events and socket messages in, output
+    events and socket messages out, with times as input. No I/O, no clock.
+  - a thin I/O layer: evdev, uinput, inotify, the socket and the clock.
+- `mise run build` compiles the service and runs the state machine on
+  recorded event sequences: chords, taps, holds, Alt with a click,
+  dictation, cancel, paste with a held modifier, the escape chord. CI needs
+  no `/dev/uinput`.
+- Key latency is measured in the process, from the read of an event to the
+  write of its output. The service logs it on request. No bench is needed.
+
+### Escape chord
+
+- Both Shift keys and Esc held together for 3 s: the service releases every
+  grab and exits. This chord is hard-coded and handled before any remap.
+- It is the way out of a bug that swallows keys or holds a modifier without
+  a crash. systemd restarts the service after `RestartSec`, and
+  `systemctl stop` keeps it off.
 
 ## Alternatives considered
 
@@ -145,7 +175,9 @@ Proposed
 - The session service needs no input group, no udev rules and no injection
   tool.
 - A keys service bug can break typing for every app. The service stays small,
-  and a crash releases the grab, so the raw keyboard comes back at once.
+  a crash releases the grab, and the escape chord releases it when the
+  service does not crash. Tests on recorded sequences catch most such bugs
+  before an install.
 - The dictation key is fixed in code. A change needs a rebuild and
   `install --system`.
 - A lone Left Alt tap reaches apps at its release, not its press. Apps act

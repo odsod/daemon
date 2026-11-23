@@ -40,8 +40,9 @@ The name follows the Unix term
   other language in long chunks that span a change. Short requests,
   one utterance each, avoid most of that loss (benchmark 2026-11: mixed WER
   45% on long chunks, 5.3% split per utterance, as an upper bound).
-- Local inference runs on one shared GPU host. Inference servers handle one
-  request at a time, so dictation competes with ambient work.
+- Local inference runs on one shared GPU host. Whisper-server handles one
+  request at a time, so dictation competes with ambient work. A batch summary
+  can hold an LLM request for tens of seconds.
 - Raw ASR output is never final text. It needs LLM cleanup with a glossary.
 - Recording and dictation need the same audio, cut in different ways.
 - The keys service grabs every physical keyboard. No other process can read key
@@ -58,7 +59,6 @@ The name follows the Unix term
 | ------------- | ---------------------------------------------------------------------------- | -------------------------------------- |
 | **daemon**    | The whole system: one repo, one install, one CLI                             | `odsod-daemon`                         |
 | **service**   | One systemd unit and its process. Runs the components that share a lifecycle | the keys service, the pipeline service |
-| **service**   | The systemd unit that runs a daemon                                          | `odsod-daemon-keys.service`            |
 | **component** | A module with one job, inside a service or run as a command                  | `segmentation`, `cleanup`              |
 | **command**   | A component that runs on demand, with no service                             | `odsodctl note`, `odsodctl bench`      |
 | **owner**     | The one person who uses and runs the system                                  |                                        |
@@ -85,7 +85,10 @@ The name follows the Unix term
      reach other processes only through D-Bus
      ([ADR-0008](0008-shortcuts-and-kwin-script.md)).
    - **HTTP** from each host to the shared inference servers. No broker in
-     between.
+     between. Inference URLs must be `localhost` or a tailnet address. The
+     clients refuse any other host, and the servers listen only on the
+     tailnet, so ambient audio never crosses an open network (owner
+     decision, 2026-11-23).
 6. **Rules for files.**
    - One writer per path.
    - Streams are append-only. Readers consume only complete lines. Single
@@ -102,11 +105,17 @@ The name follows the Unix term
    channel. Its ID joins all artifacts about it.
 9. **Dictation goes first on each host.** Each host queues its work by urgency:
    dictation, then live transcription, then batch work. Across hosts there is
-   no priority. Dictation can wait for one short in-flight request from
-   another host.
+   no priority queue:
+   - Whisper requests are one utterance each, so dictation waits at most for
+     one short request from another host.
+   - The inference host runs llama-server with 2 parallel slots, so dictation
+     cleanup never waits behind a batch summary.
+   - Dictation cleanup has a 1 s limit. After it, dictation uses the raw ASR
+     text (owner decision, 2026-11-23).
 10. **Fast first, accurate later.** A live pass gives text only, within
     seconds. A batch pass reprocesses a finished interaction with full context:
-    diarization, speaker names, summaries.
+    speaker names from the meeting, summaries. Diarization is a later
+    per-host extra, not part of v1 (owner decision, 2026-11-23).
 11. **Hosts are independent.** Each host records and writes its own files. Hosts
     share only inference servers. No locks or coordination between hosts.
 12. **Consumers are third parties.** The daemon keeps its own documents and
@@ -116,7 +125,9 @@ The name follows the Unix term
 13. **Split services by lifecycle, not by module.** The keys service runs as root
     from boot, so the keyboard works before login. Capture runs alone, so
     changes elsewhere never cause audio gaps. Session-bound parts (dictation,
-    tray icon) run in the graphical session. All else can restart freely.
+    shortcuts) run in the graphical session. The tray icon runs in its own
+    unit, so Qt can never delay a mute or a paste. All else can restart
+    freely.
     systemd supervises every service
     ([ADR-0004](0004-orchestration-with-systemd.md)).
 14. **Python, with two exceptions.** The best speech and audio tools are
@@ -133,22 +144,23 @@ The name follows the Unix term
 | keys     | root, from boot          | Remap keys; detect the dictation key; inject paste keys |
 | capture  | owner                    | Record mic and system audio to the audio buffer         |
 | pipeline | owner                    | Turn audio into transcripts and interaction documents   |
-| session  | owner, graphical session | Dictation, the tray icon and global shortcuts           |
+| session  | owner, graphical session | Dictation and global shortcuts                          |
+| tray     | owner, graphical session | The tray icon: mode, health, pause and resume           |
 
 ### Capabilities
 
-| Capability            | What the owner gets                                                                                          |
-| --------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Keyboard remapping    | Custom key behavior in every application, from boot.                                                         |
-| Ambient recording     | Every host records mic and system audio in the background. Audio is kept for a rolling period.               |
-| Live transcript       | A daily log of what was said, within seconds, with notes, pins and meeting changes.                          |
-| Dictation             | Hold a key, speak, release: the text appears in the active application. Meetings do not hear the dictation.  |
-| Interaction documents | Each finished meeting or conversation gets a transcript with speaker names and a summary.                    |
-| Publishing            | Finished documents go to configured directories, such as a vault inbox.                                      |
-| Benchmarking          | Stored audio and results compare models, prompts and strategies on real speech.                              |
-| Global shortcuts      | One key chord focuses or launches an app, or runs a window action.                                           |
-| Health and control    | A tray icon shows the mode and any problem. Pause stops recording. `odsodctl` can do all that the tray does. |
-| Install and upgrade   | One command installs or upgrades a host from `main`; a dev deploy runs local work live.                      |
+| Capability          | What the owner gets                                                                                          |
+| ------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Keyboard remapping  | Custom key behavior in every application, from boot.                                                         |
+| Ambient recording   | Every host records mic and system audio in the background. Audio is kept for a rolling period.               |
+| Live transcript     | A daily log of what was said, within seconds, with notes, pins and meeting changes.                          |
+| Dictation           | Hold a key, speak, release: the text appears in the active application. Meetings do not hear the dictation.  |
+| Interactions        | Each finished meeting or conversation gets a transcript with meeting speaker names and a summary.            |
+| Publishing          | Finished documents go to configured directories, such as a vault inbox.                                      |
+| Benchmarking        | Stored cases compare models, prompts and strategies on real speech, offline.                                 |
+| Global shortcuts    | One key chord focuses or launches an app, or runs a window action.                                           |
+| Health and control  | A tray icon shows the mode and any problem. Pause stops recording. `odsodctl` can do all that the tray does. |
+| Install and upgrade | One command installs or upgrades a host from `main`; a dev deploy runs local work live.                      |
 
 ### Flow
 
@@ -200,6 +212,16 @@ benchmark: reads stored audio and results
 - Fast, but audio is lost on restart, nothing can be replayed, and benchmark
   data needs a separate path.
 
+### Local ASR on each laptop
+
+- A local whisper-server on each laptop would work away from the inference
+  host.
+- Rejected: a model good enough for Swedish and English does not keep up
+  with two always-on channels on a laptop CPU. The tailnet reaches the
+  inference host from anywhere. With no inference host reachable, ambient
+  work waits in files and dictation is off: Left Alt is plain Alt, and the
+  tray shows a Warning (owner decision, 2026-11-23).
+
 ### Cloud ASR
 
 - Cloud services claim better mixed-language accuracy. Rejected because
@@ -218,9 +240,20 @@ benchmark: reads stored audio and results
 
 - An in-memory queue in front of the inference servers would give dictation
   priority across hosts.
-- Rejected: one more service for a rare case. With short utterances, the
-  in-flight request that dictation waits for is short. If that wait hurts,
-  a second inference server just for dictation is the next step.
+- Rejected: one more service. Short whisper requests, 2 llama-server slots
+  and the 1 s cleanup limit keep dictation inside its target. If that wait
+  still hurts, a second inference server just for dictation is the next
+  step.
+
+### Diarization in v1
+
+- pyannote on each host would split voices that no meeting names, such as a
+  talk in the room.
+- Deferred: it brings torch, a Hugging Face token, a model download step and
+  hours of CPU on laptops. Meetings already name speakers through their
+  speaking indicator. Talks outside a meeting show the owner and "Others"
+  until a later per-host extra adds diarization (owner decision,
+  2026-11-23).
 
 ### Speaker attribution in the live pass
 
@@ -233,8 +266,9 @@ benchmark: reads stored audio and results
 
 - Lets each part use its best ecosystem, but costs several toolchains and
   duplicated file helpers. For this system, Python is the best ecosystem for
-  the hard parts and good enough for the rest. The keys service is the one
-  exception, for the reasons in ADR-0007.
+  the hard parts and good enough for the rest. The two exceptions are the
+  keys service in C (ADR-0007) and the KWin script in JavaScript
+  (ADR-0008).
 
 ## Consequences
 
@@ -247,6 +281,10 @@ benchmark: reads stored audio and results
   a broken message queue.
 - More requests per hour of audio than long chunks, so the shared GPU carries
   more load.
-- Dictation can take a few seconds longer when another host is transcribing.
+- Dictation can take up to about 1 s longer when another host is
+  transcribing. Under load, dictation can paste raw ASR text without
+  cleanup.
+- Away from the tailnet, or with the inference host down, there is no
+  transcription and no dictation.
 - Live text has no speaker names. Names appear when the batch pass finishes.
 - Two toolchains: Python and C. The C part stays one small service.

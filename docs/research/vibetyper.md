@@ -171,7 +171,7 @@ recording"** (config key `muteSystemAudioDuringRecording`), in
   Skip streams that were muted before. Handle streams that end during
   dictation.
 - **Clear stale mutes at start.** A crash between mute and unmute leaves the
-  meeting deaf to the owner. On start, `recorder-session` unmutes any stream
+  meeting deaf to the owner. On start, `odsod-daemon-session` unmutes any stream
   it marked. Restore on SIGTERM with a short time budget.
 - **Mute fails open.** Dictation continues and the tray shows a warning.
 - **Optional playback mute while dictating.** It keeps speaker sound out of
