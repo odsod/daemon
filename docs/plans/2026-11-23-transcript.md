@@ -51,6 +51,10 @@ mise run build
   a 3,600-line backlog, and missing signals pass (41 component checks).
   Ruff and pyright pass.
 
+- 2026-11-23: Added and mounted note, pin, and transcript commands, with
+  stdin notes, optional pin text, day selection, and JSON. Pipeline-down
+  notes replay into the day file. All 52 component checks and pyright pass.
+
 ## Decisions to confirm
 
 - Mic text shorter than three normalized tokens is never dropped. This
@@ -62,3 +66,8 @@ mise run build
 
 - Replay orders records by write timestamp, with stable stream order for
   ties. Held mic lines append when released. Gap lines append on closure.
+
+- A missing day prints no Markdown and returns an empty JSON lines list.
+- Parsed times use the header time zone. In a repeated DST hour, the
+  file format has no offset or fold marker; parsing uses the first
+  occurrence of that wall-clock time.

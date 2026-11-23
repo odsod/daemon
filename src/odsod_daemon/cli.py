@@ -15,7 +15,10 @@ from types import ModuleType
 import typer
 from pydantic import BaseModel
 
+from odsod_daemon.components.note.cli import app as note_app
+from odsod_daemon.components.pin.cli import app as pin_app
 from odsod_daemon.components.retention.cli import app as retention_app
+from odsod_daemon.components.transcript.cli import app as transcript_app
 from odsod_daemon.lib import cli as output
 from odsod_daemon.lib import config
 from odsod_daemon.services import SERVICES
@@ -36,6 +39,9 @@ config_app = typer.Typer(
     help="Inspect and validate the config.",
 )
 app.add_typer(config_app, name="config")
+app.add_typer(note_app, name="note")
+app.add_typer(pin_app, name="pin")
+app.add_typer(transcript_app, name="transcript")
 
 # Each component plan enables its own line below.
 # from odsod_daemon.components.status.cli import app as status_app
@@ -46,12 +52,6 @@ app.add_typer(config_app, name="config")
 # app.add_typer(resume_app, name="resume")
 # from odsod_daemon.components.notify_failed.cli import app as notify_failed_app
 # app.add_typer(notify_failed_app, name="notify-failed")
-# from odsod_daemon.components.note.cli import app as note_app
-# app.add_typer(note_app, name="note")
-# from odsod_daemon.components.pin.cli import app as pin_app
-# app.add_typer(pin_app, name="pin")
-# from odsod_daemon.components.transcript.cli import app as transcript_app
-# app.add_typer(transcript_app, name="transcript")
 # from odsod_daemon.components.dictation.cli import app as dictation_app
 # app.add_typer(dictation_app, name="dictation")
 # from odsod_daemon.components.unmute_stale.cli import app as unmute_stale_app
