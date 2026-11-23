@@ -6,24 +6,26 @@ Wayland, PipeWire and systemd.
 
 ![odsod-daemon system configuration](docs/diagrams/overview.svg)
 
-## Services
+All speech and language models run on my own hosts, over the tailnet. The
+owner uses one CLI, `odsodctl`.
 
-| Service  | Unit                            | Job                                                     |
-| -------- | ------------------------------- | ------------------------------------------------------- |
-| keys     | `odsod-daemon-keys.service`     | Remap keys; hold Left Alt to dictate; paste the text    |
-| capture  | `odsod-daemon-capture.service`  | Record mic and system audio, always on                  |
-| pipeline | `odsod-daemon-pipeline.service` | Transcribe, clean up, summarize, publish to target dirs |
-| session  | `odsod-daemon-session.service`  | Dictation, the tray icon and global shortcuts           |
+## Docs
 
-All speech and language models run locally. The owner uses one CLI,
-`odsodctl`.
+- What the owner sees and does: [`docs/prd/`](docs/prd/).
+- How it is built: [`docs/adr/`](docs/adr/). The subsystems and their
+  ADRs are in [ADR-0009](docs/adr/0009-taxonomy-and-code-organization.md),
+  and the seams between them in
+  [ADR-0010](docs/adr/0010-contracts-and-runtime.md).
+- The detailed diagram:
+  [`high-level-architecture.svg`](docs/diagrams/high-level-architecture.svg).
+- The research behind the design:
+  [`docs/research/`](docs/research/alternatives.md).
 
 ## Status
 
-- The architecture is in [`docs/adr/`](docs/adr/), with the research behind
-  it in [`docs/research/`](docs/research/alternatives.md).
+- The design is complete. The Python rewrite has not started.
 - The code in this repo is still the Go recorder. It is the reference for the
-  Python rewrite and stays in use until the rewrite replaces it.
+  rewrite and stays in use until the rewrite replaces it.
 
 ## Development
 
