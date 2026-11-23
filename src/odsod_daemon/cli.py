@@ -19,6 +19,7 @@ from odsod_daemon.components.note.cli import app as note_app
 from odsod_daemon.components.pin.cli import app as pin_app
 from odsod_daemon.components.retention.cli import app as retention_app
 from odsod_daemon.components.transcript.cli import app as transcript_app
+from odsod_daemon.components.version.cli import app as version_app
 from odsod_daemon.lib import cli as output
 from odsod_daemon.lib import config
 from odsod_daemon.services import SERVICES
@@ -63,8 +64,8 @@ app.add_typer(retention_app, name="retention")
 # app.add_typer(bench_app, name="bench")
 # from odsod_daemon.components.install.cli import app as install_app
 # app.add_typer(install_app, name="install")
-# from odsod_daemon.components.version.cli import app as version_app
-# app.add_typer(version_app, name="version")
+
+app.add_typer(version_app, name="version")
 
 
 class CheckResult(BaseModel):

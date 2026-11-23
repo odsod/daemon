@@ -85,4 +85,8 @@ mise run build
 
 ## Progress log
 
+- 2026-11-23: Step 1 complete. Version reads VCS metadata and the recorded
+  dev deployment. Three component tests pass. Started with `jj new
+  python-rewrite` and `uv sync --extra bench`.
+
 ## Decisions to confirm
