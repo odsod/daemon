@@ -47,6 +47,11 @@ mise run build
   chunks, rendering, the gate and crash-safe batch writes. All 17 component
   tests, Ruff and component Pyright pass.
 
+- 2026-11-23: Step 2: added schema-bound llama requests, shipped Jinja
+  prompts, glossary and prompt overrides, setup hashes and map-reduce.
+  Recorded summary and error replies pass; 44 interaction/inference tests
+  and Pyright pass.
+
 ## Decisions to confirm
 
 - Front matter uses JSON syntax, which is valid YAML. The public
