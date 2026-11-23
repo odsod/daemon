@@ -32,4 +32,14 @@ mise run build
 
 ## Progress log
 
+- 2026-11-23: Step 1 done. Added config, pending, deliver and service;
+  31 component tests pass.
+
 ## Decisions to confirm
+
+- The first `publish --once` run writes the target's `start` and `since`.
+  The system test runs it once before the finished record appears, so the
+  record is new work, not history.
+- A finished record with `ts` equal to `since` is pending: "at or after".
+- A target's `target-missing` fault stays until a document for that target
+  is delivered. With no pending work, the fault is not cleared.
