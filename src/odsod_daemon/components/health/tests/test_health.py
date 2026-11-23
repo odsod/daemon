@@ -111,11 +111,53 @@ def test_dev_and_no_graphical_session():
 
 def test_audio_stale():
     snapshot = healthy()
+    snapshot.units["capture"] = state("capture", age=2000)
     snapshot.newest_audio["mic"] = OLD
     report = evaluate(snapshot, ControlConfig())
     assert report.exit_code == 2
     assert report.reasons[0].code == "audio-stale"
     assert report.reasons[0].since == OLD
+
+
+@pytest.mark.parametrize("age,exit_code", [(0.2, 0), (120, 0), (121, 2)])
+def test_audio_stale_after_capture_resume(age, exit_code):
+    snapshot = healthy()
+    snapshot.units["capture"] = state("capture", age=age)
+    snapshot.newest_audio = {"mic": OLD, "sys": OLD}
+    report = evaluate(snapshot, ControlConfig())
+    assert report.exit_code == exit_code
+    stale = [r for r in report.reasons if r.code == "audio-stale"]
+    assert len(stale) == (2 if exit_code else 0)
+    assert all(r.since == clock.iso(NOW - timedelta(seconds=age)) for r in stale)
+
+
+@pytest.mark.parametrize(
+    "capture_age,covered,seconds",
+    [(10, False, 0), (601, False, 601), (10, True, 1000)],
+)
+async def test_mid_hour_start_without_coverage(
+    tmp_path: Path, capture_age, covered, seconds
+):
+    roots = paths.Roots(tmp_path / "state", tmp_path / "run", tmp_path / "config")
+    source = systemd.FakeUnitStates()
+    source.set(state("capture", age=capture_age))
+    source.set(state("pipeline"))
+    tracker = BacklogTracker(roots.state)
+    for channel in audio.CHANNELS:
+        file = audio.hour_file(roots.state, channel, NOW)
+        file.parent.mkdir(parents=True)
+        with file.open("wb") as handle:
+            handle.truncate(1800 * audio.BYTES_PER_SECOND)
+        if covered:
+            tracker.coverage[channel] = OLD
+    snapshot = await gather(
+        roots, source, now=NOW, tracker=tracker, settings=ControlConfig()
+    )
+    report = evaluate(snapshot, ControlConfig())
+    assert report.backlog.count == 0
+    assert report.backlog.seconds == seconds * len(audio.CHANNELS)
+    assert report.exit_code == (1 if seconds else 0)
+    assert [r.code for r in report.reasons] == (["backlog"] if seconds else [])
 
 
 def test_backlog_incremental_and_ten_days(tmp_path: Path):

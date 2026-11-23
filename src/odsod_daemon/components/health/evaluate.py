@@ -58,7 +58,11 @@ def evaluate(snapshot: Snapshot, config: ControlConfig) -> StatusReport:
     capture = snapshot.units.get("capture")
     if capture is not None and capture.active_state == "active":
         for channel in ("mic", "sys"):
-            since = snapshot.newest_audio.get(channel) or timestamp(capture)
+            since = max(
+                snapshot.newest_audio.get(channel) or timestamp(capture),
+                timestamp(capture),
+                key=clock.parse_iso,
+            )
             if (
                 snapshot.now - clock.parse_iso(since)
             ).total_seconds() > config.audio_stale_s:

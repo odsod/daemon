@@ -127,6 +127,12 @@ async def gather(
             end = max(end, covered) if end else covered
             starts.setdefault(channel, clock.iso(hour))
         result.newest_audio[channel] = clock.iso(end) if end else None
+    capture = result.units.get("capture")
+    if capture is not None and capture.active_state == "active":
+        starts = {
+            channel: max(start, timestamp(capture), key=clock.parse_iso)
+            for channel, start in starts.items()
+        }
     if tracker is None:
         common = config.load_common(roots)
         tracker = BacklogTracker(roots.state, common.retention_days)
