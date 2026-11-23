@@ -49,3 +49,6 @@ mise run build
 ## Progress log
 
 ## Decisions to confirm
+
+- 2026-11-23: Step 1 passed: 21 virtual-time core and gate cases cover
+  ordered actions, cancel, disconnect, coverage failure and the hold limit.
