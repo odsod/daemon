@@ -14,7 +14,7 @@ from odsod_daemon.components.transcription.host import (
 )
 from odsod_daemon.components.transcription.queue import Inbox, pending, records
 from odsod_daemon.components.transcription.worker import glossary
-from odsod_daemon.lib import clock, config, inference, paths, streams
+from odsod_daemon.lib import clock, config, inference, paths, power, streams
 
 
 async def cleanup(
@@ -52,6 +52,17 @@ async def cleanup(
     if filters.phantom(source, speech.phantoms) or filters.glossary_echo(source, terms):
         result.outcome = "empty"
         return result
+
+    async def wait_for_power() -> None:
+        began = clock.monotonic()
+        while (
+            inference.is_loopback(common.inference.llama_url) and not power.on_mains()
+        ):
+            if once and clock.monotonic() - began >= 60:
+                raise HostUnavailable("on battery; work remains pending")
+            await clock.sleep(2)
+
+    await wait_for_power()
     began = clock.monotonic()
     timeout_s = speech.dictation.cleanup_timeout_ms / 1000 if dic else None
     client = inference.LlamaClient(common.inference.llama_url, timeout_s=180)
@@ -66,7 +77,11 @@ async def cleanup(
     try:
         async with clock.timeout(timeout_s):
             reply, _ = await host.call(
-                request, attempts=speech.attempts, once=once, raw_on_host=dic
+                request,
+                attempts=speech.attempts,
+                once=once,
+                raw_on_host=dic,
+                before_request=wait_for_power,
             )
         reply = guard.clean(reply)
         if not reply:

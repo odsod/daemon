@@ -10,11 +10,11 @@ from odsod_daemon.components.segmentation.vad import FRAME, Vad
 from odsod_daemon.lib import audio, clock, config, documents, healthfile, paths, streams
 
 
-def records(directory):
+def records(directory, retention_days=None):
+    if retention_days is None:
+        retention_days = config.load_common().retention_days
     today = clock.utc_now().date()
-    return streams.read_days(
-        directory, today - timedelta(days=config.load_common().retention_days), today
-    )
+    return streams.read_days(directory, today - timedelta(days=retention_days), today)
 
 
 def stamp(seconds: float) -> str:
@@ -31,6 +31,11 @@ class ChannelRunner:
         self.cutter: Cutter | None = None
         self.last_advance = clock.monotonic()
         self.last_covered = 0.0
+        self.retention_days = config.load_common().retention_days
+        self.masks = []
+        self.mask_version = None
+        self.was_dictating = False
+        self.masks_dirty = True
         self.done = {r["id"] for r in records(self.roots.state / "utterances/ambient")}
         ends = [
             clock.parse_iso(r["end"]).timestamp()
@@ -75,7 +80,9 @@ class ChannelRunner:
             )
             self.last_covered = end
 
-    def advance(self, *, once: bool) -> None:
+    def advance(self, *, once: bool, mono: float | None = None) -> None:
+        if mono is None:
+            mono = clock.monotonic()
         files = audio.hour_files(self.roots.state, self.channel)
         if not files:
             return
@@ -94,13 +101,23 @@ class ChannelRunner:
             if self.channel == "mic"
             else newest
         )
-        # Read masks synchronously after status, including on dictating -> idle.
-        masks = (
-            ranges(records(self.roots.state / "utterances/dictation"))
-            if self.channel == "mic"
-            else []
-        )
-        idle = clock.monotonic() - self.last_advance >= self.settings.idle_close_s
+        dictating = status.get("mode") == "dictating"
+        if self.was_dictating and not dictating:
+            self.masks_dirty = True
+        self.was_dictating = dictating
+        if self.channel == "mic" and self.cursor < limit:
+            directory = self.roots.state / "utterances/dictation"
+            version = [
+                (file.name, file.stat().st_size, file.stat().st_mtime_ns)
+                for file in sorted(directory.glob("*.jsonl"))
+            ]
+            if self.masks_dirty or version != self.mask_version:
+                # Read to the end before crossing a released dictation hold.
+                self.masks = ranges(records(directory, self.retention_days))
+                self.mask_version = version
+                self.masks_dirty = False
+        masks = self.masks
+        idle = mono - self.last_advance >= self.settings.idle_close_s
         advanced = False
         while self.cursor < limit:
             # Derive frame ends from integer samples, not accumulated float steps.
@@ -143,7 +160,7 @@ class ChannelRunner:
             if safe - self.last_covered >= 60:
                 self.cover(safe)
         if advanced:
-            self.last_advance = clock.monotonic()
+            self.last_advance = mono
         if once or idle:
             self.emit(self.cutter.boundary(self.cursor, "end-of-audio"))
             self.cover(self.cursor)
@@ -152,7 +169,7 @@ class ChannelRunner:
 async def _channel(channel: str, speech: Speech, *, once: bool) -> None:
     worker = ChannelRunner(channel, speech)
     while True:
-        await asyncio.to_thread(worker.advance, once=once)
+        await asyncio.to_thread(worker.advance, once=once, mono=clock.monotonic())
         if once:
             return
         await clock.sleep(0.02)

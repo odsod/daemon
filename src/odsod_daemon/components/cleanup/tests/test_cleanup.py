@@ -214,3 +214,42 @@ async def test_recorded_llama_pair(temp_root):
         assert body["chat_template_kwargs"] == {"enable_thinking": False}
     finally:
         server.close()
+
+
+@pytest.mark.parametrize("channel", ["sys", "dic"])
+@pytest.mark.parametrize("local", [True, False])
+async def test_battery_pending_cleanup(temp_root, monkeypatch, channel, local):
+    from odsod_daemon.components.cleanup.worker import lane
+    from odsod_daemon.components.transcription.host import HostUnavailable
+    from odsod_daemon.lib import power
+
+    setup_audio(temp_root)
+    path = temp_root / "config/config.json"
+    conf = json.loads(path.read_text())
+    if not local:
+        conf["common"]["inference"]["llama_url"] = (
+            "http://100.64.0.1:8179/v1/chat/completions"
+        )
+    path.write_text(json.dumps(conf))
+    monkeypatch.setattr(power, "on_mains", lambda: False)
+    calls = []
+
+    async def complete(*args, **kwargs):
+        calls.append(True)
+        return asr()["text"]
+
+    monkeypatch.setattr(inference.LlamaClient, "complete", complete)
+    streams.append(
+        streams.day_path(temp_root / "state/asr/whisper", clock.utc_now().date()),
+        asr(channel),
+    )
+    began = clock.monotonic()
+    if local:
+        with pytest.raises(HostUnavailable):
+            await lane(Speech(), channel == "dic", once=True)
+        assert clock.monotonic() - began == pytest.approx(60)
+        assert not calls
+        assert not list((temp_root / "state/text").glob("*.jsonl"))
+    else:
+        await lane(Speech(), channel == "dic", once=True)
+        assert calls == [True]

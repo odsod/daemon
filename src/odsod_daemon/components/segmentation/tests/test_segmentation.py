@@ -239,7 +239,7 @@ async def test_channels_advance_independently(temp_root, monkeypatch):
     setup_audio(temp_root)
     sys_started = threading.Event()
 
-    def advance(self, *, once):
+    def advance(self, *, once, mono):
         if self.channel == "mic":
             assert sys_started.wait(timeout=1), "sys waited behind mic"
         else:
@@ -278,3 +278,71 @@ def test_english_drain_keeps_sample_alignment(temp_root):
     runner = ChannelRunner("mic", Speech())
     runner.advance(once=True)
     assert abs(runner.last_covered - end.timestamp()) < 0.001
+
+
+async def test_channel_idle_uses_loop_clock(temp_root, monkeypatch):
+    import asyncio
+
+    from odsod_daemon.components.segmentation.runner import _channel
+
+    start, _ = setup_audio(temp_root)
+    path = audio.hour_file(temp_root / "state", "sys", start)
+    path.write_bytes(np.full(16000, 3000, dtype="<i2").tobytes())
+    monkeypatch.setattr(Vad, "probability", lambda self, pcm: 0.9)
+    original = ChannelRunner.advance
+    boundaries = []
+    began = clock.monotonic()
+
+    def advance(self, **kwargs):
+        original(self, **kwargs)
+        if self.done:
+            boundaries.append(kwargs["mono"] - began)
+
+    monkeypatch.setattr(ChannelRunner, "advance", advance)
+    task = asyncio.create_task(_channel("sys", Speech(), once=False))
+    try:
+        await clock.sleep(1)
+        assert not boundaries
+        await clock.sleep(4)
+        assert boundaries
+    finally:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+
+
+def test_masks_only_reload_for_new_audio_and_changes(temp_root, monkeypatch):
+    from odsod_daemon.components.segmentation import runner as module
+
+    start, _ = setup_audio(temp_root, channel="mic")
+    runner = ChannelRunner("mic", Speech())
+    original = module.records
+    reads = []
+
+    def records(directory, *args):
+        reads.append(directory)
+        return original(directory, *args)
+
+    monkeypatch.setattr(module, "records", records)
+    monkeypatch.setattr(
+        module.config,
+        "load_common",
+        lambda: pytest.fail("mask polling reloaded config"),
+    )
+    runner.advance(once=True)
+    assert len(reads) == 1
+    for _ in range(3):
+        runner.advance(once=True)
+    assert len(reads) == 1
+    path = audio.hour_file(temp_root / "state", "mic", start)
+    with path.open("ab") as handle:
+        handle.write(bytes(32000))
+    runner.advance(once=True)
+    assert len(reads) == 1
+    streams.append(
+        streams.day_path(temp_root / "state/utterances/dictation", start.date()),
+        {"id": "new-mask", "start": clock.iso(start), "end": clock.iso(start)},
+    )
+    with path.open("ab") as handle:
+        handle.write(bytes(32000))
+    runner.advance(once=True)
+    assert len(reads) == 2

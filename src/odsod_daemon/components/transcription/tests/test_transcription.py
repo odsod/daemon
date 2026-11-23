@@ -1,4 +1,5 @@
 import json
+from datetime import timedelta
 from pathlib import Path
 
 import httpx
@@ -163,7 +164,10 @@ async def test_expired_and_dictation_gate(temp_root):
     )
     assert result.outcome == "empty" and result.attempts == 0 and result.gate == 0
     result = await transcribe(
-        utterance(start, end, "sys"), Speech(), Host("whisper"), once=True
+        utterance(start - timedelta(hours=1), start, "sys"),
+        Speech(),
+        Host("whisper"),
+        once=True,
     )
     assert result.outcome == "expired"
 
@@ -256,3 +260,52 @@ async def test_new_dictation_goes_before_ambient_retry(temp_root, monkeypatch):
         (mic / file.name).write_bytes(file.read_bytes())
     await run(Speech(), once=True)
     assert calls == ["auto", "en", "auto"]
+
+
+@pytest.mark.parametrize("missing", [False, True])
+async def test_live_audio_waits_for_flush(temp_root, monkeypatch, missing):
+    from odsod_daemon.lib import audio
+
+    setup_audio(temp_root)
+    start = clock.utc_now().replace(microsecond=0)
+    end = start + timedelta(seconds=0.15)
+    path = audio.hour_file(temp_root / "state", "sys", start)
+    if missing:
+        path.unlink()
+    else:
+        path.write_bytes(b"")
+    waited = []
+
+    async def wait(state, channel, target):
+        waited.append(target)
+        path.write_bytes(
+            bytes(round((end - audio.hour_start(start)).total_seconds() * 32000))
+        )
+
+    async def response(*args, **kwargs):
+        assert waited == [end]
+        return inference.WhisperResponse(text="Words", language="english")
+
+    monkeypatch.setattr(audio, "wait_until", wait)
+    monkeypatch.setattr(inference.WhisperClient, "transcribe", response)
+    result = await transcribe(
+        utterance(start, end), Speech(), Host("whisper"), once=False
+    )
+    assert result.outcome == "ok"
+
+
+async def test_missing_old_hour_expires(temp_root, monkeypatch):
+    setup_audio(temp_root)
+    start = clock.utc_now() - timedelta(days=1)
+
+    async def no_request(*args, **kwargs):
+        pytest.fail("expired audio sent a request")
+
+    monkeypatch.setattr(inference.WhisperClient, "transcribe", no_request)
+    result = await transcribe(
+        utterance(start, start + timedelta(seconds=1)),
+        Speech(),
+        Host("whisper"),
+        once=False,
+    )
+    assert result.outcome == "expired"

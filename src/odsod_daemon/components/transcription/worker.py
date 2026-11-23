@@ -31,8 +31,9 @@ def available(state, channel, start, end) -> bool:
     while cursor < end:
         file = audio.hour_file(state, channel, cursor)
         stop = min(end, audio.hour_end(cursor))
-        required = round((stop - audio.hour_start(cursor)).total_seconds() * 16000) * 2
-        if not file.exists() or file.stat().st_size < required:
+        if not file.exists() and audio.hour_start(cursor) < audio.hour_start(
+            clock.utc_now()
+        ):
             return False
         cursor = stop
     return True
@@ -70,6 +71,15 @@ async def transcribe(
     )
     start, end = clock.parse_iso(record["start"]), clock.parse_iso(record["end"])
     channel = "mic" if dic else record["channel"]
+    if not available(roots.state, channel, start, end):
+        result.outcome = "expired"
+        return result
+    covered = audio.covered_until(roots.state, channel)
+    if covered is None or covered < end:
+        if once:
+            raise HostUnavailable("audio not yet flushed; work remains pending")
+        await audio.wait_until(roots.state, channel, end)
+    # Retention can remove an hour while the reader waits for capture.
     if not available(roots.state, channel, start, end):
         result.outcome = "expired"
         return result
