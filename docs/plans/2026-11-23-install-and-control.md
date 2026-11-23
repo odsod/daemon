@@ -105,6 +105,10 @@ mise run build
   evaluation and incremental backlog pass 17 tests, including partial
   builds, ten-day pending work, incomplete lines and day-window rollover.
 
+- 2026-11-23: Step 6 complete. Mounted status, pause, resume and
+  notify-failed. Eleven component tests pass with fake systemctl and
+  notify-send, including exit codes 0 through 3 and failure behavior.
+
 ## Decisions to confirm
 
 - One-shot helpers use no automatic restart. `Restart=always` is invalid

@@ -21,3 +21,9 @@ class PauseRecord(BaseModel):
     ts: str
     kind: Literal["pause"] = "pause"
     by: By = None
+
+
+class ControlResult(BaseModel):
+    state: Literal["paused", "running"]
+    paused_since: str | None = None
+    changed: bool

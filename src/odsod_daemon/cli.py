@@ -17,8 +17,12 @@ from pydantic import BaseModel
 
 from odsod_daemon.components.install.cli import app as install_app
 from odsod_daemon.components.note.cli import app as note_app
+from odsod_daemon.components.notify_failed.cli import app as notify_failed_app
+from odsod_daemon.components.pause.cli import app as pause_app
 from odsod_daemon.components.pin.cli import app as pin_app
+from odsod_daemon.components.resume.cli import app as resume_app
 from odsod_daemon.components.retention.cli import app as retention_app
+from odsod_daemon.components.status.cli import app as status_app
 from odsod_daemon.components.transcript.cli import app as transcript_app
 from odsod_daemon.components.version.cli import app as version_app
 from odsod_daemon.lib import cli as output
@@ -46,14 +50,24 @@ app.add_typer(pin_app, name="pin")
 app.add_typer(transcript_app, name="transcript")
 
 # Each component plan enables its own line below.
-# from odsod_daemon.components.status.cli import app as status_app
-# app.add_typer(status_app, name="status")
-# from odsod_daemon.components.pause.cli import app as pause_app
-# app.add_typer(pause_app, name="pause")
-# from odsod_daemon.components.resume.cli import app as resume_app
-# app.add_typer(resume_app, name="resume")
-# from odsod_daemon.components.notify_failed.cli import app as notify_failed_app
+# app.add_typer(note_app, name="note")
 # app.add_typer(notify_failed_app, name="notify-failed")
+# app.add_typer(pause_app, name="pause")
+# app.add_typer(pin_app, name="pin")
+# app.add_typer(resume_app, name="resume")
+# app.add_typer(status_app, name="status")
+# app.add_typer(transcript_app, name="transcript")
+# from odsod_daemon.components.note.cli import app as note_app
+# from odsod_daemon.components.notify_failed.cli import app as notify_failed_app
+# from odsod_daemon.components.pause.cli import app as pause_app
+# from odsod_daemon.components.pin.cli import app as pin_app
+# from odsod_daemon.components.resume.cli import app as resume_app
+# from odsod_daemon.components.status.cli import app as status_app
+# from odsod_daemon.components.transcript.cli import app as transcript_app
+app.add_typer(notify_failed_app, name="notify-failed")
+app.add_typer(pause_app, name="pause")
+app.add_typer(resume_app, name="resume")
+app.add_typer(status_app, name="status")
 # from odsod_daemon.components.dictation.cli import app as dictation_app
 # app.add_typer(dictation_app, name="dictation")
 # from odsod_daemon.components.unmute_stale.cli import app as unmute_stale_app

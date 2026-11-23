@@ -1,0 +1,9 @@
+#!/usr/bin/env python3
+import json
+import os
+import sys
+from pathlib import Path
+
+with (Path(os.environ['ODSOD_DAEMON_ROOT']) / 'notify.log').open('a') as log:
+    log.write(json.dumps(sys.argv[1:]) + '\n')
+sys.exit(1 if os.environ.get('FAKE_NOTIFY_FAIL') else 0)
