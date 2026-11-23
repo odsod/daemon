@@ -89,4 +89,7 @@ mise run build
   dev deployment. Three component tests pass. Started with `jj new
   python-rewrite` and `uv sync --extra bench`.
 
+- 2026-11-23: Step 2 complete. Added source parsing, template substitution,
+  shipped-unit selection and file comparison. Four pure tests pass.
+
 ## Decisions to confirm
