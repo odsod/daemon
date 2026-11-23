@@ -1,196 +1,30 @@
-# recorder
+# daemon
 
-Ambient audio recorder daemon for Linux workstations. Captures microphone and
-system audio via PipeWire, transcribes with a local whisper server, attributes
-speakers via Chrome DevTools Protocol, segments conversations, and produces
-structured summaries via a local LLM.
+My personal daemon: long-running services on my hosts that handle input,
+audio and text. Built for one system: Fedora, KDE Plasma on Wayland, PipeWire
+and systemd.
 
-## Architecture
+## Daemons
 
+| Daemon   | Service                         | Job                                                     |
+| -------- | ------------------------------- | ------------------------------------------------------- |
+| keys     | `odsod-daemon-keys.service`     | Remap keys; hold Left Alt to dictate; paste the text    |
+| capture  | `odsod-daemon-capture.service`  | Record mic and system audio, always on                  |
+| pipeline | `odsod-daemon-pipeline.service` | Transcribe, clean up, summarize, publish to target dirs |
+| session  | `odsod-daemon-session.service`  | Dictation and the tray icon                             |
+
+All speech and language models run locally. The owner uses one CLI,
+`odsodctl`.
+
+## Status
+
+- The architecture is in [`docs/adr/`](docs/adr/), with the research behind
+  it in [`docs/research/`](docs/research/alternatives.md).
+- The code in this repo is still the Go recorder. It is the reference for the
+  Python rewrite and stays in use until the rewrite replaces it.
+
+## Development
+
+```sh
+mise run build   # the CI gate
 ```
-                                    ┌────────────────┐
- parec (mic) ──┐                    │ whisper-server │
-               ├─→ RMS gate ─→ WAV ─│ (Silero VAD +  │─→ LLM cleanup ────┐
- parec (sys) ──┘   (silence         │  ASR decode)   │                   │
-                    detection)      └────────────────┘                   │
-                                                                         ▼
- Chrome CDP ──→ SpeakerTimeline ←── Transcription Worker ──→ DailyTranscript
- (Meet/Teams)   (who spoke when)            │                (append-only)
-           └──→ MeetingState ──────→ IncrementalSegmenter
-                (tab changes)               │
-                                            ▼
-                                    LLM Summarization ──→ Segment Files
-```
-
-**Goroutines**: capture loop (main), transcription worker, speaker collector
-(CDP polling). Only the transcription worker writes to the transcript file.
-
-## Requirements
-
-- Linux with PipeWire (or PulseAudio)
-- `parec` (from `pipewire-utils` or `pulseaudio-utils`)
-- whisper-server with OpenAI-compatible `/v1/audio/transcriptions` endpoint
-- LLM server with OpenAI-compatible `/v1/chat/completions` endpoint
-- Chrome/Chromium with `--remote-debugging-port` (for speaker + meeting detection)
-
-## Installation
-
-```bash
-go build -o ~/.local/bin/recorder .
-```
-
-## Configuration
-
-Config is loaded from `$XDG_CONFIG_HOME/recorder/config.json` (default:
-`~/.config/recorder/config.json`). If the file does not exist, built-in
-defaults are used.
-
-See [`config.example.json`](config.example.json) for all available fields.
-
-| Section      | Field               | Default                               | Description                                |
-| ------------ | ------------------- | ------------------------------------- | ------------------------------------------ |
-| `whisper`    | `url`               | `http://localhost:8178/v1/...`        | Whisper server transcription endpoint      |
-| `whisper`    | `timeoutS`          | `60`                                  | HTTP timeout for transcription requests    |
-| `llm`        | `url`               | `http://localhost:8179/v1/...`        | LLM server chat completions endpoint       |
-| `llm`        | `model`             | `default`                             | Model name sent in API requests            |
-| `llm`        | `timeoutS`          | `180`                                 | HTTP timeout for LLM requests              |
-| `transcript` | `outputDir`         | `~/.local/share/recorder/transcripts` | Directory for daily transcript files       |
-| `segments`   | `outputDir`         | `~/.local/share/recorder/segments`    | Directory for segment summary files        |
-| `dedup`      | `threshold`         | `0.6`                                 | Token overlap threshold for mic/sys dedup  |
-| `signals`    | `silenceThresholdS` | `180`                                 | Silence duration before segment boundary   |
-| `signals`    | `cdpPorts`          | `[]`                                  | Chrome DevTools Protocol ports to poll     |
-| `promptVars` | (see below)         | built-in defaults                     | Template variables for LLM system prompts  |
-| `prompts`    | `cleanup`           | `""` (embedded)                       | Optional path to cleanup prompt template   |
-| `prompts`    | `summarize`         | `""` (embedded)                       | Optional path to summarize prompt template |
-| `prompts`    | `combine`           | `""` (embedded)                       | Optional path to combine prompt template   |
-
-### LLM prompts
-
-Three system prompts drive the pipeline: **cleanup** (transcript post-processing),
-**summarize** (segment summaries), and **combine** (map-reduce merge for long
-segments). Defaults are embedded in the binary
-([`internal/config/prompts/`](internal/config/prompts/)) and rendered with Go
-`text/template` at startup.
-
-**`promptVars`** — personalize prompts without forking the full template:
-
-| Field               | Description                                                    |
-| ------------------- | -------------------------------------------------------------- |
-| `languages`         | Languages spoken (e.g. `["Swedish", "English"]`)               |
-| `fillerWords`       | Filler words to strip during cleanup                           |
-| `glossaryFile`      | Path to a Markdown term list rendered into the cleanup and summarize prompts. Empty disables it. The file is user data, so a missing file warns and continues |
-| `owner.role`        | Role framing for summarize intro (e.g. `"software engineer"`)  |
-| `owner.summaryFor`  | Summary destination (e.g. `"a human inbox"`)                   |
-| `includeInSummary`  | Bullet list of what to capture in summaries                    |
-| `titleMaxWords`     | Max words in segment titles (default `8`)                      |
-| `skipMaxGreetLines` | Skip threshold for pure greeting segments (default `3`)        |
-| `titleStopWords`    | Stop words to avoid in titles                                  |
-| `summaryLabels`     | Suggested bold labels in summaries (`Decided:`, `Insight:`, …) |
-
-**`prompts`** — optional file paths to override the embedded templates. Paths
-are templates too (vars still apply). If a configured file is missing, the
-embedded template is seeded to that path on first load.
-
-Not configurable: `mic`/`sys` channel definitions, JSON output schema, and
-other recorder-specific semantics baked into the templates.
-
-Example:
-
-```json
-{
-  "promptVars": {
-    "languages": ["English"],
-    "owner": { "role": "product manager", "summaryFor": "weekly notes" }
-  },
-  "prompts": {
-    "summarize": "~/.config/recorder/prompts/summarize.md"
-  }
-}
-```
-
-## Usage
-
-```bash
-recorder run                              # start the daemon
-recorder note                             # interactive note (stdin)
-recorder note "meeting started late"      # note via CLI argument
-recorder segment <transcript>             # show segments (dry-run)
-recorder segment <transcript> --write     # write segment files + transcript markers
-recorder segment <transcript> --boundaries  # show boundaries only (no LLM)
-recorder prompts                            # print resolved system prompts (debug)
-recorder prompts cleanup                    # print one prompt
-recorder prompts summarize combine          # print a subset
-```
-
-Inspect final rendered prompts after config changes:
-
-```bash
-recorder prompts summarize
-```
-
-## Output
-
-### Daily Transcripts
-
-Streaming, append-only markdown files in `transcript.outputDir`:
-
-```
-<output_dir>/YYYY-MM-DD-recorder.md
-```
-
-Each file has YAML frontmatter and timestamped event lines:
-
-```markdown
----
-date: 2026-05-23
-type: recorder-transcript
----
-
-[15:04:32] 🔊 **sys** [Alice Smith] Let's migrate the API
-[15:04:35] 🎤 **mic** We should start with the schema
-[15:04:47] 🪟 **mtg** joined: Meet - API Planning
-[15:05:01] 👥 **ppl** Alice Smith, Bob Johnson
-[15:20:15] 💤 **idl** 15 min
-[15:20:16] ✂️ **seg** | 1504 api-migration
-```
-
-**Event tags**: `sys` (system audio), `mic` (microphone), `mtg` (meeting
-change), `ppl` (participants), `idl` (silence), `nfo` (user note), `pin`
-(boundary hint), `seg` (segment boundary), `rec` (start/stop).
-
-### Segment Summaries
-
-Atomic markdown files in `segments.outputDir`:
-
-```
-<output_dir>/YYYY-MM-DD-HHMM-<slug>.md
-```
-
-Each file has YAML frontmatter with metadata and contains the LLM-generated
-summary followed by the full segment transcript:
-
-```yaml
----
-title: "API Migration & Query Optimization"
-date: 2026-05-23
-time: "15:04–15:45"
-duration: 41m
-type: segment
-source: "[[raw/transcripts/2026-05-23-recorder.md]]"
-participants: ["Alice Smith", "Bob Johnson"]
----
-```
-
-## Chrome DevTools Protocol
-
-Speaker attribution and meeting detection require Chrome launched with remote
-debugging. Configure the ports in `config.json` under `signals.cdpPorts`:
-
-```bash
-google-chrome --remote-debugging-port=9222
-```
-
-The recorder polls all configured CDP ports, auto-detects meeting tabs
-(Google Meet, Microsoft Teams), identifies active speakers by observing CSS
-class changes on participant tiles, and detects meeting changes when tabs
-appear/disappear or titles change.
