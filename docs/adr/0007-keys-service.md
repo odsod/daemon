@@ -54,7 +54,8 @@ Proposed
 - No client connected: Left Alt behaves as a plain Alt. The keyboard never
   depends on the session service.
 - Right Alt (AltGr) is never a dictation key, because Swedish symbols need it.
-- The threshold is a constant in the code, tuned by use.
+- The threshold is a constant in the code: 350 ms, the same as the
+  remapper's tap window. The owner tunes it from use.
 
 ### Paste: `Shift+Insert` from the virtual keyboard
 
@@ -147,5 +148,8 @@ Proposed
   and a crash releases the grab, so the raw keyboard comes back at once.
 - The dictation key is fixed in code. A change needs a rebuild and
   `install --system`.
-- Left Alt taps and chords reach apps a threshold later than before, only
-  when Left Alt is pressed alone first.
+- A lone Left Alt tap reaches apps at its release, not its press. Apps act
+  on the release, so the owner sees no delay. Chords are not delayed: Alt
+  goes out with the second key.
+- A Left Alt held past the threshold before a chord starts dictation for a
+  moment. The second key cancels it and sends the chord.

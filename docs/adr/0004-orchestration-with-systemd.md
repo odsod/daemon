@@ -80,24 +80,42 @@ Proposed
 
 systemd does not tell the owner when a unit gives up. The tray does.
 
-| State     | Condition                                                                                                 |
-| --------- | --------------------------------------------------------------------------------------------------------- |
-| Running   | Capture active and audio fresh                                                                            |
-| Paused    | Capture stopped by the owner                                                                              |
-| Dictating | Session state                                                                                             |
-| Warning   | Backlog grows; a meeting mute failed; stale mutes cleared at start                                        |
-| Error     | Capture failed, stalled, hit its start limit, or the mic delivers only digital zeros; keys socket missing |
+| State     | Condition                                                                                                                              |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Running   | Capture active and audio fresh                                                                                                         |
+| Paused    | Capture stopped by the owner                                                                                                           |
+| Dictating | Session state                                                                                                                          |
+| Warning   | Backlog grows; a meeting mute failed; stale mutes cleared at start                                                                     |
+| Mic muted | The owner muted the mic source. Shown as a mark, not an alarm                                                                          |
+| Error     | Capture failed, stalled, hit its start limit, or the mic delivers only digital zeros that the owner did not cause; keys socket missing |
 
 - `odsodctl status` shows the same states in a terminal.
-- A mic that delivers only zeros is muted at the source. Capture still
-  advances, so only the tray catches it.
+- A mic muted at the source delivers only zeros. Capture still advances, so
+  only the tray catches it. The mute flag of the PipeWire source tells an
+  owner mute (Mic muted) from a fault (Error).
+- Desktop notifications only for events that need the owner now: a failed
+  dictation, a failed paste
+  ([ADR-0005](0005-components-and-implementation.md)), and a new Error, once
+  per cause. They go through the freedesktop notification service on D-Bus.
+
+### `odsodctl` controls what the tray controls
+
+- Every tray action has an `odsodctl` command, so agents can control the
+  system: `odsodctl pause`, `odsodctl resume`, `odsodctl status`.
+- Every command takes `--json`. `odsodctl status` exits with the Nagios
+  plugin codes: 0 OK, 1 Warning, 2 Error, 3 unknown.
+- Generic service control stays with `systemctl`. `odsodctl` does not wrap
+  it. Status reasons name the `systemctl` command that fixes them.
 
 ### Pause is a service stop
 
 - Pause runs `systemctl --user stop odsod-daemon-capture`. Resume starts it.
+  The tray and `odsodctl pause` and `odsodctl resume` do the same.
 - systemd never restarts a unit that was stopped on purpose.
-- Pause does not survive a reboot. Recording resumes, which suits an always-on
-  recorder.
+- A pause has no timer. It ends at resume, logout, reboot or the start of
+  the next local day.
+- `odsod-daemon-resume.timer` starts capture at 00:00 local time each day.
+  Starting a running unit does nothing, so the timer only ends pauses.
 - Pause does not touch the keys service or dictation.
 
 ### Unit installation
