@@ -104,3 +104,7 @@ mise run build
 - Health tests derive expected units from `install.contract.SERVICES`, so a
   newly shipped service needs no test edit. The owner trial is not run here:
   it needs the real keys service, clipboard and meeting apps.
+- 2026-11-23 (orchestrator): `session` is not in `install.contract.SERVICES`.
+  Without the keys service it reports `keys-socket-missing` (Error) all day,
+  so status and the tray show Error. Ship `session` together with `keys`,
+  when the owner switches keyboards. The trial above needs both.

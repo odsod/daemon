@@ -11,8 +11,6 @@ def test_shipped_templates(tmp_path: Path):
         "odsod-daemon-capture.service",
         "odsod-daemon-pipeline.service",
         "odsod-daemon-tray.service",
-        "odsod-daemon-session.service",
-        render.DBUS,
     }
     capture = files["odsod-daemon-capture.service"]
     assert "ExecCondition=/bin/sh -c '! test -e %t/odsod-daemon/paused'" in capture
@@ -20,15 +18,6 @@ def test_shipped_templates(tmp_path: Path):
     assert "WatchdogSec=30" in capture
     assert "WantedBy=graphical-session.target" in capture
     assert "odsod-daemon-pipeline.service" in files["odsod-daemon.target"]
-    session = files["odsod-daemon-session.service"]
-    assert 'ExecStart="/opt/my app/odsodctl" run session' in session
-    assert 'ExecStopPost="/opt/my app/odsodctl" unmute-stale' in session
-    assert (
-        "After=pipewire.service wireplumber.service graphical-session.target" in session
-    )
-    assert "WantedBy=graphical-session.target" in session
-    assert "PartOf=graphical-session.target" in session
-    assert "WatchdogSec=" not in session
     for name, text in files.items():
         assert "{{" not in text
         assert "EnvironmentFile=" not in text
@@ -48,3 +37,12 @@ def test_future_session_and_tray_templates(tmp_path: Path, monkeypatch):
         'ExecStopPost="/bin/true" unmute-stale' in files["odsod-daemon-session.service"]
     )
     assert "PartOf=graphical-session.target" in files["odsod-daemon-tray.service"]
+    session = files["odsod-daemon-session.service"]
+    assert 'ExecStart="/bin/true" run session' in session
+    assert 'ExecStopPost="/bin/true" unmute-stale' in session
+    assert (
+        "After=pipewire.service wireplumber.service graphical-session.target" in session
+    )
+    assert "WantedBy=graphical-session.target" in session
+    assert "PartOf=graphical-session.target" in session
+    assert "WatchdogSec=" not in session
