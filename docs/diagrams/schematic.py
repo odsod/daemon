@@ -112,7 +112,7 @@ class Page:
         else:
             self.text(x + w * at, y + h - 6, label, size)
 
-    def store(self, x, y, w, h, path, rows=()):
+    def store(self, x, y, w, h, path, rows=(), family=LETTER):
         """A file in state/: folder outline with the path in typewriter."""
         t = 12
         self.add(
@@ -121,7 +121,7 @@ class Page:
             f'stroke-width="{THIN}"/>'
         )
         self.text(x + w / 2, y + t + 20, path, 13, "bold", MONO)
-        self.lines(x + w / 2, y + t + 38, rows, 11)
+        self.lines(x + w / 2, y + t + 38, rows, 11, family=family)
 
     def drum(self, x, y, w, h, title, rows=()):
         ry = 11

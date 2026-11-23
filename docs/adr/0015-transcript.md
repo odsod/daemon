@@ -430,7 +430,7 @@ Component tests use a temp state root, a fake clock and JSONL inputs in
 ### Echo cancellation in audio
 
 - Cleaner text, but lossy when both sides talk. It stays a bench
-  experiment (`mic-ec`, ADR-0005).
+  experiment for later (`mic-ec`, deferred in [ADR-0011](0011-capture.md)).
 
 ### Participant lines in the live transcript
 

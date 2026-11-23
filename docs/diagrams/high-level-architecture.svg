@@ -1,589 +1,324 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="2370" viewBox="0 0 2400 2370"><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="13" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1b1b1b"/></marker></defs><rect width="2400" height="2370" fill="#f7f5ee"/><text x="1200.0" y="36" font-family="'Courier New', Courier, monospace" font-size="17" font-weight="normal" text-anchor="middle" fill="#1b1b1b">OD-ADR-0005</text>
-<text x="1200.0" y="62" font-family="'Courier New', Courier, monospace" font-size="19" font-weight="normal" text-anchor="middle" fill="#1b1b1b">ODSOD-DAEMON SCHEMATIC</text>
-<text x="1200.0" y="96" font-family="'Courier New', Courier, monospace" font-size="17" font-weight="normal" text-anchor="middle" fill="#1b1b1b">SUBSYSTEMS, COMPONENTS, FILES AND FLOWS</text>
-<line x1="940.0" y1="104" x2="1460.0" y2="104" stroke="#1b1b1b" stroke-width="1.2"/>
-<line x1="40" y1="116" x2="2360" y2="116" stroke="#1b1b1b" stroke-width="2"/>
-<polygon points="255,245 2195,245 2195,1510 255,1510" fill="none" stroke="#1b1b1b" stroke-width="1.8" stroke-dasharray="18 5 3 5"/>
-<text x="262" y="237" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="start" fill="#1b1b1b">ODSOD-DAEMON</text>
-<rect x="290" y="255" width="230" height="145" fill="none" stroke="#1b1b1b" stroke-width="1.5" stroke-dasharray="9 5"/>
-<text x="300" y="274" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="start" fill="#1b1b1b">KEYS</text>
-<text x="348" y="274" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">ADR-0007</text>
-<rect x="320" y="310" width="160" height="72" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
-<text x="400.0" y="351.25" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#1b1b1b">KEYS</text>
-<text x="325" y="350.0" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">EVDEV</text>
-<text x="400.0" y="324" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="middle" fill="#1b1b1b">UINPUT</text>
-<text x="475" y="350.0" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="end" fill="#1b1b1b">SOCKET</text>
-<line x1="496" y1="294" x2="480" y2="310" stroke="#1b1b1b" stroke-width="1.2"/>
-<circle cx="496" cy="294" r="12" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="496" y="298.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">1</text>
-<circle cx="333" cy="323" r="9" fill="#1b1b1b"/>
-<text x="333" y="326.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">A</text>
-<rect x="640" y="255" width="460" height="145" fill="none" stroke="#1b1b1b" stroke-width="1.5" stroke-dasharray="9 5"/>
-<text x="650" y="274" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="start" fill="#1b1b1b">DICTATION</text>
-<text x="748" y="274" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">ADR-0013</text>
-<rect x="670" y="310" width="190" height="72" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
-<text x="765.0" y="351.25" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#1b1b1b">DICTATION</text>
-<text x="675" y="350.0" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">SOCKET</text>
-<text x="825.8" y="324" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="middle" fill="#1b1b1b">PACTL</text>
-<line x1="876" y1="294" x2="860" y2="310" stroke="#1b1b1b" stroke-width="1.2"/>
-<circle cx="876" cy="294" r="12" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="876" y="298.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">2</text>
-<circle cx="683" cy="323" r="9" fill="#1b1b1b"/>
-<text x="683" y="326.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">D</text>
-<rect x="900" y="321" width="160" height="50" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
-<text x="980.0" y="350.55" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">UNMUTE-STALE</text>
-<line x1="1076" y1="305" x2="1060" y2="321" stroke="#1b1b1b" stroke-width="1.2"/>
-<circle cx="1076" cy="305" r="12" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="1076" y="309.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">3</text>
-<text x="906" y="335" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">CMD</text>
-<rect x="1140" y="255" width="240" height="145" fill="none" stroke="#1b1b1b" stroke-width="1.5" stroke-dasharray="9 5"/>
-<text x="1150" y="274" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="start" fill="#1b1b1b">SHORTCUTS</text>
-<text x="1248" y="274" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">ADR-0008</text>
-<rect x="1170" y="310" width="170" height="72" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
-<text x="1255.0" y="351.25" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#1b1b1b">SHORTCUTS</text>
-<text x="1229.5" y="324" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="middle" fill="#1b1b1b">D-BUS</text>
-<line x1="1356" y1="294" x2="1340" y2="310" stroke="#1b1b1b" stroke-width="1.2"/>
-<circle cx="1356" cy="294" r="12" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="1356" y="298.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">4</text>
-<circle cx="1183" cy="323" r="9" fill="#1b1b1b"/>
-<text x="1183" y="326.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">D</text>
-<rect x="1420" y="255" width="760" height="145" fill="none" stroke="#1b1b1b" stroke-width="1.5" stroke-dasharray="9 5"/>
-<text x="1430" y="274" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="start" fill="#1b1b1b">CONTROL</text>
-<text x="1508" y="274" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">ADR-0018</text>
-<rect x="1450" y="310" width="140" height="72" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
-<text x="1520.0" y="351.25" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#1b1b1b">TRAY</text>
-<line x1="1606" y1="294" x2="1590" y2="310" stroke="#1b1b1b" stroke-width="1.2"/>
-<circle cx="1606" cy="294" r="12" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="1606" y="298.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">5</text>
-<circle cx="1463" cy="323" r="9" fill="#1b1b1b"/>
-<text x="1463" y="326.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">E</text>
-<rect x="1625" y="321" width="140" height="50" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
-<text x="1695.0" y="350.55" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">HEALTH</text>
-<line x1="1781" y1="305" x2="1765" y2="321" stroke="#1b1b1b" stroke-width="1.2"/>
-<circle cx="1781" cy="305" r="12" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="1781" y="309.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">6</text>
-<text x="1631" y="335" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">CMD</text>
-<rect x="1800" y="321" width="190" height="50" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
-<text x="1895.0" y="342.75" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">STATUS, PAUSE,</text>
-<text x="1895.0" y="358.35" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">RESUME</text>
-<line x1="2006" y1="305" x2="1990" y2="321" stroke="#1b1b1b" stroke-width="1.2"/>
-<circle cx="2006" cy="305" r="12" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="2006" y="309.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">7</text>
-<text x="1806" y="335" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">CMD</text>
-<rect x="2025" y="321" width="125" height="50" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
-<text x="2087.5" y="342.75" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">NOTIFY-</text>
-<text x="2087.5" y="358.35" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">FAILED</text>
-<line x1="2166" y1="305" x2="2150" y2="321" stroke="#1b1b1b" stroke-width="1.2"/>
-<circle cx="2166" cy="305" r="12" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="2166" y="309.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">8</text>
-<text x="2031" y="335" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">CMD</text>
-<path d="M480,346.0 L670,346.0" fill="none" stroke="#f7f5ee" stroke-width="9.4"/>
-<path d="M480,346.0 L670,346.0" fill="none" stroke="#1b1b1b" stroke-width="3.4" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
-<text x="575.0" y="327.0" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">START, STOP,</text>
-<text x="575.0" y="339.0" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">PASTE</text>
-<rect x="40" y="314.0" width="180" height="64" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.4" stroke-dasharray="6 4"/>
-<text x="130.0" y="343.9" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#1b1b1b">KEYBOARDS</text>
-<text x="130.0" y="360.9" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">/dev/input</text>
-<path d="M220,346.0 L320,346.0" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
-<path d="M220,346.0 L320,346.0" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#arrow)"/>
-<rect x="2215" y="150" width="170" height="200" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.4" stroke-dasharray="6 4"/>
-<text x="2300.0" y="227.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#1b1b1b">KDE PLASMA</text>
-<text x="2300.0" y="244.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">APPLICATIONS</text>
-<text x="2300.0" y="258.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">KWIN SCRIPT</text>
-<text x="2300.0" y="272.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">SYSTEM TRAY</text>
-<text x="2300.0" y="286.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">NOTIFICATIONS</text>
-<path d="M450,310 L450,190 L2215,190" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
-<path d="M450,310 L450,190 L2215,190" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#arrow)"/>
-<text x="462" y="183" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">REMAPPED KEYS, PASTE CHORD</text>
-<path d="M1310,310 L1310,212 L2215,212" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
-<path d="M1310,310 L1310,212 L2215,212" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
-<text x="1322" y="205" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">SHORTCUTS (D-BUS)</text>
-<path d="M1570,310 L1570,234 L2215,234" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
-<path d="M1570,310 L1570,234 L2215,234" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#arrow)"/>
-<text x="1582" y="227" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">TRAY ICON, NOTIFICATIONS</text>
-<path d="M2120,321 L2120,234" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
-<path d="M2120,321 L2120,234" fill="none" stroke="#1b1b1b" stroke-width="1.6"/>
-<circle cx="2120" cy="234" r="4" fill="#1b1b1b"/>
-<path d="M826,310 L826,168" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
-<path d="M826,310 L826,168" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#arrow)"/>
-<text x="826" y="150.0" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="bold" text-anchor="middle" fill="#1b1b1b">MUTE MEETING CAPTURE STREAMS (TO PIPEWIRE)</text>
-<rect x="290" y="440" width="230" height="230" fill="none" stroke="#1b1b1b" stroke-width="1.5" stroke-dasharray="9 5"/>
-<text x="300" y="459" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="start" fill="#1b1b1b">CAPTURE</text>
-<text x="378" y="459" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">ADR-0011</text>
-<rect x="320" y="495" width="160" height="72" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
-<text x="400.0" y="536.25" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#1b1b1b">CAPTURE</text>
-<text x="325" y="535.0" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">PCM</text>
-<line x1="496" y1="479" x2="480" y2="495" stroke="#1b1b1b" stroke-width="1.2"/>
-<circle cx="496" cy="479" r="12" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="496" y="483.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">9</text>
-<circle cx="333" cy="508" r="9" fill="#1b1b1b"/>
-<text x="333" y="511.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">B</text>
-<rect x="320" y="600" width="160" height="50" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
-<text x="400.0" y="629.55" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">RETENTION</text>
-<line x1="496" y1="584" x2="480" y2="600" stroke="#1b1b1b" stroke-width="1.2"/>
-<circle cx="496" cy="584" r="12" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="496" y="588.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">10</text>
-<text x="326" y="614" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">CMD</text>
-<rect x="40" y="496.0" width="180" height="70" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.4" stroke-dasharray="6 4"/>
-<text x="130.0" y="528.9" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#1b1b1b">PIPEWIRE</text>
-<text x="130.0" y="545.9" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">MIC, SYSTEM AUDIO</text>
-<path d="M220,531.0 L320,531.0" fill="none" stroke="#f7f5ee" stroke-width="9.4"/>
-<path d="M220,531.0 L320,531.0" fill="none" stroke="#1b1b1b" stroke-width="3.4" marker-end="url(#arrow)"/>
-<path d="M760,507 L760,575 L1500,575 L1500,507 L818,507 L810,495 L760,495 Z" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="1130.0" y="527" font-family="'Courier New', Courier, monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">state/audio/&lt;channel&gt;/</text>
-<text x="1130.0" y="545.0" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">ROLLING RAW AUDIO · TIME = BYTE OFFSET</text>
-<path d="M480,531.0 L760,531.0" fill="none" stroke="#f7f5ee" stroke-width="9.4"/>
-<path d="M480,531.0 L760,531.0" fill="none" stroke="#1b1b1b" stroke-width="3.4" marker-end="url(#arrow)"/>
-<text x="620.0" y="524.0" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">AUDIO BLOCKS</text>
-<path d="M480,625 L900,625 L900,575" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
-<path d="M480,625 L900,625 L900,575" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#arrow)"/>
-<text x="560" y="618" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">DELETE EXPIRED</text>
-<path d="M1620,507 L1620,575 L1880,575 L1880,507 L1678,507 L1670,495 L1620,495 Z" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="1750.0" y="527" font-family="'Courier New', Courier, monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">run/</text>
-<text x="1750.0" y="545.0" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">STATUS, HEALTH/, MUTED, PAUSED</text>
-<path d="M845,382 L845,420 L1650,420 L1650,495" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
-<path d="M845,382 L845,420 L1650,420 L1650,495" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#arrow)"/>
-<text x="857" y="413" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">STATUS, MUTED</text>
-<path d="M1740,371 L1740,495" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
-<path d="M1740,371 L1740,495" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
-<text x="1748" y="437.0" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">HEALTH, PAUSED</text>
-<rect x="300" y="690" width="1365" height="152" fill="none" stroke="#1b1b1b" stroke-width="1.5" stroke-dasharray="9 5"/>
-<text x="310" y="709" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="start" fill="#1b1b1b">SPEECH</text>
-<text x="378" y="709" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">ADR-0012</text>
-<rect x="330" y="745" width="160" height="72" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
-<text x="410.0" y="786.25" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#1b1b1b">SEGMENTATION</text>
-<line x1="506" y1="729" x2="490" y2="745" stroke="#1b1b1b" stroke-width="1.2"/>
-<circle cx="506" cy="729" r="12" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="506" y="733.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">11</text>
-<circle cx="343" cy="758" r="9" fill="#1b1b1b"/>
-<text x="343" y="761.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">C</text>
-<path d="M560,752 L560,820 L720,820 L720,752 L618,752 L610,740 L560,740 Z" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="640.0" y="772" font-family="'Courier New', Courier, monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">utterances/</text>
-<text x="640.0" y="790.0" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">AMBIENT, DICTATION</text>
-<text x="640.0" y="803.2" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">+ coverage/</text>
-<rect x="790" y="745" width="160" height="72" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
-<text x="870.0" y="786.25" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#1b1b1b">TRANSCRIPTION</text>
-<text x="870.0" y="811" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="middle" fill="#1b1b1b">HTTP</text>
-<line x1="966" y1="729" x2="950" y2="745" stroke="#1b1b1b" stroke-width="1.2"/>
-<circle cx="966" cy="729" r="12" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="966" y="733.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">12</text>
-<circle cx="803" cy="758" r="9" fill="#1b1b1b"/>
-<text x="803" y="761.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">C</text>
-<path d="M1020,752 L1020,820 L1180,820 L1180,752 L1078,752 L1070,740 L1020,740 Z" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="1100.0" y="772" font-family="'Courier New', Courier, monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">asr/</text>
-<text x="1100.0" y="790.0" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">RAW TEXT</text>
-<rect x="1250" y="745" width="160" height="72" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
-<text x="1330.0" y="786.25" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#1b1b1b">CLEANUP</text>
-<text x="1330.0" y="811" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="middle" fill="#1b1b1b">HTTP</text>
-<line x1="1426" y1="729" x2="1410" y2="745" stroke="#1b1b1b" stroke-width="1.2"/>
-<circle cx="1426" cy="729" r="12" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="1426" y="733.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">13</text>
-<circle cx="1263" cy="758" r="9" fill="#1b1b1b"/>
-<text x="1263" y="761.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">C</text>
-<path d="M1480,752 L1480,820 L1640,820 L1640,752 L1538,752 L1530,740 L1480,740 Z" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="1560.0" y="772" font-family="'Courier New', Courier, monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">text/</text>
-<text x="1560.0" y="790.0" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">CLEANED TEXT</text>
-<path d="M490,781.0 L560,781.0" fill="none" stroke="#f7f5ee" stroke-width="9.4"/>
-<path d="M490,781.0 L560,781.0" fill="none" stroke="#1b1b1b" stroke-width="3.4" marker-end="url(#arrow)"/>
-<rect x="520" y="773.0" width="10" height="16" fill="#f7f5ee"/>
-<line x1="520" y1="772.0" x2="520" y2="790.0" stroke="#1b1b1b" stroke-width="2"/>
-<line x1="530" y1="772.0" x2="530" y2="790.0" stroke="#1b1b1b" stroke-width="2"/>
-<text x="525" y="768.0" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#1b1b1b">LIVE</text>
-<path d="M720,781.0 L790,781.0" fill="none" stroke="#f7f5ee" stroke-width="9.4"/>
-<path d="M720,781.0 L790,781.0" fill="none" stroke="#1b1b1b" stroke-width="3.4" marker-end="url(#arrow)"/>
-<path d="M950,781.0 L1020,781.0" fill="none" stroke="#f7f5ee" stroke-width="9.4"/>
-<path d="M950,781.0 L1020,781.0" fill="none" stroke="#1b1b1b" stroke-width="3.4" marker-end="url(#arrow)"/>
-<path d="M1180,781.0 L1250,781.0" fill="none" stroke="#f7f5ee" stroke-width="9.4"/>
-<path d="M1180,781.0 L1250,781.0" fill="none" stroke="#1b1b1b" stroke-width="3.4" marker-end="url(#arrow)"/>
-<path d="M1410,781.0 L1480,781.0" fill="none" stroke="#f7f5ee" stroke-width="9.4"/>
-<path d="M1410,781.0 L1480,781.0" fill="none" stroke="#1b1b1b" stroke-width="3.4" marker-end="url(#arrow)"/>
-<path d="M1010,575 L1010,668" fill="none" stroke="#f7f5ee" stroke-width="9.4"/>
-<path d="M1010,575 L1010,668" fill="none" stroke="#1b1b1b" stroke-width="3.4"/>
-<path d="M1010,668 L460,668 L460,745" fill="none" stroke="#f7f5ee" stroke-width="9.4"/>
-<path d="M1010,668 L460,668 L460,745" fill="none" stroke="#1b1b1b" stroke-width="3.4" marker-end="url(#arrow)"/>
-<path d="M870,668 L870,745" fill="none" stroke="#f7f5ee" stroke-width="9.4"/>
-<path d="M870,668 L870,745" fill="none" stroke="#1b1b1b" stroke-width="3.4" marker-end="url(#arrow)"/>
-<circle cx="1010" cy="668" r="4" fill="#1b1b1b"/>
-<circle cx="870" cy="668" r="4" fill="#1b1b1b"/>
-<path d="M1380,717 L1380,745" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
-<path d="M1380,717 L1380,745" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#arrow)"/>
-<text x="1372" y="723" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="end" fill="#1b1b1b">GLOSSARY, PROMPTS (config/)</text>
-<path d="M690,382 L690,740" fill="none" stroke="#f7f5ee" stroke-width="9.4"/>
-<path d="M690,382 L690,740" fill="none" stroke="#1b1b1b" stroke-width="3.4" marker-end="url(#arrow)"/>
-<rect x="682" y="465" width="16" height="10" fill="#f7f5ee"/>
-<line x1="681" y1="465" x2="699" y2="465" stroke="#1b1b1b" stroke-width="2"/>
-<line x1="681" y1="475" x2="699" y2="475" stroke="#1b1b1b" stroke-width="2"/>
-<text x="704" y="474" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="start" fill="#1b1b1b">DIC</text>
-<path d="M1560,740 L1560,455 L810,455 L810,382" fill="none" stroke="#f7f5ee" stroke-width="9.4"/>
-<path d="M1560,740 L1560,455 L810,455 L810,382" fill="none" stroke="#1b1b1b" stroke-width="3.4" marker-end="url(#arrow)"/>
-<text x="1185.0" y="448" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">DICTATED TEXT</text>
-<rect x="290" y="900" width="230" height="157" fill="none" stroke="#1b1b1b" stroke-width="1.5" stroke-dasharray="9 5"/>
-<text x="300" y="919" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="start" fill="#1b1b1b">SIGNALS</text>
-<text x="378" y="919" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">ADR-0014</text>
-<rect x="320" y="955" width="160" height="72" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
-<text x="400.0" y="996.25" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#1b1b1b">SIGNALS</text>
-<text x="325" y="995.0" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">CDP</text>
-<line x1="496" y1="939" x2="480" y2="955" stroke="#1b1b1b" stroke-width="1.2"/>
-<circle cx="496" cy="939" r="12" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="496" y="943.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">14</text>
-<circle cx="333" cy="968" r="9" fill="#1b1b1b"/>
-<text x="333" y="971.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">C</text>
-<rect x="40" y="959.0" width="180" height="64" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.4" stroke-dasharray="6 4"/>
-<text x="130.0" y="988.9" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#1b1b1b">BROWSER</text>
-<text x="130.0" y="1005.9" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">MEETING TABS (CDP)</text>
-<path d="M220,991.0 L320,991.0" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
-<path d="M220,991.0 L320,991.0" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#arrow)"/>
-<path d="M560,962 L560,1030 L720,1030 L720,962 L618,962 L610,950 L560,950 Z" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="640.0" y="982" font-family="'Courier New', Courier, monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">events/</text>
-<text x="640.0" y="1000.0" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">SIGNALS, USER, CAPTURE</text>
-<path d="M480,991.0 L560,991.0" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
-<path d="M480,991.0 L560,991.0" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#arrow)"/>
-<path d="M480,540 L540,540 L540,1013.0 L560,1013.0" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
-<path d="M480,540 L540,540 L540,1013.0 L560,1013.0" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#arrow)"/>
-<text x="532" y="872" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="end" fill="#1b1b1b">CAPTURE EVENTS</text>
-<rect x="940" y="900" width="740" height="157" fill="none" stroke="#1b1b1b" stroke-width="1.5" stroke-dasharray="9 5"/>
-<text x="950" y="919" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="start" fill="#1b1b1b">TRANSCRIPT</text>
-<text x="1058" y="919" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">ADR-0015</text>
-<rect x="970" y="966" width="160" height="50" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
-<text x="1050.0" y="995.55" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">NOTE, PIN</text>
-<line x1="1146" y1="950" x2="1130" y2="966" stroke="#1b1b1b" stroke-width="1.2"/>
-<circle cx="1146" cy="950" r="12" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="1146" y="954.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">16</text>
-<text x="976" y="980" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">CMD</text>
-<rect x="1480" y="955" width="160" height="72" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
-<text x="1560.0" y="996.25" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#1b1b1b">TRANSCRIPT</text>
-<line x1="1656" y1="939" x2="1640" y2="955" stroke="#1b1b1b" stroke-width="1.2"/>
-<circle cx="1656" cy="939" r="12" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="1656" y="943.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">15</text>
-<circle cx="1493" cy="968" r="9" fill="#1b1b1b"/>
-<text x="1493" y="971.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">C</text>
-<path d="M970,991.0 L720,991.0" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
-<path d="M970,991.0 L720,991.0" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#arrow)"/>
-<text x="732" y="984.0" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">NOTES, PINS</text>
-<path d="M1560,820 L1560,955" fill="none" stroke="#f7f5ee" stroke-width="9.4"/>
-<path d="M1560,820 L1560,955" fill="none" stroke="#1b1b1b" stroke-width="3.4" marker-end="url(#arrow)"/>
-<path d="M1820,962 L1820,1260 L2000,1260 L2000,962 L1878,962 L1870,950 L1820,950 Z" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="1910.0" y="982" font-family="'Courier New', Courier, monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">documents/</text>
-<text x="1910.0" y="1000.0" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">TRANSCRIPTS/</text>
-<text x="1910.0" y="1013.2" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">INTERACTIONS/</text>
-<text x="1910.0" y="1026.4" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">+ finished/</text>
-<path d="M1640,991.0 L1820,991.0" fill="none" stroke="#f7f5ee" stroke-width="9.4"/>
-<path d="M1640,991.0 L1820,991.0" fill="none" stroke="#1b1b1b" stroke-width="3.4" marker-end="url(#arrow)"/>
-<path d="M640,1030 L640,1072 L1530,1072 L1530,1027" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
-<path d="M640,1030 L640,1072 L1530,1072 L1530,1027" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#arrow)"/>
-<text x="652" y="1065" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">MEETINGS, NOTES, PINS, GAPS</text>
-<path d="M1500,1072 L1500,1185" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
-<path d="M1500,1072 L1500,1185" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#arrow)"/>
-<circle cx="1500" cy="1072" r="4" fill="#1b1b1b"/>
-<rect x="940" y="1130" width="635" height="157" fill="none" stroke="#1b1b1b" stroke-width="1.5" stroke-dasharray="9 5"/>
-<text x="950" y="1149" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="start" fill="#1b1b1b">INTERACTIONS</text>
-<text x="1078" y="1149" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">ADR-0016</text>
-<path d="M970,1192 L970,1260 L1130,1260 L1130,1192 L1028,1192 L1020,1180 L970,1180 Z" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="1050.0" y="1212" font-family="'Courier New', Courier, monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">interactions/</text>
-<text x="1050.0" y="1230.0" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">OK, SKIPPED</text>
-<rect x="1380" y="1185" width="160" height="72" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
-<text x="1460.0" y="1226.25" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#1b1b1b">INTERACTIONS</text>
-<text x="1460.0" y="1251" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="middle" fill="#1b1b1b">HTTP</text>
-<line x1="1556" y1="1169" x2="1540" y2="1185" stroke="#1b1b1b" stroke-width="1.2"/>
-<circle cx="1556" cy="1169" r="12" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="1556" y="1173.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">17</text>
-<circle cx="1393" cy="1198" r="9" fill="#1b1b1b"/>
-<text x="1393" y="1201.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">C</text>
-<path d="M1380,1221.0 L1130,1221.0" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
-<path d="M1380,1221.0 L1130,1221.0" fill="none" stroke="#1b1b1b" stroke-width="1.6" stroke-dasharray="11 6" marker-end="url(#arrow)"/>
-<path d="M640,820 L640,870 L1410,870 L1410,1185" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
-<path d="M640,820 L640,870 L1410,870 L1410,1185" fill="none" stroke="#1b1b1b" stroke-width="1.6" stroke-dasharray="11 6" marker-end="url(#arrow)"/>
-<text x="652" y="863" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">UTTERANCE TIMES</text>
-<path d="M1640,795 L1730,795 L1730,1203.0 L1540,1203.0" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
-<path d="M1640,795 L1730,795 L1730,1203.0 L1540,1203.0" fill="none" stroke="#1b1b1b" stroke-width="1.6" stroke-dasharray="11 6" marker-end="url(#arrow)"/>
-<text x="1738" y="1115" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">PASS 1</text>
-<text x="1738" y="1127" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">TEXT</text>
-<path d="M1540,1239.0 L1820,1239.0" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
-<path d="M1540,1239.0 L1820,1239.0" fill="none" stroke="#1b1b1b" stroke-width="1.6" stroke-dasharray="11 6" marker-end="url(#arrow)"/>
-<rect x="1775" y="1231.0" width="10" height="16" fill="#f7f5ee"/>
-<line x1="1775" y1="1230.0" x2="1775" y2="1248.0" stroke="#1b1b1b" stroke-width="2"/>
-<line x1="1785" y1="1230.0" x2="1785" y2="1248.0" stroke="#1b1b1b" stroke-width="2"/>
-<text x="1780" y="1226.0" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#1b1b1b">BATCH</text>
-<rect x="2015" y="1020" width="170" height="170" fill="none" stroke="#1b1b1b" stroke-width="1.5" stroke-dasharray="9 5"/>
-<text x="2025" y="1039" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="start" fill="#1b1b1b">PUBLISHING</text>
-<text x="2133" y="1039" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b"></text>
-<text x="2025" y="1056" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">ADR-0017</text>
-<rect x="2035" y="1090" width="120" height="72" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
-<text x="2095.0" y="1131.25" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#1b1b1b">PUBLISH</text>
-<line x1="2171" y1="1074" x2="2155" y2="1090" stroke="#1b1b1b" stroke-width="1.2"/>
-<circle cx="2171" cy="1074" r="12" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="2171" y="1078.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">18</text>
-<circle cx="2048" cy="1103" r="9" fill="#1b1b1b"/>
-<text x="2048" y="1106.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">C</text>
-<path d="M2000,1126 L2035,1126" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
-<path d="M2000,1126 L2035,1126" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#arrow)"/>
-<path d="M2155,1126 L2215,1126" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
-<path d="M2155,1126 L2215,1126" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#arrow)"/>
-<rect x="2215" y="1090" width="170" height="72" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.4" stroke-dasharray="6 4"/>
-<text x="2300.0" y="1123.9" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#1b1b1b">TARGET DIRS</text>
-<text x="2300.0" y="1140.9" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">VAULT INBOX</text>
-<path d="M870,817 L870,1297 L1460,1297" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
-<path d="M870,817 L870,1297 L1460,1297" fill="none" stroke="#1b1b1b" stroke-width="1.6"/>
-<path d="M1330,817 L1330,1297" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
-<path d="M1330,817 L1330,1297" fill="none" stroke="#1b1b1b" stroke-width="1.6"/>
-<path d="M1460,1257 L1460,1297" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
-<path d="M1460,1257 L1460,1297" fill="none" stroke="#1b1b1b" stroke-width="1.6"/>
-<circle cx="1330" cy="1297" r="4" fill="#1b1b1b"/>
-<circle cx="1215" cy="1297" r="4" fill="#1b1b1b"/>
-<path d="M1215,1297 L1215,1540" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
-<path d="M1215,1297 L1215,1540" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
-<text x="1223" y="1422.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">AUDIO SLICES, TEXT (HTTP, TAILNET)</text>
-<rect x="1000" y="1540" width="430" height="56" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.4" stroke-dasharray="6 4"/>
-<text x="1215.0" y="1566.25" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#1b1b1b">INFERENCE HOST</text>
-<text x="1215.0" y="1583.25" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">WHISPER-SERVER, LLAMA-SERVER</text>
-<rect x="290" y="1330" width="430" height="110" fill="none" stroke="#1b1b1b" stroke-width="1.5" stroke-dasharray="9 5"/>
-<text x="300" y="1349" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="start" fill="#1b1b1b">OPERATIONS</text>
-<text x="408" y="1349" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">ADR-0006</text>
-<rect x="320" y="1375" width="160" height="50" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
-<text x="400.0" y="1404.55" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">INSTALL</text>
-<line x1="496" y1="1359" x2="480" y2="1375" stroke="#1b1b1b" stroke-width="1.2"/>
-<circle cx="496" cy="1359" r="12" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="496" y="1363.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">19</text>
-<text x="326" y="1389" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">CMD</text>
-<rect x="520" y="1375" width="160" height="50" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
-<text x="600.0" y="1404.55" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">VERSION</text>
-<line x1="696" y1="1359" x2="680" y2="1375" stroke="#1b1b1b" stroke-width="1.2"/>
-<circle cx="696" cy="1359" r="12" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="696" y="1363.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">20</text>
-<text x="526" y="1389" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">CMD</text>
-<rect x="1600" y="1330" width="585" height="110" fill="none" stroke="#1b1b1b" stroke-width="1.5" stroke-dasharray="9 5"/>
-<text x="1610" y="1349" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="start" fill="#1b1b1b">BENCH</text>
-<text x="1668" y="1349" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">ADR-0019</text>
-<rect x="1630" y="1375" width="160" height="50" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
-<text x="1710.0" y="1404.55" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">BENCH</text>
-<line x1="1806" y1="1359" x2="1790" y2="1375" stroke="#1b1b1b" stroke-width="1.2"/>
-<circle cx="1806" cy="1359" r="12" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="1806" y="1363.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">21</text>
-<text x="1636" y="1389" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">CMD</text>
-<path d="M1900,1367 L1900,1430 L2070,1430 L2070,1367 L1958,1367 L1950,1355 L1900,1355 Z" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="1985.0" y="1387" font-family="'Courier New', Courier, monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">bench/</text>
-<text x="1985.0" y="1405.0" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">CASES, RESULTS</text>
-<path d="M1790,1400 L1900,1400" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
-<path d="M1790,1400 L1900,1400" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#arrow)"/>
-<path d="M1760,1308 L1760,1375" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
-<path d="M1760,1308 L1760,1375" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#arrow)"/>
-<text x="1772" y="1316" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">AUDIO, ASR, TEXT</text>
-<rect x="290" y="1455" width="860" height="40" fill="none" stroke="#1b1b1b" stroke-width="1.5" stroke-dasharray="2 4"/>
-<text x="720" y="1481" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="bold" text-anchor="middle" fill="#1b1b1b">RUNTIME  ADR-0010:  lib/ (STREAMS, PENDING WORK, CONFIG, CLIENTS)  ·  services/  ·  cli.py</text>
-<rect x="40" y="1640" width="760" height="326" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
-<line x1="40" y1="1670" x2="800" y2="1670" stroke="#1b1b1b" stroke-width="2"/>
-<text x="420.0" y="1661" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#1b1b1b">COMPONENTS 1-11</text>
-<circle cx="60" cy="1688" r="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="60" y="1692.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">1</text>
-<text x="80" y="1693" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">KEYS</text>
-<text x="255" y="1693" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">KEYS</text>
-<circle cx="378" cy="1688" r="9" fill="#1b1b1b"/>
-<text x="378" y="1691.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">A</text>
-<text x="400" y="1693" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">REMAP; DICTATION KEY; PASTE CHORD</text>
-<circle cx="60" cy="1714" r="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="60" y="1718.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">2</text>
-<text x="80" y="1719" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">DICTATION</text>
-<text x="255" y="1719" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">DICTATION</text>
-<circle cx="378" cy="1714" r="9" fill="#1b1b1b"/>
-<text x="378" y="1717.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">D</text>
-<text x="400" y="1719" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">MEETING MUTE, UTTERANCE, PASTE</text>
-<circle cx="60" cy="1740" r="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="60" y="1744.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">3</text>
-<text x="80" y="1745" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">UNMUTE-STALE</text>
-<text x="255" y="1745" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">DICTATION</text>
-<text x="378" y="1745" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#1b1b1b">CMD</text>
-<text x="400" y="1745" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">UNMUTE STREAMS LEFT MUTED</text>
-<circle cx="60" cy="1766" r="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="60" y="1770.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">4</text>
-<text x="80" y="1771" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">SHORTCUTS</text>
-<text x="255" y="1771" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">SHORTCUTS</text>
-<circle cx="378" cy="1766" r="9" fill="#1b1b1b"/>
-<text x="378" y="1769.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">D</text>
-<text x="400" y="1771" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">GLOBAL SHORTCUTS; LAUNCH APPS</text>
-<circle cx="60" cy="1792" r="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="60" y="1796.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">5</text>
-<text x="80" y="1797" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">TRAY</text>
-<text x="255" y="1797" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">CONTROL</text>
-<circle cx="378" cy="1792" r="9" fill="#1b1b1b"/>
-<text x="378" y="1795.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">E</text>
-<text x="400" y="1797" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">MODE AND HEALTH; PAUSE</text>
-<circle cx="60" cy="1818" r="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="60" y="1822.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">6</text>
-<text x="80" y="1823" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">HEALTH</text>
-<text x="255" y="1823" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">CONTROL</text>
-<text x="378" y="1823" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#1b1b1b">CMD</text>
-<text x="400" y="1823" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">STATE FROM UNITS AND HEALTH FILES</text>
-<circle cx="60" cy="1844" r="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="60" y="1848.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">7</text>
-<text x="80" y="1849" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">STATUS, PAUSE, RESUME</text>
-<text x="255" y="1849" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">CONTROL</text>
-<text x="378" y="1849" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#1b1b1b">CMD</text>
-<text x="400" y="1849" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">HEALTH VIEW; PAUSE FLAG</text>
-<circle cx="60" cy="1870" r="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="60" y="1874.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">8</text>
-<text x="80" y="1875" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">NOTIFY-FAILED</text>
-<text x="255" y="1875" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">CONTROL</text>
-<text x="378" y="1875" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#1b1b1b">CMD</text>
-<text x="400" y="1875" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">NOTIFY A FAILED UNIT</text>
-<circle cx="60" cy="1896" r="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="60" y="1900.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">9</text>
-<text x="80" y="1901" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">CAPTURE</text>
-<text x="255" y="1901" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">CAPTURE</text>
-<circle cx="378" cy="1896" r="9" fill="#1b1b1b"/>
-<text x="378" y="1899.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">B</text>
-<text x="400" y="1901" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">MIC AND SYSTEM AUDIO TO THE BUFFER</text>
-<circle cx="60" cy="1922" r="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="60" y="1926.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">10</text>
-<text x="80" y="1927" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">RETENTION</text>
-<text x="255" y="1927" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">CAPTURE</text>
-<text x="378" y="1927" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#1b1b1b">CMD</text>
-<text x="400" y="1927" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">DELETE EXPIRED AUDIO (TIMER)</text>
-<circle cx="60" cy="1948" r="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="60" y="1952.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">11</text>
-<text x="80" y="1953" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">SEGMENTATION</text>
-<text x="255" y="1953" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">SPEECH</text>
-<circle cx="378" cy="1948" r="9" fill="#1b1b1b"/>
-<text x="378" y="1951.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">C</text>
-<text x="400" y="1953" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">AUDIO TO UTTERANCES</text>
-<rect x="820" y="1640" width="760" height="300" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
-<line x1="820" y1="1670" x2="1580" y2="1670" stroke="#1b1b1b" stroke-width="2"/>
-<text x="1200.0" y="1661" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#1b1b1b">COMPONENTS 12-21</text>
-<circle cx="840" cy="1688" r="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="840" y="1692.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">12</text>
-<text x="860" y="1693" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">TRANSCRIPTION</text>
-<text x="1035" y="1693" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">SPEECH</text>
-<circle cx="1158" cy="1688" r="9" fill="#1b1b1b"/>
-<text x="1158" y="1691.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">C</text>
-<text x="1180" y="1693" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">UTTERANCES TO TEXT (ASR)</text>
-<circle cx="840" cy="1714" r="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="840" y="1718.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">13</text>
-<text x="860" y="1719" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">CLEANUP</text>
-<text x="1035" y="1719" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">SPEECH</text>
-<circle cx="1158" cy="1714" r="9" fill="#1b1b1b"/>
-<text x="1158" y="1717.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">C</text>
-<text x="1180" y="1719" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">LLM FIXES WITH THE GLOSSARY</text>
-<circle cx="840" cy="1740" r="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="840" y="1744.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">14</text>
-<text x="860" y="1745" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">SIGNALS</text>
-<text x="1035" y="1745" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">SIGNALS</text>
-<circle cx="1158" cy="1740" r="9" fill="#1b1b1b"/>
-<text x="1158" y="1743.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">C</text>
-<text x="1180" y="1745" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">MEETING AND SPEAKER EVENTS</text>
-<circle cx="840" cy="1766" r="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="840" y="1770.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">15</text>
-<text x="860" y="1771" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">TRANSCRIPT</text>
-<text x="1035" y="1771" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">TRANSCRIPT</text>
-<circle cx="1158" cy="1766" r="9" fill="#1b1b1b"/>
-<text x="1158" y="1769.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">C</text>
-<text x="1180" y="1771" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">THE DAILY TRANSCRIPT (LIVE)</text>
-<circle cx="840" cy="1792" r="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="840" y="1796.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">16</text>
-<text x="860" y="1797" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">NOTE, PIN</text>
-<text x="1035" y="1797" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">TRANSCRIPT</text>
-<text x="1158" y="1797" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#1b1b1b">CMD</text>
-<text x="1180" y="1797" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">OWNER EVENTS</text>
-<circle cx="840" cy="1818" r="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="840" y="1822.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">17</text>
-<text x="860" y="1823" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">INTERACTIONS</text>
-<text x="1035" y="1823" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">INTERACTIONS</text>
-<circle cx="1158" cy="1818" r="9" fill="#1b1b1b"/>
-<text x="1158" y="1821.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">C</text>
-<text x="1180" y="1823" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">BOUNDARIES, BATCH PASS, DOCUMENTS</text>
-<circle cx="840" cy="1844" r="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="840" y="1848.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">18</text>
-<text x="860" y="1849" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">PUBLISH</text>
-<text x="1035" y="1849" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">PUBLISHING</text>
-<circle cx="1158" cy="1844" r="9" fill="#1b1b1b"/>
-<text x="1158" y="1847.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">C</text>
-<text x="1180" y="1849" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">COPY TO TARGET DIRS</text>
-<circle cx="840" cy="1870" r="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="840" y="1874.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">19</text>
-<text x="860" y="1875" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">INSTALL</text>
-<text x="1035" y="1875" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">OPERATIONS</text>
-<text x="1158" y="1875" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#1b1b1b">CMD</text>
-<text x="1180" y="1875" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">UNITS, TIMERS, KEYS BUILD</text>
-<circle cx="840" cy="1896" r="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="840" y="1900.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">20</text>
-<text x="860" y="1901" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">VERSION</text>
-<text x="1035" y="1901" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">OPERATIONS</text>
-<text x="1158" y="1901" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#1b1b1b">CMD</text>
-<text x="1180" y="1901" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">INSTALLED COMMIT</text>
-<circle cx="840" cy="1922" r="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="840" y="1926.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">21</text>
-<text x="860" y="1927" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">BENCH</text>
-<text x="1035" y="1927" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">BENCH</text>
-<text x="1158" y="1927" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#1b1b1b">CMD</text>
-<text x="1180" y="1927" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">SCORE SETUPS ON CASES</text>
-<rect x="1600" y="1640" width="760" height="196" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
-<line x1="1600" y1="1670" x2="2360" y2="1670" stroke="#1b1b1b" stroke-width="2"/>
-<text x="1980.0" y="1661" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#1b1b1b">SERVICES (LIFECYCLE)</text>
-<circle cx="1630" cy="1688" r="9" fill="#1b1b1b"/>
-<text x="1630" y="1691.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">A</text>
-<text x="1660" y="1693" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">KEYS</text>
-<text x="1800" y="1693" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">SYSTEM UNIT, ROOT, FROM BOOT</text>
-<circle cx="1630" cy="1714" r="9" fill="#1b1b1b"/>
-<text x="1630" y="1717.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">B</text>
-<text x="1660" y="1719" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">CAPTURE</text>
-<text x="1800" y="1719" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">LOGIN SESSION</text>
-<circle cx="1630" cy="1740" r="9" fill="#1b1b1b"/>
-<text x="1630" y="1743.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">C</text>
-<text x="1660" y="1745" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">PIPELINE</text>
-<text x="1800" y="1745" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">RESTARTS FREELY</text>
-<circle cx="1630" cy="1766" r="9" fill="#1b1b1b"/>
-<text x="1630" y="1769.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">D</text>
-<text x="1660" y="1771" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">SESSION</text>
-<text x="1800" y="1771" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">GRAPHICAL SESSION</text>
-<circle cx="1630" cy="1792" r="9" fill="#1b1b1b"/>
-<text x="1630" y="1795.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">E</text>
-<text x="1660" y="1797" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">TRAY</text>
-<text x="1800" y="1797" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">GRAPHICAL SESSION</text>
-<text x="1630" y="1823" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#1b1b1b">CMD</text>
-<text x="1660" y="1823" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">COMMAND</text>
-<text x="1800" y="1823" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">ODSODCTL, NO SERVICE</text>
-<rect x="1600" y="1856" width="760" height="300" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
-<line x1="1600" y1="1886" x2="2360" y2="1886" stroke="#1b1b1b" stroke-width="2"/>
-<text x="1980.0" y="1877" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#1b1b1b">SYMBOLS</text>
-<rect x="1630" y="1894" width="60" height="20" fill="none" stroke="#1b1b1b" stroke-width="1.5" stroke-dasharray="9 5"/>
-<text x="1720" y="1909" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">SUBSYSTEM: DESIGN UNIT, ONE ADR (DASHED FRAME)</text>
-<circle cx="1660" cy="1930" r="9" fill="#1b1b1b"/>
-<text x="1660" y="1933.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">A</text>
-<text x="1720" y="1935" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">SERVICE OF A COMPONENT (FILLED LETTER)</text>
-<circle cx="1660" cy="1956" r="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="1660" y="1960.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">1</text>
-<text x="1720" y="1961" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">COMPONENT (HOLLOW NUMBER)</text>
-<path d="M1630,1982 L1690,1982" fill="none" stroke="#f7f5ee" stroke-width="9.4"/>
-<path d="M1630,1982 L1690,1982" fill="none" stroke="#1b1b1b" stroke-width="3.4" marker-end="url(#arrow)"/>
-<text x="1720" y="1987" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">SPEECH PATH (HEAVY)</text>
-<path d="M1630,2008 L1690,2008" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
-<path d="M1630,2008 L1690,2008" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#arrow)"/>
-<text x="1720" y="2013" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">CONTROL AND EVENTS (THIN)</text>
-<path d="M1630,2034 L1690,2034" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
-<path d="M1630,2034 L1690,2034" fill="none" stroke="#1b1b1b" stroke-width="1.6" stroke-dasharray="11 6" marker-end="url(#arrow)"/>
-<text x="1720" y="2039" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">BATCH PASS (DASHED)</text>
-<path d="M1630,2060 L1690,2060" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
-<path d="M1630,2060 L1690,2060" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#arrow)"/>
-<rect x="1655" y="2052" width="10" height="16" fill="#f7f5ee"/>
-<line x1="1655" y1="2051" x2="1655" y2="2069" stroke="#1b1b1b" stroke-width="2"/>
-<line x1="1665" y1="2051" x2="1665" y2="2069" stroke="#1b1b1b" stroke-width="2"/>
-<text x="1660" y="2047" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#1b1b1b"></text>
-<text x="1720" y="2065" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">MODE TAG: LIVE, DIC, BATCH</text>
-<circle cx="1660" cy="2086" r="4" fill="#1b1b1b"/>
-<text x="1720" y="2091" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">JUNCTION</text>
-<line x1="1630" y1="2112" x2="1690" y2="2112" stroke="#1b1b1b" stroke-width="1.8" stroke-dasharray="18 5 3 5"/>
-<text x="1720" y="2117" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">ODSOD-DAEMON: THE WHOLE SYSTEM (DASH-DOT)</text>
-<rect x="1632" y="2129" width="56" height="18" fill="none" stroke="#1b1b1b" stroke-width="1.4" stroke-dasharray="6 4"/>
-<text x="1720" y="2143" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">OUTSIDE SYSTEM (DASHED BOX)</text>
-<text x="2360" y="2238" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="end" fill="#1b1b1b">OD-5-001</text>
-<text x="1200.0" y="2266" font-family="'Courier New', Courier, monospace" font-size="19" font-weight="normal" text-anchor="middle" fill="#1b1b1b">Figure 1-2.  Subsystems, Components, Files and Flows</text>
-<line x1="40" y1="2282" x2="2360" y2="2282" stroke="#1b1b1b" stroke-width="3"/>
-<text x="1200.0" y="2310" font-family="'Courier New', Courier, monospace" font-size="18" font-weight="normal" text-anchor="middle" fill="#1b1b1b">HOST CONFIGURATION</text>
-<text x="40" y="2348" font-family="'Courier New', Courier, monospace" font-size="16" font-weight="normal" text-anchor="start" fill="#1b1b1b">Host</text>
-<line x1="86.4" y1="2352" x2="256.4" y2="2352" stroke="#1b1b1b" stroke-width="1.2"/>
-<text x="950.0" y="2348" font-family="'Courier New', Courier, monospace" font-size="16" font-weight="normal" text-anchor="start" fill="#1b1b1b">Basic Date</text>
-<line x1="1054.0" y1="2352" x2="1214.0" y2="2352" stroke="#1b1b1b" stroke-width="1.2"/>
-<text x="1134.0" y="2346" font-family="'Courier New', Courier, monospace" font-size="16" font-weight="normal" text-anchor="middle" fill="#1b1b1b">23 Nov 2026</text>
-<text x="1340.0" y="2348" font-family="'Courier New', Courier, monospace" font-size="16" font-weight="normal" text-anchor="start" fill="#1b1b1b">Change Date</text>
-<line x1="1453.6" y1="2352" x2="1613.6" y2="2352" stroke="#1b1b1b" stroke-width="1.2"/>
-<text x="2190" y="2348" font-family="'Courier New', Courier, monospace" font-size="16" font-weight="normal" text-anchor="start" fill="#1b1b1b">Page</text>
-<line x1="2236.4" y1="2352" x2="2346.4" y2="2352" stroke="#1b1b1b" stroke-width="1.2"/>
-<text x="2291.4" y="2346" font-family="'Courier New', Courier, monospace" font-size="16" font-weight="normal" text-anchor="middle" fill="#1b1b1b">1-2</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="2720" height="1640" viewBox="0 0 2720 1640"><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="13" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1b1b1b"/></marker></defs><rect width="2720" height="1640" fill="#f7f5ee"/><text x="1360.0" y="36" font-family="'Courier New', Courier, monospace" font-size="17" font-weight="normal" text-anchor="middle" fill="#1b1b1b">OD-ADR-0005</text>
+<text x="1360.0" y="62" font-family="'Courier New', Courier, monospace" font-size="19" font-weight="normal" text-anchor="middle" fill="#1b1b1b">ODSOD-DAEMON SCHEMATIC</text>
+<text x="1360.0" y="96" font-family="'Courier New', Courier, monospace" font-size="17" font-weight="normal" text-anchor="middle" fill="#1b1b1b">SUBSYSTEMS ON THE FILESYSTEM BACKPLANE</text>
+<line x1="1100.0" y1="104" x2="1620.0" y2="104" stroke="#1b1b1b" stroke-width="1.2"/>
+<line x1="40" y1="116" x2="2680" y2="116" stroke="#1b1b1b" stroke-width="2"/>
+<polygon points="215,280 2460,280 2460,1098 215,1098" fill="none" stroke="#1b1b1b" stroke-width="1.8" stroke-dasharray="18 5 3 5"/>
+<text x="222" y="272" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="start" fill="#1b1b1b">ODSOD-DAEMON</text>
+<rect x="510" y="560" width="1940" height="140" fill="none" stroke="#1b1b1b" stroke-width="2.4"/>
+<path d="M530.0,606 L530.0,694 L670.0,694 L670.0,606 L588.0,606 L580.0,594 L530.0,594 Z" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
+<text x="600.0" y="626" font-family="'Courier New', Courier, monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">audio/</text>
+<text x="600.0" y="644.0" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">mic/</text>
+<text x="600.0" y="657.2" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">sys/</text>
+<path d="M690.0,606 L690.0,694 L830.0,694 L830.0,606 L748.0,606 L740.0,594 L690.0,594 Z" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
+<text x="760.0" y="626" font-family="'Courier New', Courier, monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">utterances/</text>
+<text x="760.0" y="644.0" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">ambient/</text>
+<text x="760.0" y="657.2" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">dictation/</text>
+<path d="M850.0,606 L850.0,694 L990.0,694 L990.0,606 L908.0,606 L900.0,594 L850.0,594 Z" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
+<text x="920.0" y="626" font-family="'Courier New', Courier, monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">coverage/</text>
+<text x="920.0" y="644.0" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">AUDIO CUT</text>
+<text x="920.0" y="657.2" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">UNTIL</text>
+<path d="M1010.0,606 L1010.0,694 L1150.0,694 L1150.0,606 L1068.0,606 L1060.0,594 L1010.0,594 Z" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
+<text x="1080.0" y="626" font-family="'Courier New', Courier, monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">asr/</text>
+<text x="1080.0" y="644.0" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">&lt;backend&gt;/</text>
+<path d="M1170.0,606 L1170.0,694 L1310.0,694 L1310.0,606 L1228.0,606 L1220.0,594 L1170.0,594 Z" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
+<text x="1240.0" y="626" font-family="'Courier New', Courier, monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">text/</text>
+<text x="1240.0" y="644.0" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">CLEANED TEXT</text>
+<path d="M1330.0,606 L1330.0,694 L1470.0,694 L1470.0,606 L1388.0,606 L1380.0,594 L1330.0,594 Z" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
+<text x="1400.0" y="626" font-family="'Courier New', Courier, monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">events/</text>
+<text x="1400.0" y="644.0" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">capture/</text>
+<text x="1400.0" y="657.2" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">signals/</text>
+<text x="1400.0" y="670.4" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">user/</text>
+<path d="M1490.0,606 L1490.0,694 L1630.0,694 L1630.0,606 L1548.0,606 L1540.0,594 L1490.0,594 Z" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
+<text x="1560.0" y="626" font-family="'Courier New', Courier, monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">interactions/</text>
+<text x="1560.0" y="644.0" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">RANGES</text>
+<path d="M1650.0,606 L1650.0,694 L1790.0,694 L1790.0,606 L1708.0,606 L1700.0,594 L1650.0,594 Z" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
+<text x="1720.0" y="626" font-family="'Courier New', Courier, monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">documents/</text>
+<text x="1720.0" y="644.0" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">transcripts/</text>
+<text x="1720.0" y="657.2" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">interactions/</text>
+<path d="M1810.0,606 L1810.0,694 L1950.0,694 L1950.0,606 L1868.0,606 L1860.0,594 L1810.0,594 Z" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
+<text x="1880.0" y="626" font-family="'Courier New', Courier, monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">finished/</text>
+<text x="1880.0" y="644.0" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">transcript/</text>
+<text x="1880.0" y="657.2" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">interactions/</text>
+<path d="M1970.0,606 L1970.0,694 L2110.0,694 L2110.0,606 L2028.0,606 L2020.0,594 L1970.0,594 Z" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
+<text x="2040.0" y="626" font-family="'Courier New', Courier, monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">published/</text>
+<text x="2040.0" y="644.0" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">&lt;target&gt;/</text>
+<path d="M2130.0,606 L2130.0,694 L2270.0,694 L2270.0,606 L2188.0,606 L2180.0,594 L2130.0,594 Z" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
+<text x="2200.0" y="626" font-family="'Courier New', Courier, monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">bench/</text>
+<text x="2200.0" y="644.0" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">&lt;case-id&gt;/</text>
+<path d="M2290.0,606 L2290.0,694 L2430.0,694 L2430.0,606 L2348.0,606 L2340.0,594 L2290.0,594 Z" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
+<text x="2360.0" y="626" font-family="'Courier New', Courier, monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">install/</text>
+<text x="2360.0" y="644.0" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">current</text>
+<text x="2360.0" y="657.2" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">previous-commit</text>
+<text x="240" y="478" font-family="'Courier New', Courier, monospace" font-size="18" font-weight="bold" text-anchor="start" fill="#1b1b1b">state/ →</text>
+<text x="240" y="500" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="bold" text-anchor="start" fill="#1b1b1b">FILESYSTEM BACKPLANE (ADR-0003)</text>
+<text x="240" y="514" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="bold" text-anchor="start" fill="#1b1b1b">state/&lt;kind&gt;/&lt;writer&gt;/:</text>
+<text x="240" y="528" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="bold" text-anchor="start" fill="#1b1b1b">ONE WRITER PER SUBFOLDER,</text>
+<text x="240" y="542" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="bold" text-anchor="start" fill="#1b1b1b">ANY NUMBER OF READERS.</text>
+<text x="240" y="556" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="bold" text-anchor="start" fill="#1b1b1b">ALL SUBSYSTEMS READ config/;</text>
+<text x="240" y="570" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="bold" text-anchor="start" fill="#1b1b1b">OWN-OUTPUT READS NOT SHOWN</text>
+<rect x="230" y="310" width="240" height="140" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.5" stroke-dasharray="9 5"/>
+<text x="240" y="331" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#1b1b1b">KEYS</text>
+<text x="294" y="331" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">ADR-0007</text>
+<circle cx="253" cy="356" r="9" fill="#1b1b1b"/>
+<text x="253" y="359.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">A</text>
+<text x="268" y="361" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="start" fill="#1b1b1b">KEYS</text>
+<rect x="520" y="310" width="260" height="140" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.5" stroke-dasharray="9 5"/>
+<text x="530" y="331" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#1b1b1b">DICTATION</text>
+<text x="639" y="331" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">ADR-0013</text>
+<circle cx="543" cy="356" r="9" fill="#1b1b1b"/>
+<text x="543" y="359.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">D</text>
+<text x="558" y="361" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="start" fill="#1b1b1b">DICTATION</text>
+<text x="534" y="382" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">CMD</text>
+<text x="562" y="383" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="start" fill="#1b1b1b">UNMUTE-STALE</text>
+<text x="534" y="408" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">WRITES</text>
+<text x="584" y="408" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">utterances/dictation/</text>
+<text x="584" y="423" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">run/status.json, muted.json</text>
+<text x="534" y="442" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">READS</text>
+<text x="584" y="442" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">audio/, text/</text>
+<rect x="820" y="310" width="240" height="140" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.5" stroke-dasharray="9 5"/>
+<text x="830" y="331" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#1b1b1b">CAPTURE</text>
+<text x="917" y="331" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">ADR-0011</text>
+<circle cx="843" cy="356" r="9" fill="#1b1b1b"/>
+<text x="843" y="359.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">B</text>
+<text x="858" y="361" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="start" fill="#1b1b1b">CAPTURE</text>
+<text x="933.4" y="360" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">CMD</text>
+<text x="961.4" y="361" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="start" fill="#1b1b1b">RETENTION</text>
+<text x="834" y="386" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">WRITES</text>
+<text x="884" y="386" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">audio/mic/, audio/sys/</text>
+<text x="884" y="401" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">events/capture/</text>
+<text x="834" y="420" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">READS</text>
+<text x="884" y="420" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">run/paused</text>
+<rect x="1100" y="310" width="200" height="140" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.5" stroke-dasharray="9 5"/>
+<text x="1110" y="331" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#1b1b1b">SIGNALS</text>
+<text x="1197" y="331" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">ADR-0014</text>
+<circle cx="1123" cy="356" r="9" fill="#1b1b1b"/>
+<text x="1123" y="359.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">C</text>
+<text x="1138" y="361" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="start" fill="#1b1b1b">SIGNALS</text>
+<text x="1114" y="386" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">WRITES</text>
+<text x="1164" y="386" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">events/signals/</text>
+<rect x="1340" y="310" width="560" height="140" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.5" stroke-dasharray="9 5"/>
+<text x="1350" y="331" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#1b1b1b">SPEECH</text>
+<text x="1426" y="331" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">ADR-0012</text>
+<circle cx="1363" cy="356" r="9" fill="#1b1b1b"/>
+<text x="1363" y="359.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">C</text>
+<text x="1378" y="361" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="start" fill="#1b1b1b">SEGMENTATION</text>
+<circle cx="1503.4" cy="356" r="9" fill="#1b1b1b"/>
+<text x="1503.4" y="359.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">C</text>
+<text x="1518.4" y="361" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="start" fill="#1b1b1b">TRANSCRIPTION</text>
+<circle cx="1652.0" cy="356" r="9" fill="#1b1b1b"/>
+<text x="1652.0" y="359.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">C</text>
+<text x="1667.0" y="361" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="start" fill="#1b1b1b">CLEANUP</text>
+<text x="1354" y="386" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">WRITES</text>
+<text x="1404" y="386" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">utterances/ambient/, coverage/, asr/&lt;backend&gt;/, text/</text>
+<text x="1354" y="405" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">READS</text>
+<text x="1404" y="405" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">audio/, utterances/dictation/, run/status.json</text>
+<rect x="230" y="870" width="250" height="180" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.5" stroke-dasharray="9 5"/>
+<text x="240" y="891" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#1b1b1b">CONTROL</text>
+<text x="327" y="891" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">ADR-0018</text>
+<circle cx="253" cy="916" r="9" fill="#1b1b1b"/>
+<text x="253" y="919.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">E</text>
+<text x="268" y="921" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="start" fill="#1b1b1b">TRAY</text>
+<text x="318.8" y="920" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">CMD</text>
+<text x="346.8" y="921" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="start" fill="#1b1b1b">HEALTH</text>
+<text x="244" y="942" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">CMD</text>
+<text x="272" y="943" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="start" fill="#1b1b1b">STATUS, PAUSE, RESUME</text>
+<text x="244" y="964" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">CMD</text>
+<text x="272" y="965" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="start" fill="#1b1b1b">NOTIFY-FAILED</text>
+<text x="244" y="990" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">WRITES</text>
+<text x="294" y="990" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">run/paused, events/user/</text>
+<text x="244" y="1009" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">READS</text>
+<text x="294" y="1009" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">audio/, utterances/,</text>
+<text x="294" y="1024" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">coverage/, text/,</text>
+<text x="294" y="1039" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">install/, run/</text>
+<rect x="520" y="870" width="340" height="180" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.5" stroke-dasharray="9 5"/>
+<text x="530" y="891" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#1b1b1b">TRANSCRIPT</text>
+<text x="650" y="891" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">ADR-0015</text>
+<circle cx="543" cy="916" r="9" fill="#1b1b1b"/>
+<text x="543" y="919.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">C</text>
+<text x="558" y="921" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="start" fill="#1b1b1b">TRANSCRIPT</text>
+<text x="658.0" y="920" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">CMD</text>
+<text x="686.0" y="921" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="start" fill="#1b1b1b">NOTE, PIN</text>
+<text x="534" y="946" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">WRITES</text>
+<text x="584" y="946" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">documents/transcripts/, events/user/</text>
+<text x="584" y="961" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">finished/transcript/</text>
+<text x="534" y="980" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">READS</text>
+<text x="584" y="980" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">utterances/, coverage/, text/, events/</text>
+<rect x="900" y="870" width="460" height="180" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.5" stroke-dasharray="9 5"/>
+<text x="910" y="891" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#1b1b1b">INTERACTIONS</text>
+<text x="1052" y="891" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">ADR-0016</text>
+<circle cx="923" cy="916" r="9" fill="#1b1b1b"/>
+<text x="923" y="919.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">C</text>
+<text x="938" y="921" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="start" fill="#1b1b1b">INTERACTIONS</text>
+<text x="914" y="946" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">WRITES</text>
+<text x="964" y="946" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">interactions/, documents/interactions/,</text>
+<text x="964" y="961" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">finished/interactions/</text>
+<text x="914" y="980" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">READS</text>
+<text x="964" y="980" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">utterances/, coverage/, text/, events/</text>
+<rect x="1400" y="870" width="300" height="180" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.5" stroke-dasharray="9 5"/>
+<text x="1410" y="891" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#1b1b1b">PUBLISHING</text>
+<text x="1530" y="891" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">ADR-0017</text>
+<circle cx="1423" cy="916" r="9" fill="#1b1b1b"/>
+<text x="1423" y="919.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">C</text>
+<text x="1438" y="921" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="start" fill="#1b1b1b">PUBLISH</text>
+<text x="1414" y="946" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">WRITES</text>
+<text x="1464" y="946" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">published/&lt;target&gt;/</text>
+<text x="1414" y="965" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">READS</text>
+<text x="1464" y="965" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">documents/, finished/</text>
+<rect x="1740" y="870" width="320" height="180" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.5" stroke-dasharray="9 5"/>
+<text x="1750" y="891" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#1b1b1b">BENCH</text>
+<text x="1815" y="891" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">ADR-0019</text>
+<text x="1754" y="920" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">CMD</text>
+<text x="1782" y="921" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="start" fill="#1b1b1b">BENCH</text>
+<text x="1754" y="946" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">WRITES</text>
+<text x="1804" y="946" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">bench/&lt;case-id&gt;/</text>
+<text x="1754" y="965" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">READS</text>
+<text x="1804" y="965" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">audio/, asr/, text/, interactions/,</text>
+<text x="1804" y="980" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">documents/, install/</text>
+<rect x="2100" y="870" width="340" height="180" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.5" stroke-dasharray="9 5"/>
+<text x="2110" y="891" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#1b1b1b">OPERATIONS</text>
+<text x="2230" y="891" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">ADR-0006</text>
+<text x="2114" y="920" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">CMD</text>
+<text x="2142" y="921" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="start" fill="#1b1b1b">INSTALL</text>
+<text x="2217.4" y="920" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">CMD</text>
+<text x="2245.4" y="921" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="start" fill="#1b1b1b">VERSION</text>
+<text x="2114" y="946" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="start" fill="#1b1b1b">WRITES</text>
+<text x="2164" y="946" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">install/current, previous-commit</text>
+<rect x="230" y="590" width="250" height="100" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.5" stroke-dasharray="9 5"/>
+<text x="240" y="611" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#1b1b1b">SHORTCUTS</text>
+<text x="349" y="611" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">ADR-0008</text>
+<circle cx="253" cy="636" r="9" fill="#1b1b1b"/>
+<text x="253" y="639.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">D</text>
+<text x="268" y="641" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="start" fill="#1b1b1b">SHORTCUTS</text>
+<rect x="30" y="320" width="150" height="700" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.4" stroke-dasharray="6 4"/>
+<text x="105.0" y="647.25" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#1b1b1b">KDE PLASMA</text>
+<text x="105.0" y="664.25" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">APPLICATIONS</text>
+<text x="105.0" y="678.25" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">KWIN SCRIPT</text>
+<text x="105.0" y="692.25" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">SYSTEM TRAY</text>
+<text x="105.0" y="706.25" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">NOTIFICATIONS</text>
+<path d="M230,400 L180,400" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
+<path d="M230,400 L180,400" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="205" y="392" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#1b1b1b">UINPUT</text>
+<path d="M230,640 L180,640" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
+<path d="M230,640 L180,640" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+<text x="205" y="632" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#1b1b1b">D-BUS</text>
+<path d="M230,990 L180,990" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
+<path d="M230,990 L180,990" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="205" y="982" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#1b1b1b">TRAY</text>
+<rect x="230" y="150" width="240" height="70" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.4" stroke-dasharray="6 4"/>
+<text x="350.0" y="182.9" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#1b1b1b">KEYBOARDS</text>
+<text x="350.0" y="199.9" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">/dev/input (EVDEV)</text>
+<path d="M350,220 L350,310" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
+<path d="M350,220 L350,310" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#arrow)"/>
+<path d="M470,380 L520,380" fill="none" stroke="#f7f5ee" stroke-width="9.4"/>
+<path d="M470,380 L520,380" fill="none" stroke="#1b1b1b" stroke-width="3.4" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+<text x="495" y="366" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#1b1b1b">SOCKET</text>
+<rect x="820" y="150" width="240" height="70" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.4" stroke-dasharray="6 4"/>
+<text x="940.0" y="182.9" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#1b1b1b">PIPEWIRE</text>
+<text x="940.0" y="199.9" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">MIC, SYSTEM AUDIO</text>
+<path d="M900,220 L900,310" fill="none" stroke="#f7f5ee" stroke-width="9.4"/>
+<path d="M900,220 L900,310" fill="none" stroke="#1b1b1b" stroke-width="3.4" marker-end="url(#arrow)"/>
+<text x="908" y="269.0" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">PCM</text>
+<path d="M700,310 L700,185 L820,185" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
+<path d="M700,310 L700,185 L820,185" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="760.0" y="178" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">MUTE</text>
+<rect x="1100" y="150" width="200" height="70" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.4" stroke-dasharray="6 4"/>
+<text x="1200.0" y="182.9" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#1b1b1b">BROWSER</text>
+<text x="1200.0" y="199.9" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">MEETING TABS</text>
+<path d="M1200,220 L1200,310" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
+<path d="M1200,220 L1200,310" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="1208" y="269.0" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">CDP</text>
+<rect x="2490" y="320" width="200" height="700" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.4" stroke-dasharray="6 4"/>
+<text x="2590.0" y="654.25" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#1b1b1b">INFERENCE HOST</text>
+<text x="2590.0" y="671.25" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">WHISPER-SERVER</text>
+<text x="2590.0" y="685.25" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">LLAMA-SERVER</text>
+<text x="2590.0" y="699.25" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">(TAILNET)</text>
+<path d="M1900,370 L2490,370" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
+<path d="M1900,370 L2490,370" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+<text x="2195.0" y="363" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">AUDIO SLICES, TEXT (HTTP)</text>
+<path d="M1330,1050 L1330,1078 L2590,1078 L2590,1020" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
+<path d="M1330,1050 L1330,1078 L2590,1078 L2590,1020" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="1342" y="1071" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">TEXT (HTTP)</text>
+<path d="M2590,1078 L2590,1020" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
+<path d="M2590,1078 L2590,1020" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+<path d="M1550,1050 L1550,1170" fill="none" stroke="#f7f5ee" stroke-width="7.6"/>
+<path d="M1550,1050 L1550,1170" fill="none" stroke="#1b1b1b" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="1558" y="1114.0" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">COPY</text>
+<rect x="1440" y="1170" width="220" height="60" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.4" stroke-dasharray="6 4"/>
+<text x="1550.0" y="1197.9" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#1b1b1b">TARGET DIRS</text>
+<text x="1550.0" y="1214.9" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#1b1b1b">VAULT INBOX</text>
+<text x="520" y="745" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="bold" text-anchor="start" fill="#1b1b1b">run/ AND config/</text>
+<rect x="520" y="755" width="157" height="62" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
+<text x="598.5" y="775" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#1b1b1b">run/status.json</text>
+<text x="598.5" y="794" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="middle" fill="#1b1b1b">W DICTATION</text>
+<rect x="682" y="755" width="157" height="62" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
+<text x="760.5" y="775" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#1b1b1b">run/health/</text>
+<text x="760.5" y="794" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="middle" fill="#1b1b1b">W EACH SERVICE</text>
+<rect x="844" y="755" width="157" height="62" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
+<text x="922.5" y="775" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#1b1b1b">run/muted.json</text>
+<text x="922.5" y="794" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="middle" fill="#1b1b1b">W DICTATION</text>
+<rect x="1006" y="755" width="157" height="62" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
+<text x="1084.5" y="775" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#1b1b1b">run/paused</text>
+<text x="1084.5" y="794" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="middle" fill="#1b1b1b">W CONTROL</text>
+<rect x="1168" y="755" width="157" height="62" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
+<text x="1246.5" y="775" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#1b1b1b">config/config.json</text>
+<text x="1246.5" y="794" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="middle" fill="#1b1b1b">W OWNER</text>
+<rect x="1330" y="755" width="157" height="62" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
+<text x="1408.5" y="775" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#1b1b1b">config/glossary.txt</text>
+<text x="1408.5" y="794" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="middle" fill="#1b1b1b">W OWNER</text>
+<rect x="1492" y="755" width="157" height="62" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
+<text x="1570.5" y="775" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#1b1b1b">config/prompts/</text>
+<text x="1570.5" y="794" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="middle" fill="#1b1b1b">W OWNER</text>
+<rect x="40" y="1270" width="900" height="196" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
+<line x1="40" y1="1300" x2="940" y2="1300" stroke="#1b1b1b" stroke-width="2"/>
+<text x="490.0" y="1291" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#1b1b1b">SERVICES</text>
+<circle cx="64" cy="1318" r="9" fill="#1b1b1b"/>
+<text x="64" y="1321.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">A</text>
+<text x="86" y="1323" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">KEYS</text>
+<text x="190" y="1323" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">SYSTEM UNIT, ROOT</text>
+<circle cx="64" cy="1344" r="9" fill="#1b1b1b"/>
+<text x="64" y="1347.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">B</text>
+<text x="86" y="1349" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">CAPTURE</text>
+<text x="190" y="1349" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">LOGIN SESSION</text>
+<circle cx="64" cy="1370" r="9" fill="#1b1b1b"/>
+<text x="64" y="1373.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">C</text>
+<text x="86" y="1375" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">PIPELINE</text>
+<text x="190" y="1375" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">RESTARTS FREELY</text>
+<circle cx="64" cy="1396" r="9" fill="#1b1b1b"/>
+<text x="64" y="1399.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">D</text>
+<text x="86" y="1401" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">SESSION</text>
+<text x="190" y="1401" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">GRAPHICAL SESSION</text>
+<circle cx="64" cy="1422" r="9" fill="#1b1b1b"/>
+<text x="64" y="1425.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">E</text>
+<text x="86" y="1427" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">TRAY</text>
+<text x="190" y="1427" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">GRAPHICAL SESSION</text>
+<text x="64" y="1453" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#1b1b1b">CMD</text>
+<text x="86" y="1453" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">COMMAND</text>
+<text x="190" y="1453" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">ODSODCTL, NO SERVICE</text>
+<rect x="980" y="1270" width="900" height="144" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="2"/>
+<line x1="980" y1="1300" x2="1880" y2="1300" stroke="#1b1b1b" stroke-width="2"/>
+<text x="1430.0" y="1291" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#1b1b1b">SYMBOLS</text>
+<rect x="996" y="1308" width="60" height="20" fill="none" stroke="#1b1b1b" stroke-width="1.5" stroke-dasharray="9 5"/>
+<text x="1070" y="1323" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">SUBSYSTEM, ONE ADR</text>
+<circle cx="1026" cy="1344" r="9" fill="#1b1b1b"/>
+<text x="1026" y="1347.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">A</text>
+<text x="1070" y="1349" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">SERVICE OF A COMPONENT</text>
+<rect x="998" y="1361" width="56" height="18" fill="none" stroke="#1b1b1b" stroke-width="1.4" stroke-dasharray="6 4"/>
+<text x="1070" y="1375" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">OUTSIDE SYSTEM</text>
+<line x1="996" y1="1396" x2="1056" y2="1396" stroke="#1b1b1b" stroke-width="1.8" stroke-dasharray="18 5 3 5"/>
+<text x="1070" y="1401" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">ODSOD-DAEMON</text>
+<text x="40" y="1496" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="normal" text-anchor="start" fill="#1b1b1b">RUNTIME (ADR-0010): lib/, services/ AND cli.py SERVE ALL SUBSYSTEMS AND OWN NO FILES. RETENTION (CAPTURE) DELETES OLD AUDIO.</text>
+<text x="2680" y="1508" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="end" fill="#1b1b1b">OD-5-001</text>
+<text x="1360.0" y="1536" font-family="'Courier New', Courier, monospace" font-size="19" font-weight="normal" text-anchor="middle" fill="#1b1b1b">Figure 1-2.  Subsystems on the Filesystem Backplane</text>
+<line x1="40" y1="1552" x2="2680" y2="1552" stroke="#1b1b1b" stroke-width="3"/>
+<text x="1360.0" y="1580" font-family="'Courier New', Courier, monospace" font-size="18" font-weight="normal" text-anchor="middle" fill="#1b1b1b">HOST CONFIGURATION</text>
+<text x="40" y="1618" font-family="'Courier New', Courier, monospace" font-size="16" font-weight="normal" text-anchor="start" fill="#1b1b1b">Host</text>
+<line x1="86.4" y1="1622" x2="256.4" y2="1622" stroke="#1b1b1b" stroke-width="1.2"/>
+<text x="1110.0" y="1618" font-family="'Courier New', Courier, monospace" font-size="16" font-weight="normal" text-anchor="start" fill="#1b1b1b">Basic Date</text>
+<line x1="1214.0" y1="1622" x2="1374.0" y2="1622" stroke="#1b1b1b" stroke-width="1.2"/>
+<text x="1294.0" y="1616" font-family="'Courier New', Courier, monospace" font-size="16" font-weight="normal" text-anchor="middle" fill="#1b1b1b">23 Nov 2026</text>
+<text x="1500.0" y="1618" font-family="'Courier New', Courier, monospace" font-size="16" font-weight="normal" text-anchor="start" fill="#1b1b1b">Change Date</text>
+<line x1="1613.6" y1="1622" x2="1773.6" y2="1622" stroke="#1b1b1b" stroke-width="1.2"/>
+<text x="2510" y="1618" font-family="'Courier New', Courier, monospace" font-size="16" font-weight="normal" text-anchor="start" fill="#1b1b1b">Page</text>
+<line x1="2556.4" y1="1622" x2="2666.4" y2="1622" stroke="#1b1b1b" stroke-width="1.2"/>
+<text x="2611.4" y="1616" font-family="'Courier New', Courier, monospace" font-size="16" font-weight="normal" text-anchor="middle" fill="#1b1b1b">1-2</text></svg>

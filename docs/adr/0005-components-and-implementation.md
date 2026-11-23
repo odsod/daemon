@@ -185,7 +185,8 @@ shows the overview, [`overview.py`](../diagrams/overview.py). Regenerate with
 
 - Removes echo before ASR, but distorts the owner's speech when both sides
   talk, and the raw audio is gone.
-- Rejected: raw `mic` stays. `mic-ec` is an experiment beside it.
+- Rejected: raw `mic` stays. A `mic-ec` channel beside it is deferred
+  ([ADR-0011](0011-capture.md)).
 
 ## Consequences
 

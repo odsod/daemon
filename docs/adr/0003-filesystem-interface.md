@@ -88,9 +88,6 @@ dictation socket ([ADR-0007](0007-keys-service.md)).
 ### Audio
 
 - Path: `state/audio/<channel>/<YYYYMMDDTHH>Z.pcm`, channels `mic` and `sys`.
-- Config can add an extra channel for a bench experiment, such as `mic-ec`
-  (echo-cancelled mic, [ADR-0011](0011-capture.md)).
-  Utterances use only `mic` and `sys`.
 - Format: raw signed 16-bit little-endian, 16 kHz, mono. 32,000 bytes per
   second.
 - Byte offset / 32,000 = seconds after the start of the hour. A reader cuts
@@ -105,6 +102,12 @@ dictation socket ([ADR-0007](0007-keys-service.md)).
 - Audio is kept for the retention period: 14 days, about 77 GB per host.
 
 ### Paths
+
+- Layout rule: `state/<kind>/<writer>/`. The first level names the kind of
+  data, and each kind has one record format. A kind with more than one writer
+  has one subfolder per writer, such as `events/capture/` and
+  `events/signals/`. Each file then has one writer, and a reader takes all
+  sources of a kind with one glob, such as `events/*/`.
 
 | Path                                                               | Kind                  | Writer                                 | Readers                                                                                    |
 | ------------------------------------------------------------------ | --------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------ |
