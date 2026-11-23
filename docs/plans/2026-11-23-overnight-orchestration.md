@@ -1,6 +1,6 @@
 # Plan: overnight orchestration
 
-- Status: Active
+- Status: Done 2026-11-23
 - Depends on: [roadmap](2026-11-23-roadmap.md)
 - Design: none (process plan)
 
