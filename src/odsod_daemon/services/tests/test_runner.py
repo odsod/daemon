@@ -124,3 +124,24 @@ async def test_service_does_not_report_ready_before_config_is_valid(
         receiver.close()
 
     assert called == []
+
+
+async def test_once_drains_in_component_order() -> None:
+    seen = []
+
+    async def upstream(_config, *, once=False):
+        await asyncio.sleep(0)
+        seen.append("upstream")
+
+    async def downstream(_config, *, once=False):
+        assert seen == ["upstream"]
+        seen.append("downstream")
+
+    await run_service(
+        ServiceSpec(
+            "test",
+            [component("upstream", upstream), component("downstream", downstream)],
+        ),
+        once=True,
+    )
+    assert seen == ["upstream", "downstream"]

@@ -77,9 +77,8 @@ async def _watchdog(interval_s: float) -> None:
 async def run_service(spec: ServiceSpec, *, once: bool = False) -> None:
     prepared = [prepare_component(module) for module in spec.components]
     if once:
-        async with asyncio.TaskGroup() as group:
-            for item in prepared:
-                group.create_task(run_prepared(item, once=True))
+        for item in prepared:
+            await run_prepared(item, once=True)
         return
 
     started = [asyncio.Event() for _ in prepared]

@@ -16,9 +16,9 @@ from odsod_daemon.services.runner import ServiceSpec
 NAME = "pipeline"
 
 COMPONENTS = [
-    # segmentation,
-    # transcription,
-    # cleanup,
+    segmentation,
+    transcription,
+    cleanup,
     signals,
     # transcript,
     # interactions,
