@@ -1,6 +1,6 @@
 # Plan: interactions (stretch)
 
-- Status: Draft
+- Status: Done 2026-11-23
 - Depends on: [transcript](2026-11-23-transcript.md),
   [signals](2026-11-23-signals.md),
   [inference-recordings](2026-11-23-inference-recordings.md)
