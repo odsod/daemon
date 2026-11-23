@@ -1,0 +1,17 @@
+# Alt interrupts both Ctrl overload taps, so neither emits Esc.
+0 in key KEY_CAPSLOCK down
+0 out key KEY_LEFTCTRL down
+50 in key KEY_LEFTALT down
+50 out key KEY_LEFTALT down
+100 in key KEY_CAPSLOCK up
+100 out key KEY_LEFTCTRL up
+150 in key KEY_LEFTALT up
+150 out key KEY_LEFTALT up
+200 in key KEY_LEFTCTRL down
+200 out key KEY_LEFTCTRL down
+250 in key KEY_LEFTALT down
+250 out key KEY_LEFTALT down
+300 in key KEY_LEFTCTRL up
+300 out key KEY_LEFTCTRL up
+350 in key KEY_LEFTALT up
+350 out key KEY_LEFTALT up

@@ -1,0 +1,9 @@
+# A nonzero REL_HWHEEL resolves Alt during dictate.
+0 in sock connect
+0 in key KEY_LEFTALT down
+400 in rel REL_HWHEEL -1
+350 out sock start 0
+400 out sock cancel 400
+400 out key KEY_LEFTALT down
+500 in key KEY_LEFTALT up
+500 out key KEY_LEFTALT up

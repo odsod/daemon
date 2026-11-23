@@ -1,0 +1,13 @@
+# Caps Lock holds Ctrl. Paste waits until its physical release.
+0 in sock connect
+0 in key KEY_CAPSLOCK down
+0 out key KEY_LEFTCTRL down
+100 in sock paste
+400 in tick
+500 in key KEY_CAPSLOCK up
+500 out key KEY_LEFTCTRL up
+500 out key KEY_LEFTSHIFT down
+500 out key KEY_INSERT down
+500 out key KEY_INSERT up
+500 out key KEY_LEFTSHIFT up
+500 out sock pasted

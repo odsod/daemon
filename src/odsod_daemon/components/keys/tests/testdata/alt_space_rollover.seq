@@ -1,0 +1,9 @@
+# A queued Alt press follows the Space tap, as in the port source.
+0 in key KEY_SPACE down
+50 in key KEY_LEFTALT down
+100 in key KEY_SPACE up
+100 out key KEY_SPACE down
+100 out key KEY_SPACE up
+100 out key KEY_LEFTALT down
+150 in key KEY_LEFTALT up
+150 out key KEY_LEFTALT up

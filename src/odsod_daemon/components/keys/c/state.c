@@ -59,6 +59,7 @@ static void emit_meta_chord(struct ks_state *state, struct ks_outputs *out,
 static int is_modifier(int code)
 {
 	switch (code) {
+	case KEY_CAPSLOCK:
 	case KEY_LEFTCTRL:
 	case KEY_RIGHTCTRL:
 	case KEY_LEFTSHIFT:
@@ -354,7 +355,7 @@ static void handle_left_alt(struct ks_state *state, struct ks_outputs *out,
 		if (state->alt.state != KS_ALT_IDLE)
 			return;
 		if (other_key_held(state, KEY_LEFTALT)) {
-			out_key(state, out, t_ms, KEY_LEFTALT, 1);
+			process_key(state, out, t_ms, KEY_LEFTALT, 1);
 			state->alt.state = KS_ALT_CHORD;
 		} else {
 			state->alt.state = KS_ALT_PENDING;
@@ -365,7 +366,7 @@ static void handle_left_alt(struct ks_state *state, struct ks_outputs *out,
 	}
 	if (value == 2) {
 		if (state->alt.state == KS_ALT_CHORD)
-			out_key(state, out, t_ms, KEY_LEFTALT, 2);
+			process_key(state, out, t_ms, KEY_LEFTALT, 2);
 		return;
 	}
 	if (value != 0)
@@ -373,14 +374,14 @@ static void handle_left_alt(struct ks_state *state, struct ks_outputs *out,
 
 	switch (state->alt.state) {
 	case KS_ALT_PENDING:
-		out_key(state, out, t_ms, KEY_LEFTALT, 1);
-		out_key(state, out, t_ms, KEY_LEFTALT, 0);
+		process_key(state, out, t_ms, KEY_LEFTALT, 1);
+		process_key(state, out, t_ms, KEY_LEFTALT, 0);
 		break;
 	case KS_ALT_DICTATE:
 		out_sock(out, KS_OUT_SOCK_STOP, t_ms, t_ms, NULL);
 		break;
 	case KS_ALT_CHORD:
-		out_key(state, out, t_ms, KEY_LEFTALT, 0);
+		process_key(state, out, t_ms, KEY_LEFTALT, 0);
 		break;
 	case KS_ALT_SWALLOW:
 	case KS_ALT_IDLE:
@@ -394,12 +395,12 @@ static void resolve_alt_for_pointer(struct ks_state *state, long t_ms,
 				    struct ks_outputs *out)
 {
 	if (state->alt.state == KS_ALT_PENDING) {
-		out_key(state, out, t_ms, KEY_LEFTALT, 1);
+		process_key(state, out, t_ms, KEY_LEFTALT, 1);
 		state->alt.state = KS_ALT_CHORD;
 		state->alt_deadline = -1;
 	} else if (state->alt.state == KS_ALT_DICTATE) {
 		out_sock(out, KS_OUT_SOCK_CANCEL, t_ms, t_ms, NULL);
-		out_key(state, out, t_ms, KEY_LEFTALT, 1);
+		process_key(state, out, t_ms, KEY_LEFTALT, 1);
 		state->alt.state = KS_ALT_CHORD;
 	}
 }
@@ -420,6 +421,12 @@ static void handle_key(struct ks_state *state, const struct ks_input *in,
 	arm_chord(state, t_ms);
 
 	if (code == KEY_LEFTALT) {
+		if (value == 1) {
+			if (state->capslock.state == KS_CTRL_PENDING)
+				state->capslock.interrupted = 1;
+			if (state->leftctrl.state == KS_CTRL_PENDING)
+				state->leftctrl.interrupted = 1;
+		}
 		handle_left_alt(state, out, t_ms, value);
 		return;
 	}
@@ -427,12 +434,12 @@ static void handle_key(struct ks_state *state, const struct ks_input *in,
 	/* A press resolves a held-back Alt. A release alone does not. */
 	if (value == 1) {
 		if (state->alt.state == KS_ALT_PENDING) {
-			out_key(state, out, t_ms, KEY_LEFTALT, 1);
+			process_key(state, out, t_ms, KEY_LEFTALT, 1);
 			state->alt.state = KS_ALT_CHORD;
 			state->alt_deadline = -1;
 		} else if (state->alt.state == KS_ALT_DICTATE) {
 			out_sock(out, KS_OUT_SOCK_CANCEL, t_ms, t_ms, NULL);
-			out_key(state, out, t_ms, KEY_LEFTALT, 1);
+			process_key(state, out, t_ms, KEY_LEFTALT, 1);
 			state->alt.state = KS_ALT_CHORD;
 		}
 	}
@@ -442,7 +449,12 @@ static void handle_key(struct ks_state *state, const struct ks_input *in,
 static void handle_pointer(struct ks_state *state, const struct ks_input *in,
 			   struct ks_outputs *out)
 {
-	resolve_alt_for_pointer(state, in->t_ms, out);
+	if ((in->kind == KS_IN_BTN && in->value == 1) ||
+	    (in->kind == KS_IN_REL && in->value != 0 &&
+	     (in->code == REL_WHEEL || in->code == REL_HWHEEL ||
+	      in->code == REL_WHEEL_HI_RES ||
+	      in->code == REL_HWHEEL_HI_RES)))
+		resolve_alt_for_pointer(state, in->t_ms, out);
 }
 
 static void handle_connect(struct ks_state *state)
@@ -532,5 +544,6 @@ int ks_deadline(const struct ks_state *state, long *t_ms)
 
 void ks_release_all(struct ks_state *state, long t_ms, struct ks_outputs *out)
 {
+	out->count = 0;
 	release_all(state, t_ms, out);
 }

@@ -1,0 +1,11 @@
+# Shutdown replaces previous outputs and releases each held key once.
+0 in key KEY_A down
+0 out key KEY_A down
+10 in key KEY_LEFTSHIFT down
+10 out key KEY_LEFTSHIFT down
+20 in stop
+20 out key KEY_A up
+20 out key KEY_LEFTSHIFT up
+20 out grab release
+30 in stop
+30 out grab release

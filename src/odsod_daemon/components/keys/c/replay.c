@@ -8,7 +8,8 @@
 /*
  * Test driver: feeds the in lines of a sequence file to the state machine and
  * prints its outputs as out lines. Timers fire on the next input, so a
- * sequence that waits for a timer puts another input after it.
+ * sequence that waits for a timer uses an in tick line. An in stop line
+ * calls ks_release_all(), as service shutdown does.
  */
 
 static int value_of(const char *name)
@@ -87,6 +88,8 @@ int main(int argc, char **argv)
 		return 2;
 	}
 
+	/* Reuse outputs so stop checks that ks_release_all resets the count. */
+	struct ks_outputs out = {0};
 	struct ks_state state;
 	ks_init(&state);
 
@@ -150,6 +153,12 @@ int main(int argc, char **argv)
 				status = fail(path, line_no, "bad rel code");
 				break;
 			}
+		} else if (strcmp(kind, "tick") == 0 ||
+			   strcmp(kind, "stop") == 0) {
+			if (fields != 3) {
+				status = fail(path, line_no, "bad timer or stop line");
+				break;
+			}
 		} else if (strcmp(kind, "sock") == 0) {
 			if (fields != 4) {
 				status = fail(path, line_no, "bad sock line");
@@ -170,8 +179,19 @@ int main(int argc, char **argv)
 			break;
 		}
 
-		struct ks_outputs out;
-		ks_handle(&state, &in, &out);
+		if (strcmp(kind, "stop") == 0) {
+			ks_release_all(&state, ms, &out);
+		} else {
+			ks_handle(&state, &in, &out);
+			for (int i = 0; i < out.count; i++) {
+				if (out.items[i].kind == KS_OUT_GRAB_RELEASE &&
+				    !state.exit) {
+					status = fail(path, line_no,
+						      "escape chord did not exit");
+					break;
+				}
+			}
+		}
 		for (int i = 0; i < out.count; i++)
 			print_output(&out.items[i]);
 	}

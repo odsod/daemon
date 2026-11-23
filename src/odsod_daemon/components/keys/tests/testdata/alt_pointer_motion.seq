@@ -1,0 +1,21 @@
+# Motion, button releases and zero wheel values do not resolve Alt.
+0 in sock connect
+0 in key KEY_LEFTALT down
+50 in rel REL_X 1
+60 in rel REL_Y -1
+70 in btn BTN_LEFT up
+80 in rel REL_WHEEL 0
+90 in rel REL_HWHEEL 0
+100 in rel REL_WHEEL_HI_RES 0
+110 in rel REL_HWHEEL_HI_RES 0
+350 in tick
+350 out sock start 0
+400 in rel REL_X 1
+410 in rel REL_Y -1
+420 in btn BTN_RIGHT up
+430 in rel REL_WHEEL 0
+440 in rel REL_HWHEEL 0
+450 in rel REL_WHEEL_HI_RES 0
+460 in rel REL_HWHEEL_HI_RES 0
+500 in key KEY_LEFTALT up
+500 out sock stop 500

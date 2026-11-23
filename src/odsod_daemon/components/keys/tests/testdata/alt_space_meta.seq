@@ -1,0 +1,11 @@
+# Alt uses the Space Meta layer, including repeats and release.
+0 in key KEY_SPACE down
+200 in key KEY_LEFTALT down
+200 out key KEY_LEFTMETA down
+200 out key KEY_LEFTALT down
+210 in key KEY_LEFTALT repeat
+210 out key KEY_LEFTALT repeat
+250 in key KEY_LEFTALT up
+250 out key KEY_LEFTALT up
+250 out key KEY_LEFTMETA up
+300 in key KEY_SPACE up

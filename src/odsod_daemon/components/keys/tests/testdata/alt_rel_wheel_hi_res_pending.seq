@@ -1,0 +1,7 @@
+# A nonzero REL_WHEEL_HI_RES resolves Alt during pending.
+0 in sock connect
+0 in key KEY_LEFTALT down
+100 in rel REL_WHEEL_HI_RES -1
+100 out key KEY_LEFTALT down
+500 in key KEY_LEFTALT up
+500 out key KEY_LEFTALT up

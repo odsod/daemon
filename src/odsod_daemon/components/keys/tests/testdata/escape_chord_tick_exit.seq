@@ -1,0 +1,17 @@
+# The timer exits without a key event. Later inputs have no output.
+0 in key KEY_LEFTSHIFT down
+0 out key KEY_LEFTSHIFT down
+100 in key KEY_RIGHTSHIFT down
+100 out key KEY_RIGHTSHIFT down
+200 in key KEY_ESC down
+200 out key KEY_CAPSLOCK down
+3199 in tick
+3200 in tick
+3200 out key KEY_LEFTSHIFT up
+3200 out key KEY_RIGHTSHIFT up
+3200 out key KEY_CAPSLOCK up
+3200 out grab release
+3300 in key KEY_A down
+3400 in sock connect
+3500 in sock paste
+3600 in tick

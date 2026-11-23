@@ -1,0 +1,9 @@
+# An Alt tap during pending Space resolves the queued Meta chord.
+0 in key KEY_SPACE down
+50 in key KEY_LEFTALT down
+100 in key KEY_LEFTALT up
+100 out key KEY_LEFTMETA down
+100 out key KEY_LEFTALT down
+100 out key KEY_LEFTALT up
+100 out key KEY_LEFTMETA up
+200 in key KEY_SPACE up

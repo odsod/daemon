@@ -272,6 +272,15 @@ static void scan_devices(int grab)
 	closedir(dir);
 }
 
+static int device_index_of(int fd)
+{
+	for (int i = 0; i < device_count; i++) {
+		if (devices[i].fd == fd)
+			return i;
+	}
+	return -1;
+}
+
 static void drop_device(int index)
 {
 	if (index < 0 || index >= device_count)
@@ -367,7 +376,6 @@ static void drop_client(struct ks_state *state, long wall_offset)
 static void apply_outputs(struct ks_state *state, struct ks_outputs *out,
 			  long wall_offset)
 {
-	int wrote_key = 0;
 	int drop = 0;
 	for (int i = 0; i < out->count; i++) {
 		const struct ks_output *item = &out->items[i];
@@ -375,7 +383,7 @@ static void apply_outputs(struct ks_state *state, struct ks_outputs *out,
 			if (uinput_fd >= 0 &&
 			    write_event(uinput_fd, EV_KEY, item->code,
 					item->value) == 0)
-				wrote_key = 1;
+				(void)write_event(uinput_fd, EV_SYN, SYN_REPORT, 0);
 			continue;
 		}
 		if (item->kind == KS_OUT_GRAB_RELEASE)
@@ -386,8 +394,6 @@ static void apply_outputs(struct ks_state *state, struct ks_outputs *out,
 		if (client.fd >= 0 && send_line(client.fd, message) < 0)
 			drop = 1;
 	}
-	if (wrote_key && uinput_fd >= 0)
-		(void)write_event(uinput_fd, EV_SYN, SYN_REPORT, 0);
 	if (drop)
 		drop_client(state, wall_offset);
 }
@@ -568,12 +574,14 @@ static int record_main(const char *path)
 		for (int i = 0; i < count; i++) {
 			if (!(pfds[i].revents & (POLLIN | POLLERR | POLLHUP)))
 				continue;
+			int index = device_index_of(pfds[i].fd);
+			if (index < 0)
+				continue;
 			struct input_event events[64];
 			ssize_t length =
 				read(pfds[i].fd, events, sizeof(events));
 			if (length <= 0) {
-				drop_device(i);
-				count = device_count;
+				drop_device(index);
 				continue;
 			}
 			int n = (int)(length /
@@ -587,7 +595,7 @@ static int record_main(const char *path)
 				if (ev->type == EV_KEY) {
 					fprintf(out,
 						"%ld in %s %s %s\n", t,
-						devices[i].keyboard ? "key"
+						devices[index].keyboard ? "key"
 								    : "btn",
 						name,
 						ev->value == 1
@@ -665,11 +673,9 @@ int main(int argc, char **argv)
 
 	while (running) {
 		struct pollfd pfds[MAX_POLLFD];
-		int device_index[MAX_DEVICES];
 		nfds_t count = 0;
 
 		for (int i = 0; i < device_count; i++) {
-			device_index[i] = i;
 			pfds[count].fd = devices[i].fd;
 			pfds[count].events = POLLIN;
 			pfds[count].revents = 0;
@@ -719,6 +725,10 @@ int main(int argc, char **argv)
 					      .code = 0,
 					      .value = 0};
 			feed_input(&state, &in, wall_offset);
+			if (state.exit) {
+				running = 0;
+				break;
+			}
 			continue;
 		}
 
@@ -743,11 +753,12 @@ int main(int argc, char **argv)
 				read_client(&state, wall_offset);
 				continue;
 			}
-			if (i >= (nfds_t)device_count)
+			int index = device_index_of(pfds[i].fd);
+			if (index < 0)
 				continue;
-			struct device *dev = &devices[device_index[i]];
+			struct device *dev = &devices[index];
 			if (revents & POLLERR) {
-				drop_device(device_index[i]);
+				drop_device(index);
 				continue;
 			}
 
@@ -758,7 +769,7 @@ int main(int argc, char **argv)
 				if (length < 0 &&
 				    (errno == EAGAIN || errno == EINTR))
 					continue;
-				drop_device(device_index[i]);
+				drop_device(index);
 				continue;
 			}
 			int n = (int)(length /
@@ -783,7 +794,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	struct ks_outputs final;
+	struct ks_outputs final = {0};
 	ks_release_all(&state, mono_ms(), &final);
 	apply_outputs(&state, &final, wall_offset_ms());
 	release_devices();
