@@ -127,14 +127,17 @@ def test_mode_change_reaches_the_icon_slot(temp_root, qt_app, monkeypatch):
     background = TrayWorker(
         roots,
         source(),
-        ControlConfig(tray_interval_s=5),
+        ControlConfig(tray_interval_s=5, backlog_warning_s=100_000),
         report=bridge.report.emit,
         tracker=BacklogTracker(roots.state),
     )
     thread = threading.Thread(target=lambda: asyncio.run(background.run()), daemon=True)
     thread.start()
     try:
-        assert wait_for(qt_app, lambda: tray.state == "running")
+        assert wait_for(qt_app, lambda: tray.state == "running"), (
+            tray.state,
+            tray.tooltip,
+        )
         assert background.following.wait(1)
         threading.Event().wait(0.05)
         started = clock.monotonic()
