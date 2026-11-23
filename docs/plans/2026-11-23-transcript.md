@@ -42,4 +42,15 @@ mise run build
 
 ## Progress log
 
+- 2026-11-23: Started from `jj new python-rewrite`; `uv sync --extra
+  bench` passed. Pure line, echo, gap, local-day and finish rules pass
+  33 table checks, ruff and pyright.
+
 ## Decisions to confirm
+
+- Mic text shorter than three normalized tokens is never dropped. This
+  guard stays in transcript; the shared overlap helper stays unchanged.
+- An open capture gap has a closed segment at each completed local
+  midnight. This lets logout gaps appear before the day is finished.
+- Echo hold age uses the text record timestamp, so restart does not reset
+  the hold limit. Missing sys coverage holds mic text up to that limit.

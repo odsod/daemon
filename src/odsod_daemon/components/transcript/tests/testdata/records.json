@@ -1,0 +1,9 @@
+[
+  {"kind":"text","ts":"2026-11-23T12:00:05Z","input":"sys-first","channel":"sys","start":"2026-11-23T12:00:00Z","end":"2026-11-23T12:00:04Z","outcome":"ok","text":"Hello from the other side."},
+  {"kind":"text","ts":"2026-11-23T12:00:06Z","input":"mic-first","channel":"mic","start":"2026-11-23T12:00:00Z","end":"2026-11-23T12:00:04Z","outcome":"ok","text":"Hello from the other side."},
+  {"kind":"text","ts":"2026-11-23T12:01:05Z","input":"dic-first","channel":"dic","start":"2026-11-23T12:01:00Z","end":"2026-11-23T12:01:04Z","outcome":"ok","text":"Why does this work?"},
+  {"kind":"note","ts":"2026-11-23T12:02:00Z","text":"Check this\n<!-- note -->"},
+  {"kind":"pin","ts":"2026-11-23T12:03:00Z","text":""},
+  {"kind":"meeting-start","ts":"2026-11-23T12:04:02Z","at":"2026-11-23T12:04:00Z","platform":"meet","code":"abc-defg-hij","title":"Daily"},
+  {"kind":"meeting-end","ts":"2026-11-23T12:05:02Z","at":"2026-11-23T12:05:00Z","platform":"meet","code":"abc-defg-hij"}
+]
