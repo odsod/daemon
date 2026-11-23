@@ -18,7 +18,10 @@ def wall() -> float:
 
 def monotonic() -> float:
     """Seconds from an arbitrary monotonic origin."""
-    return time.monotonic()
+    try:
+        return asyncio.get_running_loop().time()
+    except RuntimeError:
+        return time.monotonic()
 
 
 def boottime() -> float:

@@ -42,3 +42,9 @@ async def test_timeout_runs_on_virtual_time() -> None:
     with pytest.raises(TimeoutError):
         async with clock.timeout(1):
             await clock.sleep(2)
+
+
+async def test_monotonic_uses_virtual_loop_time() -> None:
+    start = clock.monotonic()
+    await clock.sleep(3600)
+    assert clock.monotonic() - start == pytest.approx(3600)
