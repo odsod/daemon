@@ -231,7 +231,6 @@ def pick(
             continue
         pool = sorted(grouped[stratum], key=lambda item: (item.start, item.source_id))
         rng.shuffle(pool)
-        pool.sort(key=lambda item: item.start)
         for candidate in pool:
             if need <= 0:
                 break

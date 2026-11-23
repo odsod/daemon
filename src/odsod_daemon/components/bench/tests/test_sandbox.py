@@ -1,5 +1,5 @@
 import json
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -258,3 +258,110 @@ def test_sandbox_adapter_kinds_and_cloud_rule(bench_root):
 
     with pytest.raises(ValueError, match="dictation cases only"):
         adapters.check_contract(CloudLike(setup(), manifest, paths.roots()), cloud=True)
+
+
+def test_synthetic_times_stay_in_the_past_near_midnight(bench_root, monkeypatch):
+    configure(
+        bench_root,
+        "http://127.0.0.1:1/v1/audio/transcriptions",
+        "http://127.0.0.1:1/v1/chat/completions",
+    )
+    two_ambient_cases(bench_root)
+    stored = cases.load_cases(paths.roots())
+    now = datetime(2026, 11, 23, 23, 0, 1, tzinfo=UTC)
+    monkeypatch.setattr(clock, "utc_now", lambda: now)
+    chosen = setup("asr")
+    manifest = setups.manifest(chosen, paths.roots())
+    base = bench_root / "sandbox"
+    mapping = sandbox.build(base, paths.roots(), chosen, manifest, stored)
+    assert len(mapping) == 2
+    days = [path.stem for path in (base / "state/utterances/ambient").glob("*.jsonl")]
+    assert days and all(day <= "2026-11-23" for day in days)
+    for path in (base / "state/utterances/ambient").glob("*.jsonl"):
+        for line in path.read_text().splitlines():
+            assert clock.parse_iso(json.loads(line)["end"]) <= now
+
+
+def test_setup_cases_limit_the_adapter(bench_root):
+    chosen = setups.Setup.model_validate(
+        {
+            "name": "dictation-only",
+            "kind": "asr",
+            "cases": ["dictation"],
+            "asr": {"model": "m"},
+        }
+    )
+    manifest = setups.manifest(chosen, paths.roots())
+    adapter = adapters.SandboxAdapter(chosen, manifest, paths.roots())
+    assert adapter.accepts("dictation")
+    assert not adapter.accepts("ambient")
+
+
+def test_interrupted_isolated_run_keeps_finished_results(bench_root, monkeypatch):
+    configure(
+        bench_root,
+        "http://127.0.0.1:1/v1/audio/transcriptions",
+        "http://127.0.0.1:1/v1/chat/completions",
+    )
+    two_ambient_cases(bench_root)
+    calls: list[str] = []
+
+    def stop_on_second(target: str, base: Path, **kwargs):
+        calls.append(target)
+        if len(calls) == 2:
+            raise KeyboardInterrupt
+        return "boom"
+
+    monkeypatch.setattr(sandbox, "execute", stop_on_second)
+    with pytest.raises(KeyboardInterrupt):
+        runner.run(paths.roots(), setup("asr"), isolated=True)
+    fingerprint = setups.manifest(setup("asr"), paths.roots()).fingerprint
+    stored = [
+        runner.result(paths.roots(), case, fingerprint)
+        for case in cases.load_cases(paths.roots())
+    ]
+    assert sum(1 for item in stored if item is not None) == 1
+    monkeypatch.setattr(sandbox, "execute", lambda target, base, **kwargs: "boom")
+    assert runner.run(paths.roots(), setup("asr"), isolated=True).ran == 1
+
+
+def test_pipeline_cleans_what_transcription_finished(bench_root, monkeypatch):
+    configure(
+        bench_root,
+        "http://127.0.0.1:1/v1/audio/transcriptions",
+        "http://127.0.0.1:1/v1/chat/completions",
+    )
+    two_ambient_cases(bench_root)
+    calls: list[str] = []
+
+    def utterances(base: Path) -> list[dict]:
+        return [
+            json.loads(line)
+            for path in sorted((base / "state/utterances/ambient").glob("*.jsonl"))
+            for line in path.read_text().splitlines()
+        ]
+
+    def partial(target: str, base: Path, **kwargs):
+        calls.append(target)
+        first = utterances(base)[0]
+        if target == "transcription":
+            add_asr(base, first)
+            return "whisper: host unavailable; work remains pending"
+        add_text(base, first, text="Rent.")
+        return None
+
+    monkeypatch.setattr(sandbox, "execute", partial)
+    summary = runner.run(paths.roots(), setup())
+    assert calls == ["transcription", "cleanup"]
+    assert summary.ok == 1 and summary.failed == 1
+    stored = [
+        runner.result(paths.roots(), case, summary.fingerprint)
+        for case in cases.load_cases(paths.roots())
+    ]
+    outcomes = sorted(
+        (item.outcome, item.output, item.error) for item in stored if item is not None
+    )
+    assert outcomes == [
+        ("failed", None, "whisper: host unavailable; work remains pending"),
+        ("ok", "Rent.", None),
+    ]

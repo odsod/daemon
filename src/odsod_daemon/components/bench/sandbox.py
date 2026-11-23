@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tempfile
 import wave
+from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -153,7 +154,9 @@ def build(
     _write_config(base, roots, setup, manifest.settings)
 
     mapping: dict[str, BenchCase] = {}
-    cursor = audio.hour_start(clock.utc_now())
+    # A day back keeps every case in the past and inside the pending window,
+    # so no case lands in tomorrow's day file near UTC midnight.
+    cursor = audio.hour_start(clock.utc_now()) - timedelta(days=1)
     for case in cases:
         start = cursor
         end = start + (clock.parse_iso(case.end) - clock.parse_iso(case.start))
@@ -200,6 +203,10 @@ def _outcome(record: dict | None, error: str | None) -> tuple[Outcome, str | Non
     if value == "expired":
         return "failed", "expired"
     return "failed", record.get("error") or error or "failed"
+
+
+def _has_asr(base: Path) -> bool:
+    return any(path.stat().st_size for path in base.glob("state/asr/*/*.jsonl"))
 
 
 def read_back(
@@ -255,10 +262,12 @@ def run(
     cases: list[BenchCase],
     *,
     isolated: bool = False,
-) -> list[RunResult]:
-    """Run the setup over the cases in one sandbox, or one per case."""
+) -> Iterator[RunResult]:
+    """Run the setup over the cases in one sandbox, or one per case.
+
+    Yield each sandbox's results as soon as it finishes.
+    """
     groups = [[case] for case in cases] if isolated else [cases]
-    results: list[RunResult] = []
     for group in groups:
         if not group:
             continue
@@ -266,9 +275,11 @@ def run(
         try:
             mapping = build(base, roots, setup, manifest, group)
             error = execute("transcription", base)
-            if error is None and setup.kind == "pipeline":
-                error = execute("cleanup", base)
-            results.extend(read_back(base, mapping, setup, error))
+            if setup.kind == "pipeline" and (error is None or _has_asr(base)):
+                # Clean what transcription finished, even if it stopped early.
+                cleanup_error = execute("cleanup", base)
+                error = error or cleanup_error
+            results = read_back(base, mapping, setup, error)
         finally:
             shutil.rmtree(base, ignore_errors=True)
-    return results
+        yield from results

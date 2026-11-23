@@ -32,3 +32,13 @@ def test_latency_percentiles():
     assert percentile(values, 0.5) == 200
     assert percentile(values, 0.95) == 400
     assert percentile([], 0.5) is None
+
+
+def test_glossary_hits_match_whole_words_only():
+    references = ["I said we are going on a sprint", "We use uv and go"]
+    outputs = ["I said we are going on a sprint", "We use uv and Go"]
+    assert glossary_hits(references, outputs, ["ai", "go", "pr", "uv"]) == (2, 2)
+    assert glossary_hits(["Use Claude Code"], ["use claude code"], ["Claude Code"]) == (
+        1,
+        1,
+    )

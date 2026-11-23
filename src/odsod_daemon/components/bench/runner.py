@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from odsod_daemon.components.bench import cases as bench_cases
-from odsod_daemon.components.bench import setups
+from odsod_daemon.components.bench import sandbox, setups
 from odsod_daemon.components.bench.adapters import Adapter, SandboxAdapter
 from odsod_daemon.components.bench.contract import BenchCase, BenchResult
 from odsod_daemon.lib import clock, documents, paths
@@ -76,8 +76,9 @@ def run(
         limit=limit,
         retry_failed=retry_failed,
     )
-    results = adapter.run(selected, isolated=isolated)
-    for item in results:
+    results: list[sandbox.RunResult] = []
+    for item in adapter.run(selected, isolated=isolated):
+        results.append(item)
         result_value = BenchResult(
             setup=manifest,
             outcome=item.outcome,

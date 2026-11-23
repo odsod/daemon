@@ -51,9 +51,9 @@ def glossary_hits(
         reference_text = normalize(reference)
         output_text = normalize(output)
         for term in normalized_terms:
-            if term in reference_text:
+            if f" {term} " in f" {reference_text} ":
                 total += 1
-                if term in output_text:
+                if f" {term} " in f" {output_text} ":
                     hits += 1
     return hits, total
 

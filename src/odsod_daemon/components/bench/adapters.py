@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from typing import Protocol
 
 from odsod_daemon.components.bench import sandbox
@@ -19,7 +20,7 @@ class Adapter(Protocol):
 
     def run(
         self, cases: list[BenchCase], *, isolated: bool = False
-    ) -> list[sandbox.RunResult]: ...
+    ) -> Iterable[sandbox.RunResult]: ...
 
 
 def check_contract(adapter: Adapter, *, cloud: bool = False) -> None:
@@ -40,11 +41,11 @@ class SandboxAdapter:
         self.roots = roots
 
     def accepts(self, kind: str) -> bool:
-        return kind in SANDBOX_KINDS
+        return kind in SANDBOX_KINDS and kind in self.setup.cases
 
     def run(
         self, cases: list[BenchCase], *, isolated: bool = False
-    ) -> list[sandbox.RunResult]:
+    ) -> Iterable[sandbox.RunResult]:
         return sandbox.run(
             self.setup, self.manifest, self.roots, cases, isolated=isolated
         )

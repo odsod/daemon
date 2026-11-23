@@ -217,3 +217,34 @@ def test_retention_keeps_case_audio(bench_root):
     assert completed.returncode == 0, completed.stderr
     assert not audio.hour_file(bench_root / "state", "mic", start).exists()
     assert (directory / "audio.wav").exists()
+
+
+def test_pick_draws_at_random_with_the_seed(bench_root):
+    base = audio.hour_start(clock.utc_now()) - timedelta(days=1)
+    candidates = [
+        cases.Candidate(
+            kind="dictation",
+            source_id=f"dic-{hour}",
+            start=base + timedelta(hours=hour),
+            end=base + timedelta(hours=hour, seconds=5),
+            channel="dic",
+            language="en",
+            text="Test.",
+            raw=False,
+            live=Live(),
+            ts=clock.iso(),
+        )
+        for hour in range(20)
+    ]
+    targets = make_targets(dictation=3)
+    draws = {
+        tuple(
+            item.source_id
+            for item in cases.pick(paths.roots(), candidates, targets, seed=seed)
+        )
+        for seed in range(5)
+    }
+    assert all(len(draw) == 3 for draw in draws)
+    assert len(draws) > 1
+    first = cases.pick(paths.roots(), candidates, targets, seed=0)
+    assert cases.pick(paths.roots(), candidates, targets, seed=0) == first
