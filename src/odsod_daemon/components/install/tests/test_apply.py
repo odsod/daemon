@@ -79,3 +79,45 @@ def test_failure_names_step_and_keeps_record(installed, monkeypatch):
     apply(record("b"))
     assert "restart odsod-daemon-capture.service" in calls(installed)
     assert "restart odsod-daemon-pipeline.service" in calls(installed)
+
+
+@pytest.mark.parametrize("graphical", [True, False])
+def test_future_graphical_services_use_the_right_restart(
+    installed, monkeypatch, graphical
+):
+    from odsod_daemon.components.install import apply as apply_module
+    from odsod_daemon.components.install import render as render_module
+
+    services = ("capture", "pipeline", "session", "tray")
+    monkeypatch.setattr(apply_module, "SERVICES", services)
+    monkeypatch.setattr(render_module, "SERVICES", services)
+    installed.mkdir()
+    documents.write_json(
+        installed / "systemctl.json",
+        {
+            "graphical-session.target": "active" if graphical else "inactive",
+        },
+    )
+    apply(record())
+    log = calls(installed)
+    for name in ("capture", "session", "tray"):
+        assert f"enable odsod-daemon-{name}.service" in log
+        action = "restart" if graphical else "try-restart"
+        assert f"{action} odsod-daemon-{name}.service" in log
+        assert (f"start odsod-daemon-{name}.service" in log) == graphical
+    assert "enable odsod-daemon-login.service" in log
+
+
+def test_only_changed_service_restarts(installed, monkeypatch):
+    apply(record())
+    unit = (
+        Path(os.environ["XDG_CONFIG_HOME"])
+        / "systemd/user/odsod-daemon-pipeline.service"
+    )
+    unit.write_text("old")
+    (installed / "systemctl.log").unlink()
+    apply(record())
+    log = calls(installed)
+    assert "daemon-reload" in log
+    assert "restart odsod-daemon-pipeline.service" in log
+    assert "restart odsod-daemon-capture.service" not in log

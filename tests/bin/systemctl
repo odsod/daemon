@@ -36,4 +36,6 @@ if command in ("start", "restart", "stop", "try-restart"):
             states[unit] = "inactive"
         else:
             states[unit] = "active"
-    state_file.write_text(json.dumps(states))
+    temporary = state_file.with_suffix(".tmp")
+    temporary.write_text(json.dumps(states))
+    temporary.replace(state_file)

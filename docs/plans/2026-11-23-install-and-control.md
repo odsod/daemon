@@ -109,6 +109,15 @@ mise run build
   notify-failed. Eleven component tests pass with fake systemctl and
   notify-send, including exit codes 0 through 3 and failure behavior.
 
+- 2026-11-23: Step 7 complete. System tests pass for capture pause/resume,
+  pause-preserving install, owner-data preservation and retries after
+  step 3 and partial step 6 failures. Restored the shared test fixtures
+  from jj history after a mistaken replacement. Added regressions for
+  deployed dev version reads and D-Bus loading of inactive unit definitions.
+- 2026-11-23: Required component tests: 52 passed. System selection: five
+  passed, including the 140,000-utterance status timing check under 1 s.
+  Two temp-home CLI installs and systemd-analyze verification pass.
+
 ## Decisions to confirm
 
 - One-shot helpers use no automatic restart. `Restart=always` is invalid
@@ -120,3 +129,8 @@ mise run build
 - With audio but no coverage record, backlog starts at the oldest present
   current/previous-hour audio file. This exposes stalled segmentation
   before it has emitted its first coverage record.
+
+- Every dev install restarts Python services as ADR-0006 requires. The
+  literal two-install smoke uses local dev metadata and thus restarts
+  twice. The no-write/no-restart criterion is checked with VCS metadata;
+  it cannot also hold for dev installs.

@@ -99,11 +99,24 @@ class DBusUnitStates:
     async def get(self, unit: str, *, scope: str = "user") -> UnitState | None:
         bus = await self._bus(scope)
         try:
+            manager_path = "/org/freedesktop/systemd1"
+            manager_info = await bus.introspect(
+                "org.freedesktop.systemd1", manager_path
+            )
+            manager_proxy = bus.get_proxy_object(
+                "org.freedesktop.systemd1", manager_path, manager_info
+            )
+            manager = cast(
+                Any, manager_proxy.get_interface("org.freedesktop.systemd1.Manager")
+            )
+            # Inactive units may not have an exported object until loaded.
+            # LoadUnit reads the unit definition; it does not start the unit.
+            object_path = await manager.call_load_unit(unit)
             introspection = await bus.introspect(
-                "org.freedesktop.systemd1", unit_object_path(unit)
+                "org.freedesktop.systemd1", object_path
             )
             proxy = bus.get_proxy_object(
-                "org.freedesktop.systemd1", unit_object_path(unit), introspection
+                "org.freedesktop.systemd1", object_path, introspection
             )
             properties = cast(
                 Any, proxy.get_interface("org.freedesktop.DBus.Properties")

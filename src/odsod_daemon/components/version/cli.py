@@ -2,8 +2,8 @@
 
 import typer
 
+from odsod_daemon.components.install import source as install_source
 from odsod_daemon.components.install.contract import InstallRecord
-from odsod_daemon.components.install.source import candidate
 from odsod_daemon.components.version.contract import VersionReport
 from odsod_daemon.lib import cli, documents, paths
 
@@ -11,11 +11,13 @@ app = typer.Typer(add_completion=False)
 
 
 def report() -> VersionReport:
-    source = candidate()
-    if source.source == "dev":
+    metadata = install_source.direct_url()
+    source = None
+    if not metadata.get("vcs_info"):
         path = paths.roots().state / "install/current"
         if path.exists():
             source = InstallRecord.model_validate(documents.read_json(path))
+    source = source or install_source.candidate(metadata)
     return VersionReport.model_validate(source.model_dump())
 
 

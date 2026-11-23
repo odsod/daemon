@@ -113,3 +113,35 @@ async def test_read_state_defaults_result_when_the_unit_type_has_none() -> None:
     state = await systemd.read_state("capture.socket", "user", properties)
     assert state.result == ""
     assert {interface for interface, _name in properties.calls} == {UNIT}
+
+
+async def test_dbus_loads_units_before_reading_properties(monkeypatch):
+    source = systemd.DBusUnitStates()
+    loaded = []
+
+    class Manager:
+        async def call_load_unit(self, name):
+            loaded.append(name)
+            return systemd.unit_object_path(name)
+
+    class Proxy:
+        def get_interface(self, name):
+            if name == "org.freedesktop.systemd1.Manager":
+                return Manager()
+            assert loaded == ["capture.service"]
+            return FakeProperties({**UNIT_VALUES, (SERVICE, "Result"): "exit-code"})
+
+    class Bus:
+        async def introspect(self, destination, path):
+            return None
+
+        def get_proxy_object(self, destination, path, introspection):
+            return Proxy()
+
+    async def bus(scope):
+        return Bus()
+
+    monkeypatch.setattr(source, "_bus", bus)
+    result = await source.get("capture.service")
+    assert result is not None
+    assert result.active_state == "failed"

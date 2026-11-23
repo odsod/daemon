@@ -12,13 +12,15 @@ from odsod_daemon.components.install.contract import InstallRecord
 from odsod_daemon.lib import clock
 
 
+def direct_url() -> dict:
+    raw = distribution("odsod-daemon").read_text("direct_url.json")
+    if raw is None:
+        raise ValueError("odsod-daemon has no direct_url.json")
+    return json.loads(raw)
+
+
 def candidate(metadata: dict | None = None) -> InstallRecord:
-    if metadata is None:
-        raw = distribution("odsod-daemon").read_text("direct_url.json")
-        if raw is None:
-            raise ValueError("odsod-daemon has no direct_url.json")
-        metadata = json.loads(raw)
-    assert metadata is not None
+    metadata = direct_url() if metadata is None else metadata
     vcs = metadata.get("vcs_info")
     if vcs:
         return InstallRecord(
