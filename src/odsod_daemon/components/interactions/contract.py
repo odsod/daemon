@@ -60,3 +60,17 @@ class InteractionDocument(BaseModel):
     meeting: MeetingInfo | None = None
     participants: list[str] = []
     title: str
+
+
+# Public names used by readers in other subsystems.
+InteractionRecord = Interaction
+DocumentMeta = InteractionDocument
+
+
+def parse_front_matter(text: str) -> InteractionDocument:
+    """Read the JSON form of YAML front matter written by interactions."""
+    import json
+
+    if not text.startswith("---\n"):
+        raise ValueError("missing front matter")
+    return InteractionDocument.model_validate(json.loads(text.split("\n---", 1)[0][4:]))

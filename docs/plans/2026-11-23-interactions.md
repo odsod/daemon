@@ -42,4 +42,14 @@ mise run build
 
 ## Progress log
 
+- 2026-11-23: Step 1: added pure boundaries, coverage across recording-off
+  ranges, meeting cutoffs, speaker overlap, echo removal, summary validation,
+  chunks, rendering, the gate and crash-safe batch writes. All 17 component
+  tests, Ruff and component Pyright pass.
+
 ## Decisions to confirm
+
+- Front matter uses JSON syntax, which is valid YAML. The public
+  `parse_front_matter()` reads that form without a new YAML dependency.
+- A single transcript line longer than `chunk_chars` fails the attempt.
+  Splitting that line would violate the required line-end chunk boundary.
