@@ -30,7 +30,7 @@ Proposed
 | `odsod-daemon-keys.service`     | system | `odsod-daemon-keys` (C)                      | `multi-user.target`        | No                     |
 | `odsod-daemon-capture.service`  | user   | `odsodctl run capture`                       | `default.target`           | Yes, on audio progress |
 | `odsod-daemon-pipeline.service` | user   | `odsodctl run pipeline`                      | `default.target`           | Yes, on main loop      |
-| `odsod-daemon-session.service`  | user   | `odsodctl run session` (`dictation`, `tray`) | `graphical-session.target` | No                     |
+| `odsod-daemon-session.service`  | user   | `odsodctl run session` (`dictation`, `tray`, `shortcuts`) | `graphical-session.target` | No                     |
 | `odsod-daemon.target`           | user   | Groups the user units above                  | `default.target`           |                        |
 
 - All services use `Restart=always`, a short `RestartSec`, and a start limit
@@ -105,7 +105,9 @@ systemd does not tell the owner when a unit gives up. The tray does.
 - Unit templates ship as package data.
 - `odsodctl install` writes the user units to `~/.config/systemd/user/`,
   with the absolute path of the installed `odsodctl` command, runs
-  `daemon-reload`, and enables and restarts `odsod-daemon.target`.
+  `daemon-reload`, and enables and restarts `odsod-daemon.target`. It also
+  writes the D-Bus activation file that starts the session service on a call
+  from the KWin script ([ADR-0008](0008-shortcuts-and-kwin-script.md)).
 - `odsodctl install --system`, run with sudo, builds and installs the keys
   daemon and its system unit ([ADR-0007](0007-keys-daemon.md)).
 - [ADR-0006](0006-installation.md) covers how the package itself gets

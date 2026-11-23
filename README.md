@@ -11,7 +11,7 @@ and systemd.
 | keys     | `odsod-daemon-keys.service`     | Remap keys; hold Left Alt to dictate; paste the text    |
 | capture  | `odsod-daemon-capture.service`  | Record mic and system audio, always on                  |
 | pipeline | `odsod-daemon-pipeline.service` | Transcribe, clean up, summarize, publish to target dirs |
-| session  | `odsod-daemon-session.service`  | Dictation and the tray icon                             |
+| session  | `odsod-daemon-session.service`  | Dictation, the tray icon and global shortcuts           |
 
 All speech and language models run locally. The owner uses one CLI,
 `odsodctl`.

@@ -60,13 +60,18 @@ odsodctl install
   binary did not change.
 - `models fetch` downloads the pyannote model once. The Silero model ships
   in the package.
-- `install` writes the user units, reloads systemd and restarts
-  `odsod-daemon.target` ([ADR-0004](0004-orchestration-with-systemd.md)).
+- `install` writes the user units and the D-Bus activation file, installs
+  the KWin script, reloads systemd and restarts `odsod-daemon.target`
+  ([ADR-0004](0004-orchestration-with-systemd.md),
+  [ADR-0008](0008-shortcuts-and-kwin-script.md)).
 - The `machine` repo also links the per-host `config.json` into
   `~/.config/odsod-daemon/`, and keeps the platform settings the daemons rely
   on, such as the WirePlumber Bluetooth profile config.
 - The `machine` repo no longer builds `odsod-keys`. The first `daemon:setup`
   disables and removes `odsod-keys.service`, which the keys daemon replaces.
+- The `machine` repo no longer installs the KWin script or the
+  `io.github.odsod.kwin` D-Bus service. It keeps the KWin settings (window
+  rules, focus policy).
 
 ### The repo has a dev deploy
 
