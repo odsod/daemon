@@ -1,0 +1,279 @@
+"""Follow inputs, detect boundaries and drain gated work."""
+
+import asyncio
+import bisect
+import json
+import os
+from datetime import timedelta
+from pathlib import Path
+from zoneinfo import ZoneInfo
+
+import httpx
+
+from odsod_daemon.components.interactions import batch
+from odsod_daemon.components.interactions.boundaries import Boundary, Record, at, detect
+from odsod_daemon.components.interactions.config import InteractionsConfig
+from odsod_daemon.components.interactions.contract import Interaction, MeetingRef
+from odsod_daemon.components.interactions.summarize import Summarizer
+from odsod_daemon.lib import clock, config, healthfile, inference, paths, power, streams
+
+SOURCES = (
+    "utterances/ambient",
+    "utterances/dictation",
+    "coverage",
+    "text",
+    "events/signals",
+    "events/user",
+    "events/capture",
+    "interactions",
+)
+BOUNDARY_KINDS = {
+    "utterance",
+    "covered",
+    "pin",
+    "meeting-start",
+    "meeting-end",
+    "start",
+    "gap",
+    "stop",
+    "interaction",
+}
+
+
+def local_zone() -> ZoneInfo:
+    name = os.environ.get("TZ")
+    if not name:
+        name = str(Path("/etc/localtime").resolve()).split("/zoneinfo/")[-1]
+    return ZoneInfo(name)
+
+
+class View:
+    """Keep sorted input records; stream followers insert only new records."""
+
+    def __init__(self, roots: paths.Roots, days: int):
+        self.roots = roots
+        self.days = days
+        self.data: dict[str, list[Record]] = {name: [] for name in SOURCES}
+        self.seen: set[tuple[str, str]] = set()
+        self.tasks: dict[Path, asyncio.Task] = {}
+        self.changed = asyncio.Event()
+        self.dirty = True
+        self.day = clock.utc_now().date()
+
+    def insert(self, source: str, record: Record) -> None:
+        signature = source, json.dumps(record, sort_keys=True)
+        if signature in self.seen:
+            return
+        self.seen.add(signature)
+        bisect.insort_right(self.data[source], record, key=at)
+        if record["kind"] in BOUNDARY_KINDS and source != "utterances/dictation":
+            self.dirty = True
+        self.changed.set()
+
+    def load(self) -> None:
+        first = clock.utc_now().date() - timedelta(days=self.days)
+        for source in SOURCES:
+            for path in sorted((self.roots.state / source).glob("*.jsonl")):
+                if first.isoformat() <= path.stem:
+                    for record in streams.read_day(path):
+                        self.insert(source, record)
+
+    async def follow(self, source: str, path: Path) -> None:
+        async for record in streams.follow(path, start_at_end=False, scan_s=5):
+            self.insert(source, record)
+
+    def refresh(self) -> None:
+        today = clock.utc_now().date()
+        first = today - timedelta(days=self.days)
+        if self.day != today:
+            for source in SOURCES:
+                self.data[source] = [
+                    r for r in self.data[source] if at(r).date() >= first
+                ]
+            self.seen = {
+                (source, json.dumps(r, sort_keys=True))
+                for source in SOURCES
+                for r in self.data[source]
+            }
+            for path in list(self.tasks):
+                if path.stem < first.isoformat():
+                    self.tasks.pop(path).cancel()
+            self.dirty = True
+            self.day = today
+        for source in SOURCES:
+            directory = self.roots.state / source
+            candidates = set(directory.glob("*.jsonl"))
+            candidates.add(streams.day_path(directory, today))
+            candidates.add(streams.day_path(directory, today + timedelta(days=1)))
+            for path in candidates:
+                if path.stem >= first.isoformat() and path not in self.tasks:
+                    self.tasks[path] = asyncio.create_task(self.follow(source, path))
+        for task in self.tasks.values():
+            if task.done():
+                task.result()  # Propagate unexpected reader failures to the pipeline.
+
+    async def close(self) -> None:
+        for task in self.tasks.values():
+            task.cancel()
+        await asyncio.gather(*self.tasks.values(), return_exceptions=True)
+
+
+class Worker:
+    def __init__(self, settings: InteractionsConfig, roots: paths.Roots):
+        self.config = settings
+        self.roots = roots
+        self.common = config.load_common(roots)
+        self.view = View(roots, self.common.retention_days)
+        self.view.load()
+        self.boundaries: list[Boundary] = []
+        self.attempts: dict[str, int] = {}
+        self.retry_at: dict[str, float] = {}
+        self.power_at = 0.0
+        self.mains = False
+        self.host_at = 0.0
+        self.zone = local_zone()
+
+    def pending(self) -> list[Boundary]:
+        data = self.view.data
+        now = clock.utc_now()
+        if self.view.dirty or any(e["kind"] == "stop" for e in data["events/capture"]):
+            done = data["interactions"]
+            newest = max((clock.parse_iso(r["end"]) for r in done), default=None)
+            first = now - timedelta(days=self.common.retention_days)
+            utterances = [
+                u
+                for u in data["utterances/ambient"]
+                if clock.parse_iso(u["start"]) >= first
+                and (newest is None or clock.parse_iso(u["start"]) >= newest)
+            ]
+            self.boundaries = detect(
+                utterances,
+                data["events/signals"] + data["events/user"],
+                data["coverage"],
+                data["events/capture"],
+                now,
+                self.config,
+            )
+            self.view.dirty = False
+        done_ids = {r["id"] for r in data["interactions"]}
+        return [b for b in self.boundaries if b.id not in done_ids]
+
+    def waiting(self, todo: list[Boundary]) -> None:
+        health = healthfile.HealthFile(
+            self.roots.run / "health/pipeline.json", "pipeline"
+        )
+        old = [
+            b
+            for b in todo
+            if (clock.utc_now() - b.end).total_seconds()
+            > self.config.waiting_warn_h * 3600
+        ]
+        if old:
+            oldest = min(b.end for b in old).astimezone(self.zone).isoformat()
+            health.set(
+                "interactions-waiting",
+                f"{len(old)} interaction documents waiting since {oldest}",
+            )
+        else:
+            health.clear("interactions-waiting")
+        health.rewrite()
+
+    async def step(self) -> bool:
+        todo = self.pending()
+        self.waiting(todo)
+        if not todo:
+            return False
+        now = clock.monotonic()
+        if now >= self.power_at:
+            self.mains = power.on_mains()
+            self.power_at = now + self.config.power_check_s
+        data = self.view.data
+        first = clock.utc_now() - timedelta(days=self.common.retention_days)
+        ambient = [u for u in data["utterances/ambient"] if at(u) >= first]
+        dictation = [u for u in data["utterances/dictation"] if at(u) >= first]
+        if not batch.gate(
+            ambient,
+            dictation,
+            data["text"],
+            self.mains,
+            True,
+        ):
+            return False
+        boundary = todo[0]
+        if now < max(self.host_at, self.retry_at.get(boundary.id, 0)):
+            return False
+        if not await inference.reachable(self.common.inference.llama_url, 2):
+            self.host_at = now + 60
+            return False
+        try:
+            await batch.process(
+                boundary,
+                data["text"],
+                data["events/signals"] + data["events/user"],
+                self.config,
+                self.roots,
+                self.common.host,
+                self.zone,
+                Summarizer(self.config, self.roots, self.common.inference.llama_url),
+            )
+        except httpx.TransportError, TimeoutError:
+            self.host_at = clock.monotonic() + 60
+            return False
+        except (httpx.HTTPStatusError, ValueError, IndexError) as error:
+            count = self.attempts.get(boundary.id, 0) + 1
+            self.attempts[boundary.id] = count
+            if count < self.config.max_attempts:
+                self.retry_at[boundary.id] = clock.monotonic() + (
+                    60 if count == 1 else 300
+                )
+                return False
+            batch.append(
+                self.roots.state / "interactions",
+                Interaction(
+                    ts=clock.iso(),
+                    id=boundary.id,
+                    start=clock.iso(boundary.start),
+                    end=clock.iso(boundary.end),
+                    outcome="failed",
+                    end_cause=boundary.end_cause,
+                    meeting=None
+                    if boundary.meeting is None
+                    else MeetingRef.model_validate(boundary.meeting),
+                    error=" ".join(str(error).splitlines()),
+                ).model_dump(mode="json"),
+            )
+        # Include our writes now, without waiting for a follower wakeup.
+        for record in batch.records(self.roots.state / "interactions"):
+            self.view.insert("interactions", record)
+        self.waiting(self.pending())
+        return True
+
+
+async def run(settings: InteractionsConfig, *, once: bool = False) -> None:
+    worker = Worker(settings, paths.roots())
+    try:
+        while True:
+            if not once:
+                worker.view.refresh()
+            if await worker.step():
+                continue
+            if once:
+                todo = worker.pending()
+                retry = worker.retry_at.get(todo[0].id) if todo else None
+                if (
+                    retry
+                    and retry > clock.monotonic()
+                    and worker.mains
+                    and worker.host_at <= clock.monotonic()
+                ):
+                    await clock.sleep(max(0, retry - clock.monotonic()))
+                    continue
+                return
+            worker.view.changed.clear()
+            try:
+                async with clock.timeout(5):
+                    await worker.view.changed.wait()
+            except TimeoutError:
+                pass
+    finally:
+        await worker.view.close()

@@ -21,7 +21,7 @@ COMPONENTS = [
     cleanup,
     signals,
     transcript,
-    # interactions,
+    interactions,
     # publish,
 ]
 

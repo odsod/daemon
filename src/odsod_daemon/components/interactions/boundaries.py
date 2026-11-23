@@ -63,18 +63,31 @@ def detect(
                 (
                     clock.parse_iso(event["prev_end"]),
                     clock.parse_iso(event["audio_start"]),
+                    event.get("channel"),
                 )
             )
         elif kind == "gap":
-            off.append((clock.parse_iso(event["start"]), clock.parse_iso(event["end"])))
+            off.append(
+                (
+                    clock.parse_iso(event["start"]),
+                    clock.parse_iso(event["end"]),
+                    event.get("channel"),
+                )
+            )
         elif kind == "stop":
             next_start = next(
-                (e for e in capture[i + 1 :] if e["kind"] == "start"), None
+                (
+                    e
+                    for e in capture[i + 1 :]
+                    if e["kind"] == "start" and e.get("channel") == event.get("channel")
+                ),
+                None,
             )
             off.append(
                 (
                     at(event),
                     clock.parse_iso(next_start["audio_start"]) if next_start else now,
+                    event.get("channel"),
                 )
             )
     covered = []
@@ -83,8 +96,8 @@ def detect(
             (clock.parse_iso(c["end"]) for c in coverage if c["channel"] == channel),
             default=datetime.min.replace(tzinfo=now.tzinfo),
         )
-        for start, stop in sorted(off):
-            if start <= end <= stop:
+        for start, stop, source_channel in sorted(off):
+            if source_channel in (None, channel) and start <= end <= stop:
                 end = stop
         covered.append(end)
     horizon = min(covered)

@@ -209,3 +209,10 @@ async def test_crash(temp_root, monkeypatch, crash_directory):
     assert len(calls) == 1
     assert len(list((temp_root / "state/documents/interactions").glob("*.md"))) == 1
     assert len(records(temp_root / "state/finished/interactions")) == 1
+
+
+def test_capture_coverage_is_per_channel():
+    # A mic stop cannot certify unprocessed sys audio as silence.
+    cov = [dict(channel="mic", end=stamp(400)), dict(channel="sys", end=stamp(20))]
+    capture = [event("stop", 20, channel="mic")]
+    assert not detect([utterance()], [], cov, capture, NOW + timedelta(seconds=1000), C)

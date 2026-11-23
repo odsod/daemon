@@ -26,6 +26,13 @@ class Summary(BaseModel):
 
 def validate(reply: str, title_max_words: int = 8) -> Summary:
     value = json.loads(re.sub(r"<think>.*?</think>", "", reply, flags=re.S))
+    if not isinstance(value, dict) or not isinstance(value.get("points"), list):
+        raise ValueError("summary must have a points array")
+    if any(
+        not isinstance(p, dict) or not isinstance(p.get("text"), str)
+        for p in value["points"]
+    ):
+        raise ValueError("summary points must have text")
     value["points"] = [
         p
         for p in value["points"]

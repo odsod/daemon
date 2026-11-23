@@ -52,9 +52,19 @@ mise run build
   Recorded summary and error replies pass; 44 interaction/inference tests
   and Pyright pass.
 
+- 2026-11-23: Step 3: enabled interactions in pipeline and added `--once`
+  draining, sorted stream views, boundary invalidation, the power/pending/host
+  gate, bounded retries and the waiting warning. Fixed per-channel capture
+  coverage after a failing regression check. All 26 component tests, Ruff
+  and component Pyright pass.
+
 ## Decisions to confirm
 
 - Front matter uses JSON syntax, which is valid YAML. The public
   `parse_front_matter()` reads that form without a new YAML dependency.
 - A single transcript line longer than `chunk_chars` fails the attempt.
   Splitting that line would violate the required line-end chunk boundary.
+
+- `--once` exits when power, pending speech or host availability blocks the
+  gate. It waits through bounded model-error retries while the gate holds.
+- Local document times use `TZ`, or the IANA zone of `/etc/localtime`.

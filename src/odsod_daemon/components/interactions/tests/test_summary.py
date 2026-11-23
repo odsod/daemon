@@ -13,6 +13,7 @@ DATA = Path(inference.__file__).parent / "testdata"
 
 
 @pytest.mark.parametrize("limit,calls", [(37000, 1), (20, 3)])
+@pytest.mark.looptime(False)
 async def test_recorded_summary(temp_root, limit, calls):
     pair = json.loads((DATA / "llama-summary.json").read_text())
     server = inference.ReplayServer([pair] * calls)
@@ -39,6 +40,7 @@ async def test_recorded_summary(temp_root, limit, calls):
         server.close()
 
 
+@pytest.mark.looptime(False)
 async def test_error_reply(temp_root):
     pair = json.loads((DATA / "llama-bad-request.json").read_text())
     server = inference.ReplayServer([pair])

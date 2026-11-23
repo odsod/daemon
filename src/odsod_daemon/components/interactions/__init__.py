@@ -7,4 +7,11 @@ run/health/pipeline.json.
 ADR: docs/adr/0016-interactions.md
 """
 
+from odsod_daemon.components.interactions.config import (
+    InteractionsConfig as CONFIG_MODEL,
+)
+from odsod_daemon.components.interactions.service import run
+
 SUBSYSTEM = "interactions"
+
+__all__ = ["CONFIG_MODEL", "run"]
