@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+if [ -n "${FAKE_LOG:-}" ]; then
+  printf '%s\n' "$*" >> "$FAKE_LOG/systemctl.log"
+fi
+exit 0
