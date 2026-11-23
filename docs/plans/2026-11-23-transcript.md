@@ -73,6 +73,10 @@ mise run build
   system tests, and `mise run build` (ruff, formatting, pyright, import
   rules, keys compile, and 437 tests; one timing test deselected). All
   five work steps have local commits. No deployment or remote writes.
+- 2026-11-23: Fix: the 3-token echo guard moves from `transcript/echo.py`
+  into `lib.textmatch.overlap`, as ADR-0015 says. interactions now keeps
+  short owner replies such as "Yes" too. The guard runs before the
+  containment rule.
 
 ## Decisions to confirm
 

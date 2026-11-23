@@ -105,12 +105,23 @@ def test_speakers_and_echo():
     assert speaker(line, meeting, events, C) == "Alice"
     assert speaker(line, None, events, C) == "Others"
     texts = [
-        dict(u, input=u["id"], outcome="ok", text="Hej världen")
+        dict(u, input=u["id"], outcome="ok", text="Hej hela världen")
         for u in [utterance(), line]
     ]
     texts.append(dict(input="dic", channel="dic", outcome="ok", text="SECRET"))
     b = boundary([utterance(), line], events)
     assert [line["name"] for line in collect(b, texts, events, C)] == ["Alice"]
+
+
+def test_a_short_owner_reply_is_kept_next_to_matching_sys_text():
+    events = [event("speaking", -1, names=["Alice"])]
+    mic, sys = utterance(), utterance(channel="sys")
+    texts = [
+        dict(mic, input=mic["id"], outcome="ok", text="Yes."),
+        dict(sys, input=sys["id"], outcome="ok", text="Yes, I think so too."),
+    ]
+    lines = collect(boundary([mic, sys], events), texts, events, C)
+    assert [line["channel"] for line in lines] == ["mic", "sys"]
 
 
 def test_validation_and_chunks():

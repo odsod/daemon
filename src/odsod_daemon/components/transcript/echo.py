@@ -38,8 +38,6 @@ def decide(
     if waiting:
         age = (now - clock.parse_iso(mic["ts"])).total_seconds()
         return "hold" if age < config.echo_hold_max_s else "keep"
-    if len(textmatch.normalize(mic["text"]).split()) < 3:
-        return "keep"
     matching = sorted(
         (
             r

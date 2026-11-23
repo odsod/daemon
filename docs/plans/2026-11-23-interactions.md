@@ -84,6 +84,9 @@ mise run build
   pytest 26 passed; system pytest `-k interactions` 4 passed; `mise run
   build` 453 passed, 1 timing test deselected. Lint, formatting, types,
   import rules and C compilation passed. Plan Status left unchanged.
+- 2026-11-23: Fix: `lib.textmatch.overlap` now gives 0.0 when the shorter
+  text has fewer than 3 tokens (ADR-0015). A short owner reply next to
+  matching `sys` text stays in the document.
 
 ## Decisions to confirm
 
