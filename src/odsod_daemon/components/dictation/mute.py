@@ -49,5 +49,11 @@ class Mute:
             return False
 
     async def stop(self) -> None:
-        await restore(read(self.path))
+        try:
+            record = read(self.path)
+        except ValueError:
+            # A corrupt record names no streams; reset it so it fails once.
+            documents.write_json(self.path, MutedDocument().model_dump())
+            raise
+        await restore(record)
         documents.write_json(self.path, MutedDocument().model_dump())

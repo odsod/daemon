@@ -121,7 +121,10 @@ class Session:
             self.fault("mute-failed", True)
 
     async def startup(self) -> None:
-        stale = bool(mute.read(self.mute.path).streams)
+        try:
+            stale = bool(mute.read(self.mute.path).streams)
+        except OSError, ValueError:
+            stale = False
         await self.unmute()
         self.fault("stale-mutes-cleared", stale)
         if stale:

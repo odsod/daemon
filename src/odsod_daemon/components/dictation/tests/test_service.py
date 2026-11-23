@@ -337,3 +337,13 @@ async def test_missing_socket_while_gated_waits_and_clears(
     finally:
         task.cancel()
         await asyncio.gather(task, return_exceptions=True)
+
+
+async def test_corrupt_muted_record_does_not_stop_startup(temp_root):
+    session = service.Session(DictationConfig(), units=service.systemd.FakeUnitStates())
+    session.mute.path.parent.mkdir(parents=True, exist_ok=True)
+    session.mute.path.write_text("{not json")
+    await session.startup()
+    health = documents.read_json(session.roots.run / "health/session.json")
+    assert "mute-failed" in {fault["code"] for fault in health["faults"]}
+    assert documents.read_json(session.mute.path) == {"streams": []}
