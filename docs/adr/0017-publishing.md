@@ -66,6 +66,9 @@ Proposed
 | `sha256`   | extra | Hash of the copy                        |
 
 - One stream per target, so a new target starts with an empty history.
+- The first record of a target's stream is kind `start`, with `since`: the
+  time publishing first saw the target in config. It is internal: only
+  publishing reads it.
 - `document` is the input ID of this derived work (ADR-0003). There is no
   `outcome` field: a delivery is written only on success. A document that
   cannot be delivered stays pending and shows as a fault. This is a
@@ -112,12 +115,17 @@ components/publish/
 #### Pending
 
 - For each target and each document type it names: every `finished`
-  record of that type in the pending window (14 days, ADR-0003), with no
+  record of that type with `ts` at or after the target's `since`, with no
   delivery record for its `document` in that target's stream.
-- At start, read each target's stream for the window into a set of
-  delivered names.
-- A target added later gets the documents of the last 14 days, not all
-  history.
+- This is the one exception to the 14-day pending window (ADR-0003). A
+  finished document is text that never expires, so it stays pending while
+  its source exists. A target that comes back after 30 days still gets
+  every document (`publishing` AC-1, AC-5).
+- At start, read all `finished/` records and each target's whole stream
+  into in-memory sets. These are small text streams: one line per
+  document.
+- A target added later gets the documents finished after it first
+  appeared, not all history. To backfill, the owner copies files by hand.
 - A document that the owner deletes from `state/documents/` stops being
   pending.
 
@@ -167,7 +175,9 @@ For one document and one target:
 | Document vanishes from state before copy | Skips it                                          | none             |
 | Unexpected exception                     | Ends the pipeline; systemd restarts it (ADR-0004) | none             |
 
-- `target-missing` is one fault per target. Message: "Target `<name>`
+- `target-missing` is one fault per target, keyed by the target name
+  (`lib.healthfile`, ADR-0010), so one target's success never clears
+  another target's fault. Message: "Target `<name>`
   missing or full: `<dir>` (`<reason>`)". `fix` is null: only the owner
   can mount, create or free the directory. The fault starts on the first
   failed try, so it shows within one scan (`publishing` AC-5: 1 min). It
@@ -195,8 +205,8 @@ Section `publishing`:
 ```
 
 - `name` matches `[a-z0-9-]+` and is unique. It names the stream
-  directory, so a rename of a target starts a new history and redelivers
-  14 days. The config check warns about that in its help text.
+  directory, so a rename of a target starts a new history with a new
+  `since`, and redelivers nothing.
 - `dir` may start with `~`. Config load expands it. It must be absolute
   after that.
 - `types` is a non-empty subset of `transcripts` and `interactions`
@@ -207,17 +217,19 @@ Section `publishing`:
 
 Component tests use temp dirs for state and targets, and a fake clock.
 
-| Test                  | Setup                                                                                          | Checks                                                                   |
-| --------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `test_deliver.py`     | Finished transcript and interaction document; two targets                                      | Copy equal to source; one record each: `publishing` AC-1                 |
-| `test_unfinished.py`  | Transcript with no `finished` record, then the record                                          | Not delivered, then delivered: `live-transcript` AC-12                   |
-| `test_latency.py`     | Fake clock; new document                                                                       | Delivered within 1 min: AC-2                                             |
-| `test_types.py`       | Target with only `interactions`                                                                | Gets no transcript: AC-3                                                 |
-| `test_names.py`       | Documents of two hosts in one target                                                           | Different names: AC-4                                                    |
-| `test_missing.py`     | Target dir absent, then created; full disk (a `tmpfs` with a small size, or a mocked `ENOSPC`) | Fault within 1 min; delivery within 5 min of return; fault cleared: AC-5 |
-| `test_moved.py`       | Delete the copy after delivery; restart                                                        | Never written again: AC-6                                                |
-| `test_crash.py`       | Crash after rename, before record                                                              | At most one extra copy: AC-1                                             |
-| `test_never_reads.py` | Target with a file of the same name and other content; target files made unreadable            | Publish never opens a target file for reading: AC-1                      |
+| Test                   | Setup                                                                                          | Checks                                                                   |
+| ---------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `test_deliver.py`      | Finished transcript and interaction document; two targets                                      | Copy equal to source; one record each: `publishing` AC-1                 |
+| `test_unfinished.py`   | Transcript with no `finished` record, then the record                                          | Not delivered, then delivered: `live-transcript` AC-12                   |
+| `test_latency.py`      | Fake clock; new document                                                                       | Delivered within 1 min: AC-2                                             |
+| `test_types.py`        | Target with only `interactions`                                                                | Gets no transcript: AC-3                                                 |
+| `test_names.py`        | Documents of two hosts in one target                                                           | Different names: AC-4                                                    |
+| `test_missing.py`      | Target dir absent, then created; full disk (a `tmpfs` with a small size, or a mocked `ENOSPC`) | Fault within 1 min; delivery within 5 min of return; fault cleared: AC-5 |
+| `test_moved.py`        | Delete the copy after delivery; restart                                                        | Never written again: AC-6                                                |
+| `test_long_absence.py` | Target dir absent for 30 days of fake time, then created                                       | Every document finished in that time is delivered: AC-1, AC-5            |
+| `test_two_faults.py`   | Two targets missing; one returns                                                               | Only the returning target's fault clears                                 |
+| `test_crash.py`        | Crash after rename, before record                                                              | At most one extra copy: AC-1                                             |
+| `test_never_reads.py`  | Target with a file of the same name and other content; target files made unreadable            | Publish never opens a target file for reading: AC-1                      |
 
 - System test (root `tests/`): transcript finishes a day, interactions
   writes a document, publish delivers both to a temp target
@@ -264,8 +276,9 @@ Component tests use temp dirs for state and targets, and a fake clock.
 
 - The vault gets each document at least once. After a crash in the
   delivery window, it can get two.
-- A target that is gone for more than 14 days misses the older documents.
-  They stay in `state/documents/`, and the owner can copy them by hand.
-- Renaming a target in config redelivers 14 days of documents.
+- A target that is gone for any time gets all its documents when it
+  returns, as long as they stay in `state/documents/`.
+- Renaming a target in config starts it fresh. A new target gets no
+  history. The owner copies old documents by hand if needed.
 - Deliberately left out: sync, version control and merges in targets,
   edits that flow back, and delivery to anything but a local directory.

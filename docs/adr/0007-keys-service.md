@@ -43,6 +43,9 @@ Proposed
 - `odsod-keys` moves into this repo as `odsod-daemon-keys`. It keeps all its
   current remapping and adds two jobs: the dictation key and paste
   injection.
+- **Port source:** `keys/odsod-keys.c` in the `machine` repo. It mixes logic
+  with I/O and wall-clock reads, so the port is a restructure into
+  `state.c` and `io.c`, not a file move.
 - No other process reads `/dev/input` or writes `/dev/uinput`.
 
 ### Components
@@ -56,6 +59,10 @@ Proposed
 - `odsodctl install --system` builds and installs it
   ([ADR-0006](0006-installation.md)). The component owns its system unit
   template.
+- `contract.py` exports the package-data names of the C source directory
+  and the system unit template as constants (`C_SOURCE_DIR`,
+  `SYSTEM_UNIT`). operations imports them to build and install the service
+  without reaching into keys internals (ADR-0010 seam; ADR-0009, rule 2).
 
 ### Writes
 
@@ -95,7 +102,8 @@ Proposed
 ```
 components/keys/
 ├── __init__.py            SUBSYSTEM = "keys"
-├── contract.py            Python models of every socket message; parse and format
+├── contract.py            socket message models (parse, format);
+│                          C_SOURCE_DIR, SYSTEM_UNIT package-data names
 ├── c/
 │   ├── state.h, state.c   pure state machine: events and times in, outputs out
 │   ├── io.c               main: evdev, uinput, inotify, socket, clocks
@@ -283,7 +291,36 @@ components/keys/
 - `mise run build` compiles the service and `replay.c`, then runs every
   sequence in `testdata/`. CI needs no `/dev/uinput`.
 - A sequence file lists timed inputs (key, pointer, socket message,
-  client connect and disconnect) and the expected outputs.
+  client connect and disconnect) and the expected outputs. Grammar, one
+  event per line, `#` starts a comment, times in ms from the start of the
+  file, in order:
+
+```
+<ms> in  key  <code> down|up|repeat     # code: Linux KEY_* name
+<ms> in  btn  <code> down|up            # BTN_* name, from a pointer device
+<ms> in  rel  <code> <value>            # REL_* name, such as REL_WHEEL
+<ms> in  sock connect|disconnect
+<ms> in  sock paste
+<ms> out key  <code> down|up            # sent on the virtual keyboard
+<ms> out sock start|stop|cancel <ms>    # second number: the key time sent
+<ms> out sock pasted|paste-failed
+<ms> out grab release                   # escape chord
+```
+
+- `replay.c` feeds the `in` lines to `state.c` and prints the `out` lines.
+  The test compares them with the expected `out` lines, exactly.
+- `io.c` has a `--record <file>` mode that writes `in` lines from the
+  real devices, so the owner can record fast typing for AC-6 later.
+
+#### Build order
+
+1. Port today's remaps from `odsod-keys.c` into `state.c` with no new
+   behavior. Write sequences that freeze today's behavior: each one the
+   old program's output for the same input. These pass before any change.
+2. Then add the Left Alt machine, pointer devices, the socket and the
+   escape chord, each with its own sequences.
+3. **Owner gate:** before the first `install --system` on a real host, the
+   owner tests the escape chord there, with a second way in (SSH) open.
 
 | Sequences                                                 | Checks                 |
 | --------------------------------------------------------- | ---------------------- |
@@ -302,15 +339,18 @@ components/keys/
 
 - `test_contract.py` checks that every message parses and formats both
   ways, and that the Python models match the table above.
-- The latency counter is checked in a system test on a host with
-  `/dev/uinput` (AC-15).
+- The latency counter (read to write, in the process) is an owner check on
+  a real host with `/dev/uinput` (AC-15), not a CI test.
 
 ### Build without hardware
 
 - An agent builds the C code and runs every sequence with no input
   device, no root and no uinput. The session side uses the fake keys socket
   ([ADR-0013](0013-dictation.md)).
-- The owner checks on a real host: hotplug (`keyboard` AC-12), remaps at
+- Recorded fast typing (AC-6) needs the owner's keyboard and `--record`.
+  Until then, written sequences with rollover cover AC-6.
+- The owner checks on a real host: the escape chord first (owner gate),
+  hotplug (`keyboard` AC-12), remaps at
   the login screen (AC-13), restart time after a crash (AC-14), the latency
   log (AC-15), and AltGr symbols on the Swedish layout (AC-10).
 

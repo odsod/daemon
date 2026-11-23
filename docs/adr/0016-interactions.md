@@ -151,11 +151,11 @@ One to three sentences of overview.
 | ----------------------- | --------------------------------------------------------------------------------------------------------------- |
 | `utterances/ambient/`   | `utterance` (`id`, `channel`, `start`, `end`); (`coverage/` below)                                              |
 | `coverage/`             | `covered` (`channel`, `end`): segmentation's coverage (ADR-0012)                                                |
-| `utterances/dictation/` | `utterance` (`id`): the pending gate (R3)                                                                       |
+| `utterances/dictation/` | `utterance` (`id`): the pending gate                                                                            |
 | `text/`                 | `input`, `outcome`, `channel`, `start`, `end`, `text`                                                           |
 | `events/signals/`       | all four kinds; `at` when present (ADR-0014)                                                                    |
 | `events/user/`          | `note` (`text`), `pin`                                                                                          |
-| `events/capture/`       | `stop`, `start`, `gap`: recording-off ranges count as covered (R3)                                              |
+| `events/capture/`       | `start` (`prev_end`, `audio_start`), `gap` (`start`, `end`), `stop`: recording-off ranges count as covered      |
 | `config/`               | section `interactions`, `common`, `glossary.txt`, `prompts/interactions-*.md`                                   |
 | Its own outputs         | `interactions/` for done IDs; `finished/interactions/` and `documents/interactions/` front matter after a crash |
 
@@ -216,6 +216,11 @@ of the pending window, 14 days).
   in `state/coverage/`,
   moved forward across recording-off ranges from `events/capture/`. So a
   backlog never looks like silence, and a logout still ends the talk.
+- Recording-off ranges, the same rule as the transcript (ADR-0015, Gaps):
+  from each `start` record's `prev_end` to its `audio_start`, each `gap`
+  record's `start` to `end`, and from a `stop` with no later `start` to
+  `now`. A crash writes no `stop`, but the next `start` still bounds the
+  range, so a crash never holds an interaction open.
 - Cutoff: `meeting_cutoffs[code]` when the meeting has an entry, else
   `silence_cutoff_s` (300 s). This is the meeting profile, and the only
   thing it sets (`interactions` AC-2, PRD "Not planned").
@@ -247,8 +252,9 @@ of the pending window, 14 days).
    Sort by time.
 3. **Echo drop.** Drop a `mic` line whose text overlaps the `sys` text in
    its window (±`echo_tolerance_s`, 2 s) by at least `echo_threshold`
-   (0.6), the same match as the transcript (ADR-0015). Here all `sys` text
-   is known, so nothing waits.
+   (0.6), with `lib.textmatch.overlap`, the same function and rule as the
+   transcript (ADR-0015, Echo). Here all `sys` text is known, so nothing
+   waits.
 4. **Speakers.**
    - `mic`: `owner_name`.
    - `sys`: build intervals per name from the meeting's `speaking` records:
@@ -269,7 +275,14 @@ of the pending window, 14 days).
 #### Summary
 
 - Input text: `[HH:MM:SS] Name: text`, notes as `[HH:MM:SS] Note: text`.
-- Up to `chunk_chars` (35,000) characters: one call with the
+- `chunk_chars` must fit one llama-server slot. With `--parallel 2` and
+  `--ctx-size 32768`, a slot holds 16,384 tokens for the prompt, the
+  chunk and the reply. 35,000 is the Go recorder's value and a
+  placeholder. A spike before implementation sends a 35,000-character
+  Swedish transcript with the real prompt to the server with
+  `--parallel 2`, reads `usage.prompt_tokens`, and sets the default so
+  that the prompt plus the reply use at most 75% of a slot.
+- Up to `chunk_chars` characters: one call with the
   `interactions-summarize` prompt.
 - Longer: split at line ends into chunks of at most `chunk_chars`,
   summarize each, then one call with `interactions-combine` over the
@@ -278,18 +291,36 @@ of the pending window, 14 days).
 
 ```json
 {
-  "skip": "boolean",
-  "title": "string",
-  "overview": "string",
-  "points": [
-    {
-      "label": "Decided | Insight | Problem | Context | Next",
-      "text": "string",
-      "owner": "string or null"
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["skip", "title", "overview", "points"],
+  "properties": {
+    "skip": { "type": "boolean" },
+    "title": { "type": "string" },
+    "overview": { "type": "string" },
+    "points": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["label", "text", "owner"],
+        "properties": {
+          "label": {
+            "type": "string",
+            "enum": ["Decided", "Insight", "Problem", "Context", "Next"]
+          },
+          "text": { "type": "string" },
+          "owner": { "type": ["string", "null"] }
+        }
+      }
     }
-  ]
+  }
 }
 ```
+
+- The schema ships as `prompts/summary.schema.json`. The request sends it
+  as `response_format: {"type": "json_schema", "json_schema": {"name":
+  "summary", "schema": …}}`. The combine call uses the same schema.
 
 - The prompt (static rules, from the PRD):
   - write in English, also for Swedish talk; never translate the
@@ -305,7 +336,12 @@ of the pending window, 14 days).
   important last), `title_max_words`. Overrides in
   `config/prompts/interactions-summarize.md` and
   `config/prompts/interactions-combine.md` are templates too (ADR-0010).
-- Validation after the reply: strip reasoning blocks (`<think>…</think>`);
+- Reasoning is off for these calls. The `machine` repo runs llama-server
+  with `--reasoning off` today. The request also sends
+  `chat_template_kwargs: {"enable_thinking": false}`, so a server restart
+  with other flags does not turn it on.
+- Validation after the reply: strip reasoning blocks (`<think>…</think>`)
+  as a guard;
   cut the title to `title_max_words` (8) words; cut the overview to 3
   sentences; drop points with an unknown label or empty text. AC-3, AC-5.
 - `setup` in the record is the model name and a hash of the rendered
@@ -314,7 +350,14 @@ of the pending window, 14 days).
 #### Timing
 
 - Inputs are followed with `lib/streams` (inotify plus a 5 s scan).
-  Boundaries are recomputed on each change.
+- Boundaries are recomputed only when a boundary input changes: a new
+  ambient utterance, a coverage record, a `pin`, a `meeting-start` or
+  `meeting-end`, or a capture record. `speaking`, `participants`, `text`
+  and `note` records never move a boundary. They are read when the batch
+  pass renders the document.
+- The input view is kept sorted in memory. A new record is inserted, not
+  resorted. A 14-day backlog with a `speaking` change every few seconds
+  then costs no boundary work.
 - A 5 min interaction on an idle host gets its document within a few
   minutes of its close. `interactions` AC-1 allows 24 h.
 - Requests use `request_timeout_s` (600 s): a long chunk on a busy slot can

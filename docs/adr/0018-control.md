@@ -155,13 +155,13 @@ test covers every state.
 
 Expected units:
 
-| Unit                            | Scope  | Expected when                        | Fix when down                                    |
-| ------------------------------- | ------ | ------------------------------------ | ------------------------------------------------ |
-| `odsod-daemon-capture.service`  | user   | `run/paused` does not exist          | `systemctl --user restart odsod-daemon-capture`  |
-| `odsod-daemon-pipeline.service` | user   | Always                               | `systemctl --user restart odsod-daemon-pipeline` |
-| `odsod-daemon-session.service`  | user   | `graphical-session.target` is active | `systemctl --user restart odsod-daemon-session`  |
-| `odsod-daemon-tray.service`     | user   | `graphical-session.target` is active | `systemctl --user restart odsod-daemon-tray`     |
-| `odsod-daemon-keys.service`     | system | Always                               | `sudo systemctl restart odsod-daemon-keys`       |
+| Unit                            | Scope  | Expected when                                                        | Fix when down                                    |
+| ------------------------------- | ------ | -------------------------------------------------------------------- | ------------------------------------------------ |
+| `odsod-daemon-capture.service`  | user   | `run/paused` does not exist and `graphical-session.target` is active | `systemctl --user restart odsod-daemon-capture`  |
+| `odsod-daemon-pipeline.service` | user   | Always                                                               | `systemctl --user restart odsod-daemon-pipeline` |
+| `odsod-daemon-session.service`  | user   | `graphical-session.target` is active                                 | `systemctl --user restart odsod-daemon-session`  |
+| `odsod-daemon-tray.service`     | user   | `graphical-session.target` is active                                 | `systemctl --user restart odsod-daemon-tray`     |
+| `odsod-daemon-keys.service`     | system | Always                                                               | `sudo systemctl restart odsod-daemon-keys`       |
 
 - Session and tray are not expected without a graphical session, such as a
   host reached over SSH with nobody logged in on screen. `status` then
@@ -219,11 +219,13 @@ State, first match wins (`health-and-control` AC-12):
 
 - Pending = utterance IDs in `utterances/ambient/` and
   `utterances/dictation/` with no `text/` record that names them as `input`.
-- The window is the last `backlog_window_days` UTC day files (default 3),
-  not the full 14 days. This bounds the cost of a one-shot `status`
-  (`health-and-control` AC-4: 1 s). After 48 h the transcript names any
-  older pending range as `untranscribed` anyway
-  ([ADR-0003](0003-filesystem-interface.md)).
+- The window is the full pending window: `common.retention_days` (14) UTC
+  day files, the same as speech ([ADR-0003](0003-filesystem-interface.md)).
+  A shorter window would hide pending work that still delays the batch
+  pass (`health-and-control` AC-9).
+- The backlog parses lines with plain `json.loads` and reads only `id`,
+  `input`, `start` and `end`. No model per line. This keeps a one-shot
+  `status` within 1 s on 14 days of streams (`health-and-control` AC-4).
 - `BacklogTracker.rebuild()` reads the window. `status` calls it once.
 - `BacklogTracker.update()` follows new lines with `lib.streams` and updates
   the sets in memory. The tray calls it on each tick, so a tick reads only
@@ -233,6 +235,9 @@ State, first match wins (`health-and-control` AC-12):
   newest audio. A gap older than `backlog_warning_s` adds its length to
   `seconds`, and its start can be `oldest`. This catches a segmentation
   that falls behind and so gives no utterances to count.
+- A gap under 5 s between `covered` and the newest audio is ignored.
+  Segmentation lags the live audio by design (ADR-0012), and the last
+  seconds before a capture stop drain only after the stop.
 - `seconds` is the sum of `end - start` of pending utterances. `count` and
   `seconds` appear in the Warning message (`health-and-control` AC-9).
 
@@ -257,7 +262,7 @@ State, first match wins (`health-and-control` AC-12):
 
 #### pause and resume
 
-`odsodctl pause [--json] [--by cli|tray]`:
+`odsodctl pause [--json] [--by cli|tray|login]`:
 
 1. If `run/paused` exists, print "already paused since …" and exit 0.
 2. Write `run/paused` with `since` (atomic, ADR-0003).
@@ -265,18 +270,23 @@ State, first match wins (`health-and-control` AC-12):
 4. Run `systemctl --user stop odsod-daemon-capture.service` and wait for it.
 5. Print the new state. Exit 0, or 1 if the stop failed (the flag stays).
 
-`odsodctl resume [--json] [--by cli|tray|timer]`:
+`odsodctl resume [--json] [--by cli|tray|timer|login]`:
 
 1. If `run/paused` exists: remove it, then append a `resume` record.
-2. Run `systemctl --user start odsod-daemon-capture.service` and wait for
-   it. Capture is `Type=notify`, so the start returns when capture records.
+2. If `graphical-session.target` is active, run
+   `systemctl --user start odsod-daemon-capture.service` and wait for it.
+   Capture is `Type=notify`, so the start returns when capture records.
+   With no graphical session (over SSH, or the timer while logged out),
+   resume only removes the flag; capture starts at the next login.
 3. Print the new state. Exit 0, or 1 if the start failed.
 
 - The flag goes first in pause and last in resume. The capture unit's
   `ExecCondition=` on the flag then blocks any start in between, also from
   an install (`ambient-recording` AC-19).
 - The resume timer runs `odsodctl resume --by timer` at 00:00 local time
-  (`ambient-recording` AC-18). [ADR-0006](0006-installation.md) owns the
+  (`ambient-recording` AC-18). `odsod-daemon-login.service` runs
+  `odsodctl resume --by login` when the graphical session starts, so a
+  login ends a pause. [ADR-0006](0006-installation.md) owns the
   unit.
 - `--json` prints `state`, `paused_since` and `changed`.
 
@@ -287,6 +297,12 @@ State, first match wins (`health-and-control` AC-12):
 - The worker ticks every `tray_interval_s` (1 s): `BacklogTracker.update()`,
   `gather()`, `evaluate()`. It sends the `StatusReport` to the Qt thread with
   a queued Qt signal. A slow D-Bus call never blocks the Qt loop.
+- The worker also watches `run/status.json` with inotify (low debounce, the
+  same mechanism as `lib.streams` follow). A change of `mode` triggers an
+  `evaluate()` at once, with the last snapshot and the new mode, and sends
+  the report. The icon then shows Dictating at most 200 ms after dictation
+  writes the file (`dictation` AC-1). The 1 s tick stays for systemd, files
+  and backlog.
 - The icon changes in the slot that receives the report. A tick plus the
   evaluation is well under 2 s (`health-and-control` AC-1, AC-16).
 - Icons: one SVG per state in `components/tray/icons/`, and a dev variant
@@ -330,9 +346,10 @@ State, first match wins (`health-and-control` AC-12):
 | Target                                 | Design                                    | AC                               |
 | -------------------------------------- | ----------------------------------------- | -------------------------------- |
 | Tray follows a condition in 2 s        | 1 s tick, evaluation under 200 ms         | `health-and-control` AC-1        |
+| Tray shows Dictating in 200 ms         | Watch on `run/status.json`, no tick wait  | `dictation` AC-1                 |
 | Start limit shows Error in 10 s        | `failed` has no grace; 1 s tick           | `health-and-control` AC-7        |
 | Session down shows in 10 s             | `unit_grace_s` 5 s plus 1 s tick          | `health-and-control` AC-8, AC-16 |
-| `status` answers in 1 s                | One gather; backlog window of 3 days      | `health-and-control` AC-4        |
+| `status` answers in 1 s                | One gather; 14-day backlog, `json.loads`  | `health-and-control` AC-4        |
 | Paused in 1 s                          | Flag, then a synchronous stop of capture  | `ambient-recording` AC-5         |
 | Mic muted in 5 s                       | capture's mark plus 1 s tick              | `ambient-recording` AC-17        |
 | Notification for a failed unit in 30 s | `OnFailure=` runs `notify-failed` at once | `health-and-control` AC-14       |
@@ -361,8 +378,7 @@ Section `control`:
     "tray_interval_s": 1.0,
     "unit_grace_s": 5,
     "audio_stale_s": 120,
-    "backlog_warning_s": 600,
-    "backlog_window_days": 3
+    "backlog_warning_s": 600
   }
 }
 ```
@@ -391,7 +407,10 @@ clock and the fake systemd unit-state source. A fake `systemctl` and a fake
 | `mic-muted` mark gives state `mic-muted`, exit 0                                                    | `ambient-recording` AC-17                               |
 | Capture active, audio older than 120 s gives Error                                                  | `ambient-recording` AC-13                               |
 | `status --json` holds every field of the text form                                                  | `health-and-control` AC-10                              |
-| `status` on 3 days of synthetic streams (10,000 utterances a day) runs in under 1 s                 | `health-and-control` AC-4                               |
+| `status` on 14 days of synthetic streams (10,000 utterances a day) runs in under 1 s                | `health-and-control` AC-4                               |
+| A pending utterance 10 days old counts in `count`, `seconds` and `oldest`                           | `health-and-control` AC-9                               |
+| A covered gap under 5 s gives no backlog; one over 10 min does                                      | `health-and-control` AC-9                               |
+| A `mode` change in `run/status.json` reaches the icon slot in under 200 ms (Qt offscreen)           | `dictation` AC-1                                        |
 | `pause`: flag, then record, then stop; second pause changes nothing                                 | `ambient-recording` AC-5                                |
 | `resume`: removes flag, record, start; no flag gives no record                                      | `ambient-recording` AC-6, AC-18                         |
 | Tray worker: a report reaches the icon slot in under 2 s (Qt offscreen platform)                    | `health-and-control` AC-1, AC-16                        |
@@ -440,12 +459,18 @@ System tests in `tests/`:
   terminal can never differ (`health-and-control` AC-5), and a slow stop
   never blocks Qt.
 
-### Backlog over the full 14-day pending window
+### Backlog over a 3-day window
 
-- Exact.
-- Rejected: a one-shot `status` would parse up to 14 days of three streams
-  and miss its 1 s target. Pending utterances older than 3 days are rare,
-  and the transcript names them after 48 h.
+- Fewer lines for a one-shot `status`.
+- Rejected: closing a transcript after 48 h does not transcribe its audio.
+  Older pending utterances would vanish from status while speech still
+  works on them. Plain `json.loads` of four fields keeps 14 days within
+  1 s.
+
+### Tray on the 1 s tick only
+
+- One timer for everything.
+- Rejected: Dictating must show in 200 ms (`dictation` AC-1).
 
 ### Remember notified Errors in `run/`
 

@@ -136,18 +136,18 @@ Then one line per event, in arrival order:
 
 ### Reads
 
-| Path                     | Seam fields relied on                                        | Why                                   |
-| ------------------------ | ------------------------------------------------------------ | ------------------------------------- |
-| `text/`                  | `input`, `outcome`, `channel`, `start`, `end`, `text`        | Speech lines                          |
-| `events/signals/`        | `meeting-start` (`platform`, `code`, `title`), `meeting-end` | Meeting lines                         |
-| `events/user/`           | `note`, `pin`, `pause`                                       | Note and pin lines; gap cause         |
-| `events/capture/`        | `start`, `stop`, `gap` with `channel`, `start`, `end`        | Gap lines and their cause             |
-| `utterances/ambient/`    | `utterance` (`id`, `channel`, `start`, `end`)                | Pending check, echo wait, finish (R2) |
-| `coverage/`              | `covered` (`channel`, `end`)                                 | Echo wait, finish (R1)                |
-| `utterances/dictation/`  | `utterance` (`id`, `start`, `end`)                           | Pending check (R2)                    |
-| `documents/transcripts/` | its own files                                                | Rebuild keys at start                 |
-| `finished/transcript/`   | its own records                                              | Which days are closed                 |
-| `config/config.json`     | `transcript`, `common.host`                                  |                                       |
+| Path                     | Seam fields relied on                                                                                           | Why                              |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| `text/`                  | `input`, `outcome`, `channel`, `start`, `end`, `text`                                                           | Speech lines                     |
+| `events/signals/`        | `meeting-start` (`platform`, `code`, `title`), `meeting-end`                                                    | Meeting lines                    |
+| `events/user/`           | `note`, `pin`, `pause`                                                                                          | Note and pin lines; gap cause    |
+| `events/capture/`        | `start` (`channel`, `prev_end`, `audio_start`); `gap` (`channel`, `start`, `end`, `reason`); `stop` (`channel`) | Gap lines and their cause        |
+| `utterances/ambient/`    | `utterance` (`id`, `channel`, `start`, `end`)                                                                   | Pending check, echo wait, finish |
+| `coverage/`              | `covered` (`channel`, `end`)                                                                                    | Echo wait, finish                |
+| `utterances/dictation/`  | `utterance` (`id`, `start`, `end`)                                                                              | Pending check                    |
+| `documents/transcripts/` | its own files                                                                                                   | Rebuild keys at start            |
+| `finished/transcript/`   | its own records                                                                                                 | Which days are closed            |
+| `config/config.json`     | `transcript`, `common.host`                                                                                     |                                  |
 
 - `coverage/` is segmentation's stream (`state/coverage/<day>.jsonl`,
   ADR-0012). Without it the finish and the echo wait have no safe signal.
@@ -229,10 +229,12 @@ dropped if it repeats it. `live-transcript` AC-6.
 4. Match: the `mic` text against each overlapping `sys` text, and against
    all of them joined in time order (an echo can span two `sys`
    utterances). Overlap ≥ `echo_threshold` (0.6) drops the line.
-5. Overlap (from the Go recorder): lowercase, strip punctuation, split on
+5. Overlap: `lib.textmatch.overlap(a, b)`, which implements exactly this
+   rule (from the Go recorder): lowercase, strip punctuation, split on
    space. 1.0 when one text contains the other. 0.0 when the shorter text
    has fewer than 3 tokens. Else common tokens (multiset) divided by the
-   tokens of the shorter text.
+   tokens of the shorter text. interactions uses the same function
+   (ADR-0016). The threshold stays with each caller.
 
 - The `sys` line always wins. The PRD wants the phrase "once, from the
   other side".
@@ -245,9 +247,17 @@ dropped if it repeats it. `live-transcript` AC-6.
 
 #### Gaps
 
-- Recording-off ranges per channel, from `events/capture/`:
-  - `stop` at t1 to the next `start` of that channel;
-  - each `gap` record's `start` to `end`.
+- Recording-off ranges per channel, from `events/capture/` (seam fields,
+  ADR-0010):
+  - each `start` record with a non-null `prev_end`: from `prev_end` to its
+    `audio_start`. This covers a clean stop and a crash alike: a crash
+    writes no `stop`, but the next `start` still names where the old audio
+    ended;
+  - each `gap` record's `start` to `end`, with its `reason`;
+  - a `stop` with no later `start` of that channel: an open range from the
+    `stop` time to `now`. It closes when the next `start` arrives.
+- `stop` records only name the cause of a range (see `logout` below). They
+  never define its start, so a lost `stop` changes nothing.
 - Merge `mic` and `sys` ranges that overlap. A range on one channel only
   names that channel: `not recording sys …`.
 - A gap line is written for a range longer than `gap_min_s` (60 s), when
@@ -257,9 +267,9 @@ dropped if it repeats it. `live-transcript` AC-6.
 | Cause     | Rule                                                                             |
 | --------- | -------------------------------------------------------------------------------- |
 | `pause`   | A `pause` record in `events/user/` from 10 s before to 5 s after the range start |
-| capture's | The capture record has `reason` (request R6), such as `suspend`                  |
+| capture's | The `gap` record has `reason`, such as `suspend` or `clock`                      |
 | `restart` | The range lasts at most `restart_max_s` (300 s): a crash, an upgrade or a deploy |
-| `logout`  | The range starts with a `stop` record and lasts longer                           |
+| `logout`  | A `stop` record lies at the range start (±5 s) and the range lasts longer        |
 | `unknown` | All else                                                                         |
 
 - A range that crosses local midnight gives one line in each day, cut at
@@ -274,8 +284,8 @@ A day D is finished when all of these hold (ADR-0003 "Output targets"):
 1. `now` is at least `finish_settle_s` (60 s) past the end of D.
 2. For `mic` and `sys`, coverage reaches the end of D. Coverage is the
    `covered` end of segmentation (`coverage/`), moved forward across any
-   recording-off range that starts at or before it. A stopped capture
-   then counts as covered, so a logout before midnight does not hold the
+   recording-off range that starts at or before it, including an open
+   range, which ends at `now`. A stopped capture then counts as covered, so a logout before midnight does not hold the
    day open.
 3. No utterance (ambient or dictation) with its start in D lacks a `text`
    record.
@@ -366,20 +376,21 @@ Section `transcript`:
 Component tests use a temp state root, a fake clock and JSONL inputs in
 `testdata/`. No audio, no inference.
 
-| Test                | Input                                                                     | Checks                                                               |
-| ------------------- | ------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| `test_lines.py`     | One record of each kind                                                   | Line format, tags, local time: `live-transcript` AC-2                |
-| `test_live.py`      | A `text` record after an utterance, fake clock                            | Line within 10 s: AC-1                                               |
-| `test_note_pin.py`  | `odsodctl note`, `pin`, `note -` with stdin, `--json`                     | Record, then line within 2 s: AC-7                                   |
-| `test_silence.py`   | 1 h of `empty` outcomes and `coverage/` records                           | No lines, no file: AC-9                                              |
-| `test_echo.py`      | Paired `mic` and `sys` texts: exact, partial, split over two `sys`, short | Drops and keeps: AC-6 (logic; bench measures the rate)               |
-| `test_echo_wait.py` | `sys` text late, `sys` backlog, no `sys` at all                           | Hold and the 120 s limit; AC-1 with no `sys`                         |
-| `test_restart.py`   | Kill the writer between lines; partial last line                          | Each utterance has one line: AC-10                                   |
-| `test_backlog.py`   | 1 h of utterances, then their `text` records in a burst                   | All lines, own times, within 30 min: AC-11                           |
-| `test_finish.py`    | Day with pending utterances, then text; logout before midnight; 48 h cap  | One `finished` record; `untranscribed` lines; no change after: AC-12 |
-| `test_cli.py`       | A day file                                                                | Text and `--json`, under 1 s: AC-13; `health-and-control` AC-10      |
-| `test_gaps.py`      | Capture `stop`/`start`, `gap`, `pause`, ranges over midnight              | One line per gap, cause: AC-14                                       |
-| `test_dictation.py` | A `dic` text and no `mic` text for its range                              | One `dic` line: AC-16                                                |
+| Test                 | Input                                                                                    | Checks                                                                 |
+| -------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `test_lines.py`      | One record of each kind                                                                  | Line format, tags, local time: `live-transcript` AC-2                  |
+| `test_live.py`       | A `text` record after an utterance, fake clock                                           | Line within 10 s: AC-1                                                 |
+| `test_note_pin.py`   | `odsodctl note`, `pin`, `note -` with stdin, `--json`                                    | Record, then line within 2 s: AC-7                                     |
+| `test_silence.py`    | 1 h of `empty` outcomes and `coverage/` records                                          | No lines, no file: AC-9                                                |
+| `test_echo.py`       | Paired `mic` and `sys` texts: exact, partial, split over two `sys`, short                | Drops and keeps: AC-6 (logic; bench measures the rate)                 |
+| `test_echo_wait.py`  | `sys` text late, `sys` backlog, no `sys` at all                                          | Hold and the 120 s limit; AC-1 with no `sys`                           |
+| `test_restart.py`    | Kill the writer between lines; partial last line                                         | Each utterance has one line: AC-10                                     |
+| `test_backlog.py`    | 1 h of utterances, then their `text` records in a burst                                  | All lines, own times, within 30 min: AC-11                             |
+| `test_finish.py`     | Day with pending utterances, then text; logout before midnight; 48 h cap                 | One `finished` record; `untranscribed` lines; no change after: AC-12   |
+| `test_cli.py`        | A day file                                                                               | Text and `--json`, under 1 s: AC-13; `health-and-control` AC-10        |
+| `test_gaps.py`       | Capture `stop`/`start`, `gap`, `pause`, ranges over midnight                             | One line per gap, cause: AC-14                                         |
+| `test_gaps_crash.py` | A `start` with `prev_end` and no `stop` before it (crash); an open `stop` at finish time | One `restart` gap line; the open range counts as covered: AC-14, AC-12 |
+| `test_dictation.py`  | A `dic` text and no `mic` text for its range                                             | One `dic` line: AC-16                                                  |
 
 - System test (root `tests/`, with speech's fake whisper-server and
   llama-server): audio fixtures through segmentation, transcription,

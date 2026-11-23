@@ -49,11 +49,11 @@ Proposed
 
 ### Writes
 
-| Path                                       | Kind     | Records and fields beyond the seam                       |
-| ------------------------------------------ | -------- | -------------------------------------------------------- |
-| `state/audio/<channel>/<YYYYMMDDTHH>Z.pcm` | Audio    | Format per ADR-0003. Mode `0600`, directories `0700`     |
-| `state/events/capture/<day>.jsonl`         | Stream   | `start`, `stop`, `gap` (below)                           |
-| `run/health/capture.json`                  | Document | Faults `capture-stalled`, `mic-silent`, `mic-muted` (Q3) |
+| Path                                       | Kind     | Records and fields beyond the seam                   |
+| ------------------------------------------ | -------- | ---------------------------------------------------- |
+| `state/audio/<channel>/<YYYYMMDDTHH>Z.pcm` | Audio    | Format per ADR-0003. Mode `0600`, directories `0700` |
+| `state/events/capture/<day>.jsonl`         | Stream   | `start`, `stop`, `gap` (below)                       |
+| `run/health/capture.json`                  | Document | Faults `capture-stalled`, `mic-silent`, `mic-muted`  |
 
 Records in `events/capture/`:
 
@@ -101,7 +101,8 @@ Records in `events/capture/`:
 ```
 components/capture/
 ├── __init__.py   SUBSYSTEM, run(config)
-├── contract.py   CaptureStart, CaptureStop, CaptureGap; Fault codes
+├── contract.py   CaptureStart, CaptureStop, CaptureGap; fault codes;
+│                 CAPTURE_APP_NAME = "odsod-daemon-capture"
 ├── config.py     CaptureConfig
 ├── service.py    the TaskGroup: one channel task per channel, source watch,
 │                 suspend watch, watchdog
@@ -124,11 +125,15 @@ components/retention/
 | ------- | ------------------------------------------------------------------------------------ |
 | `mic`   | No target: follows the default source                                                |
 | `sys`   | `-P '{ stream.capture.sink = true }'`, no target: follows the default sink's monitor |
-| extra   | `--target <node name>` from config, such as an echo-cancel source for `mic-ec`       |
 
-- Every stream sets `application.name = odsod-daemon-capture` and
-  `node.name = odsod-daemon-capture-<channel>`. dictation skips streams
-  with this name when it mutes ([ADR-0013](0013-dictation.md)).
+- Every stream sets `application.name` to `CAPTURE_APP_NAME`
+  (`odsod-daemon-capture`) and `node.name = odsod-daemon-capture-<channel>`.
+  `CAPTURE_APP_NAME` is a constant in `components/capture/contract.py`, a
+  seam in [ADR-0010](0010-contracts-and-runtime.md). dictation imports it
+  and skips streams with this name when it mutes
+  ([ADR-0013](0013-dictation.md)). A rename then changes both sides.
+- Two channels only in v1: `mic` and `sys`. An extra echo-cancelled
+  channel (`mic-ec`) is deferred (see Later).
 - No `--latency` and no media role. A small fragment can shrink the graph
   quantum and glitch a live call (Meetily). Role `Communication` records
   silence on Bluetooth (OpenWhispr). This gives `ambient-recording` AC-10.
@@ -141,7 +146,14 @@ stdout and gives each block to `anchor.py`, with its arrival time from
 `lib.clock`.
 
 - The anchor holds `t0`, the wall time of the first sample, and `n`, the
-  samples written since. The expected end of a block is `t0 + n / 16000`.
+  samples written since. A block arrives at its end, after the
+  `pw-record` buffer and the pipe. So the anchor computes `t0` from the
+  first block as
+  `t0 = arrival − block duration (100 ms) − capture_latency_ms`.
+  `capture_latency_ms` is a config value. The owner's capture spike sets
+  its default: the owner taps a key near the mic ten times, and the spike
+  compares the keys service's press times with the audio onsets in the
+  buffer. The expected end of a block is `t0 + n / 16000`.
 - On each block it computes `drift = arrival − expected end`, smoothed as
   the median of the last 10 blocks, so pipe jitter never moves the anchor.
 - `drift > +150 ms` (audio behind the wall clock: lost samples, a forward
@@ -154,8 +166,8 @@ stdout and gives each block to `anchor.py`, with its arrival time from
 - The 150 ms threshold keeps the error inside the 200 ms of
   `ambient-recording` AC-20, with room for pipe latency. A sound card that
   drifts 50 ppm gets one 150 ms correction about every 50 min.
-- At a new `pw-record` process, the anchor restarts from the arrival time
-  of its first block.
+- At a new `pw-record` process, the anchor restarts with the same `t0`
+  rule from its first block.
 
 #### Writer
 
@@ -172,8 +184,8 @@ stdout and gives each block to `anchor.py`, with its arrival time from
 - **Stall:** a channel that delivers no block for `stall_restart_s` (10 s)
   gets its `pw-record` killed and started again. The hole gets a `gap` with
   reason `stall`.
-- **Watchdog:** capture sends `WATCHDOG=1` only while every channel wrote a
-  block in the last 5 s. The unit sets `WatchdogSec=30` (request Q8). A
+- **Watchdog:** capture sends `WATCHDOG=1` only while both channels (`mic`
+  and `sys`) wrote a block in the last 5 s. The unit sets `WatchdogSec=30`. A
   stall that a `pw-record` restart does not fix restarts the whole service
   within 60 s (`ambient-recording` AC-13).
 - **`capture-stalled` (Error):** set when a channel has no new audio for
@@ -199,7 +211,7 @@ stdout and gives each block to `anchor.py`, with its arrival time from
 - `source.py` runs `pactl subscribe` and, on each `source` or `server`
   event and every 60 s, reads the mute flag of the default source with
   `pactl --format=json`.
-- **`mic-muted` (Mark, request Q3):** set while the default source is
+- **`mic-muted` (Mark):** set while the default source is
   muted. Cleared when it is unmuted. Within 5 s (`ambient-recording`
   AC-17).
 - **`mic-silent` (Warning):** set when every sample of the `mic` channel
@@ -213,9 +225,9 @@ stdout and gives each block to `anchor.py`, with its arrival time from
 #### Echo
 
 - `mic` is always the raw mic. Text dedup in transcript and interactions
-  is the baseline. An echo-cancel source is only an extra channel for a
-  bench experiment, never the default source (ADR-0005). Utterances use
-  only `mic` and `sys` (ADR-0003).
+  is the baseline. An echo-cancel source is deferred (see Later), and is
+  never the default source. Utterances use only `mic` and `sys`
+  (ADR-0003).
 
 #### Retention
 
@@ -253,24 +265,25 @@ Section `capture`:
 ```json
 {
   "capture": {
-    "extra_channels": [],
     "stall_restart_s": 10,
     "stall_error_s": 60,
     "mic_silent_s": 60,
-    "reanchor_ms": 150
+    "reanchor_ms": 150,
+    "capture_latency_ms": 0
   }
 }
 ```
 
-- `extra_channels`: list of `{ "name": "mic-ec", "target": "<node name>" }`.
-  Bench experiments only. A name must not be `mic` or `sys`.
+- `capture_latency_ms`: the default 0 is a placeholder until the owner's
+  capture spike measures the real value on the owner's host.
 - Retention reads `common.retention_days` (14). It has no section.
 - Block size (100 ms), the watchdog window (5 s) and the gap record
   threshold (1 s) are constants.
 
 ### Tests
 
-Component tests use a fake clock (`lib.clock`), a temp `state/` root and a
+Component tests run on the virtual-time event loop of `lib.clock`
+(ADR-0010), with a temp `state/` root and a
 fake `pw-record`: a script that writes scripted PCM to stdout with set
 delays, pauses and exits. A fake `pactl` prints scripted `subscribe` events
 and mute states.
@@ -278,6 +291,7 @@ and mute states.
 | Test                                                                                 | Checks                    |
 | ------------------------------------------------------------------------------------ | ------------------------- |
 | `anchor`: 24 h of blocks with 50 ppm drift stay within 150 ms of wall time           | `ambient-recording` AC-20 |
+| `anchor`: `t0` = first arrival − 100 ms − `capture_latency_ms`                       | AC-20                     |
 | `anchor`: clock step +1 s and −1 s; no backward write; one `gap` for +1 s            | AC-20                     |
 | Suspend: BOOTTIME jump; `pw-record` restarted; `gap` reason `suspend`                | AC-20                     |
 | Writer: offset = time; block split at the hour; hole reads as zeros                  | ADR-0003 format           |
@@ -292,9 +306,13 @@ and mute states.
 
 System tests (root `tests/`, fake `pw-record`):
 
-- Kill the service, let systemd-like restart run it again: gap at most 5 s
-  (AC-3).
-- Pipeline and inference fakes down for 1 h of fake time: audio has no gap
+System tests run in real time with small config values, and check order
+and outcomes, not latency (ADR-0010):
+
+- Kill the service and start it again: the hole between the files matches
+  `prev_end` and `audio_start` of the new `start` record. The 5 s gap of
+  AC-3 is an owner check on a real host.
+- Pipeline and inference fakes down: capture writes audio with no gap
   (AC-14).
 
 ### Build without hardware
@@ -302,7 +320,11 @@ System tests (root `tests/`, fake `pw-record`):
 - An agent builds and tests everything above with fakes: the anchor, the
   writer, stall and suspend handling, the mic checks and retention. No
   sound card and no PipeWire are needed.
-- The owner checks on a real host: start after login (AC-1), a 24 h
+- The owner runs the capture spike before the build: the `capture_latency_ms`
+  default, and that `pw-record` with `stream.capture.sink = true` records
+  the monitor.
+- The owner checks on a real host: start after login (AC-1), restart gap
+  (AC-3), a 24 h
   coverage run (AC-2), upgrade gap (AC-4), headphones keep the channels
   apart (AC-8), output switch (AC-9), a Meet or Teams call sounds the same
   and a Bluetooth headset stays in stereo (AC-10), CPU and disk (AC-11),
@@ -334,7 +356,15 @@ System tests (root `tests/`, fake `pw-record`):
 ### Read the mute flag in control
 
 - Rejected: PipeWire belongs to capture (ADR-0009, rule 3), and capture
-  needs the flag anyway for `mic-silent` (request Q3).
+  needs the flag anyway for `mic-silent`.
+
+## Later
+
+- **Extra echo-cancelled channel (`mic-ec`)**, deferred (owner decision,
+  2026-11-23). No bench path can score it yet, and each extra channel adds
+  about 39 GB over 14 days, a subprocess and another watchdog case. A
+  bounded spike adds it when bench can pair its text with the raw `mic`
+  text of the same case.
 
 ## Consequences
 

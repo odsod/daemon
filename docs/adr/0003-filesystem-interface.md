@@ -61,6 +61,10 @@ dictation socket ([ADR-0007](0007-keys-service.md)).
   no output ID yet.
 - The pending window is the audio retention period (14 days). Older inputs
   are never pending, because their audio is gone.
+- One exception: publishing. Its input is a finished document, which never
+  expires. A `finished` record with no delivery record stays pending while
+  its document exists, at any age. At startup, publishing reads all
+  `finished/` and `published/` records. They are small text.
 - At startup, a consumer reads its outputs for the whole pending window to
   rebuild its set of done IDs in memory. No cursor files, no job files, no
   claim and no lease.
@@ -174,7 +178,8 @@ dictation socket ([ADR-0007](0007-keys-service.md)).
   written to a temporary name, renamed into place, then never touched again.
   The consumer can move, edit or delete the copy.
 - The daemon never reads from a target. `state/published/<target>/` records
-  what it delivered. Pending = `finished` records with no delivery record.
+  what it delivered. Pending = `finished` records with no delivery record,
+  with no age limit (see "Pending work is derived").
 - The rename is the commit point. `publish` writes the delivery record right
   after it. A crash between the two delivers that copy once more after the
   restart. This is accepted: the vault's ingest agent merges duplicates.

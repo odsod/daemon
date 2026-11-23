@@ -501,7 +501,7 @@
 <text x="860" y="1875" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">INSTALL</text>
 <text x="1035" y="1875" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">OPERATIONS</text>
 <text x="1158" y="1875" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#1b1b1b">CMD</text>
-<text x="1180" y="1875" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">UNITS, KEYS BUILD, KWIN SCRIPT</text>
+<text x="1180" y="1875" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">UNITS, TIMERS, KEYS BUILD</text>
 <circle cx="840" cy="1896" r="10" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
 <text x="840" y="1900.5" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b1b1b">20</text>
 <text x="860" y="1901" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">VERSION</text>
@@ -524,7 +524,7 @@
 <circle cx="1630" cy="1714" r="9" fill="#1b1b1b"/>
 <text x="1630" y="1717.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">B</text>
 <text x="1660" y="1719" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">CAPTURE</text>
-<text x="1800" y="1719" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">NEVER STOPS</text>
+<text x="1800" y="1719" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">LOGIN SESSION</text>
 <circle cx="1630" cy="1740" r="9" fill="#1b1b1b"/>
 <text x="1630" y="1743.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">C</text>
 <text x="1660" y="1745" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#1b1b1b">PIPELINE</text>

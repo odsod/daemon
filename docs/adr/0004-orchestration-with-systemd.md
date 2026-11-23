@@ -28,15 +28,16 @@ Proposed
 | Unit                                  | Scope  | Runs                                               | Wanted by                      | Watchdog                            |
 | ------------------------------------- | ------ | -------------------------------------------------- | ------------------------------ | ----------------------------------- |
 | `odsod-daemon-keys.service`           | system | `odsod-daemon-keys` (C)                            | `multi-user.target`            | No                                  |
-| `odsod-daemon-capture.service`        | user   | `odsodctl run capture`                             | `default.target`               | `WatchdogSec=30`, on audio progress |
+| `odsod-daemon-capture.service`        | user   | `odsodctl run capture`                             | `graphical-session.target`     | `WatchdogSec=30`, on audio progress |
 | `odsod-daemon-pipeline.service`       | user   | `odsodctl run pipeline`                            | `default.target`               | Yes, on main loop                   |
 | `odsod-daemon-session.service`        | user   | `odsodctl run session` (`dictation`, `shortcuts`)  | `graphical-session.target`     | No                                  |
 | `odsod-daemon-tray.service`           | user   | `odsodctl run tray`                                | `graphical-session.target`     | No                                  |
 | `odsod-daemon-resume.timer`           | user   | `odsodctl resume --by timer` at 00:00 local time   | `timers.target`                |                                     |
 | `odsod-daemon-retention.timer`        | user   | `odsodctl retention`, hourly and at login          | `timers.target`                |                                     |
+| `odsod-daemon-login.service`          | user   | `odsodctl resume --by login`, one-shot             | `graphical-session.target`     |                                     |
 | `odsod-daemon-notify@.service`        | user   | `odsodctl notify-failed %i`, one-shot              | `OnFailure=` of each user unit |                                     |
 | `odsod-daemon-notify-system@.service` | system | `odsodctl notify-failed %i` as the owner, one-shot | `OnFailure=` of the keys unit  |                                     |
-| `odsod-daemon.target`                 | user   | Groups the user units above                        | `default.target`               |                                     |
+| `odsod-daemon.target`                 | user   | Groups pipeline and the timers                     | `default.target`               |                                     |
 
 - All services use `Restart=always`, a short `RestartSec`, and a start limit
   to stop crash loops.
@@ -45,7 +46,27 @@ Proposed
 - Capture and session start after PipeWire and WirePlumber: capture
   records through them, and dictation mutes streams with `pactl`. Pipeline
   reads only files and HTTP, so it needs no such order.
-- Session and tray are `PartOf=graphical-session.target`.
+- Capture, session and tray are `PartOf=graphical-session.target`.
+
+### Logged out: linger on, recording off
+
+- `daemon:setup` enables linger (`loginctl enable-linger`), so the user
+  manager runs from boot, also while the owner is logged out. The
+  retention timer then deletes old audio on time in every state
+  (`ambient-recording` AC-7, owner decision 2026-11-23).
+- Recording still needs a login session. Capture is
+  `WantedBy=` and `PartOf=graphical-session.target`, not `default.target`.
+  At logout, KDE stops `graphical-session.target`, and systemd stops
+  capture with it. At login, the target starts capture again.
+- A pause ends at logout. With linger, `run/` (the user runtime directory)
+  stays across a logout, so the flag does not clear by itself.
+  `odsod-daemon-login.service` runs `odsodctl resume --by login` when
+  `graphical-session.target` starts. The owner sees no difference: there is
+  no recording while logged out, and recording runs again at login.
+- Pipeline stays on `default.target`. While logged out it keeps working
+  through the backlog, which only reads files and calls the inference
+  host. The notify units need the owner's session bus, so a failure while
+  logged out shows only in the journal and, after login, in the tray.
 - The tray runs in its own unit, with the plain Qt event loop and no
   QtAsyncio. It reads the status and health files on a timer. Qt then never
   shares a loop with dictation, and a tray crash never touches a mute or a
@@ -63,8 +84,9 @@ Proposed
 - Capture pings the watchdog only while every channel wrote audio in the
   last 5 s. With `WatchdogSec=30`, a hung capture restarts within about
   30 s (`ambient-recording` AC-13).
-- A system unit cannot join a user target, so `odsod-daemon.target` groups only
-  the user units.
+- A system unit cannot join a user target, so `odsod-daemon.target` groups
+  only user units: pipeline and the timers. Capture, session, tray and the
+  login unit belong to `graphical-session.target`.
 - Logs go to stdout and end up in journald:
   `journalctl -u odsod-daemon-keys` and
   `journalctl --user -u 'odsod-daemon-*'`.
@@ -166,11 +188,15 @@ notify unit do.
   capture. An install keeps a pause.
 - systemd never restarts a unit that was stopped on purpose.
 - A pause has no timer. It ends at resume, logout, reboot or the start of
-  the next local day. `run/` is on tmpfs, so logout and reboot clear the
-  flag.
+  the next local day. `run/` is on tmpfs, so a reboot clears the flag. A
+  logout ends it through the login unit at the next login (see "Logged
+  out").
 - `odsod-daemon-resume.timer` runs `odsodctl resume --by timer` at 00:00
-  local time each day. It removes the flag and starts capture. Starting a running unit does nothing, so the timer
-  only ends pauses.
+  local time each day. It removes the flag and starts capture.
+- `odsodctl resume` starts capture only while `graphical-session.target` is
+  active. While logged out it only removes the flag, so the midnight timer
+  never starts recording with no one logged in. Starting a running unit
+  does nothing, so the timer only ends pauses.
 - Pause does not touch the keys service. It turns dictation off: dictation
   cuts its audio from capture's buffer, so session disconnects from the
   keys socket while capture is stopped, and Left Alt is a plain Alt.
@@ -230,8 +256,8 @@ notify unit do.
   state in the tray, or a notification from the notify unit.
 - Five services and three helper units. The tray and notify units are small,
   and they keep Qt and failure reporting apart from dictation.
-- Recording needs a logged-in user session. Recording while logged out is
-  not supported.
+- Recording needs a logged-in graphical session. Recording while logged out
+  is not supported. With linger, retention and the pipeline still run.
 - An upgrade restarts capture, which leaves an audio gap of a few seconds.
   An upgrade during a pause keeps the pause.
 - Dictation is off while recording is paused.

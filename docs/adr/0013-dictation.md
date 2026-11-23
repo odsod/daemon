@@ -57,7 +57,7 @@ Proposed
 | Path                                     | Kind     | Fields beyond the seam                                                                     |
 | ---------------------------------------- | -------- | ------------------------------------------------------------------------------------------ |
 | `state/utterances/dictation/<day>.jsonl` | Stream   | `press`: key press time. `release`: key release time (or the limit). `muted`: stream count |
-| `run/status.json`                        | Document | `audio_start` while `dictating` (request Q1)                                               |
+| `run/status.json`                        | Document | `audio_start` while `dictating`                                                            |
 | `run/muted.json`                         | Document | none                                                                                       |
 | `run/health/session.json`                | Document | Faults `mute-failed`, `stale-mutes-cleared`, `keys-socket-missing`                         |
 | Keys socket                              | Messages | `paste` (ADR-0007)                                                                         |
@@ -65,7 +65,7 @@ Proposed
 | Desktop notifications                    | D-Bus    | Failed dictation, failed paste                                                             |
 
 - The utterance is `dic-<UTC start>`, channel `dic`, `start` = press minus
-  `preroll_ms`, `end` = release plus `postroll_ms` (ADR-0003).
+  `PREROLL`, `end` = release plus `POSTROLL` (ADR-0003).
 - The session service shares its health file with shortcuts
   ([ADR-0008](0008-shortcuts-and-kwin-script.md)). Each component sets and
   clears only its own codes.
@@ -80,7 +80,7 @@ Proposed
 | `state/text/`              | `input`, `outcome`, `text`, `raw`                                              |
 | `run/muted.json`           | `streams` (`id`, `app`): at dictation start and in `unmute-stale`              |
 | systemd unit state         | `odsod-daemon-capture.service` active (`lib.systemd`)                          |
-| Inference host             | Reachable (`lib.inference.reachable`, request Q5); `lib.power.on_mains()`      |
+| Inference host             | Reachable (`lib.inference.reachable`); `lib.power.on_mains()`                  |
 | `config/config.json`       | Section `dictation`; `common.inference.whisper_url`                            |
 | PipeWire (through `pactl`) | Source outputs: ID, `application.name`, `node.name`, mute flag, monitor or not |
 
@@ -149,12 +149,12 @@ components/unmute_stale/
 expiries and results of actions. Its outputs are actions. `service.py`
 runs the actions.
 
-| State       | Entered on                | Leaves on                                                                                |
-| ----------- | ------------------------- | ---------------------------------------------------------------------------------------- |
-| `offline`   | Gate false, socket lost   | Gate true and connected → `idle`                                                         |
-| `idle`      | Connected, last hold done | `start t` → `dictating`                                                                  |
-| `dictating` | `start t`                 | `stop t` → `closing`; `cancel t` or disconnect → `idle`; `max_s` after press → `closing` |
-| `closing`   | `stop`, or the limit      | Utterance appended and status idle → `idle`                                              |
+| State       | Entered on                | Leaves on                                                                                   |
+| ----------- | ------------------------- | ------------------------------------------------------------------------------------------- |
+| `offline`   | Gate false, socket lost   | Gate true and connected → `idle`                                                            |
+| `idle`      | Connected, last hold done | `start t` → `dictating`                                                                     |
+| `dictating` | `start t`                 | `stop t` → `closing`; `cancel t` or disconnect → `idle`; `MAX_HOLD` after press → `closing` |
+| `closing`   | `stop`, or the limit      | Utterance appended and status idle → `idle`                                                 |
 
 A finished hold moves to a **delivery queue**, which runs beside the
 states, so a new hold can start while an older text is on its way.
@@ -166,18 +166,18 @@ Then write `run/status.json` with `mode: idle`.
 
 On `start t` (`t` is the press time):
 
-1. Mute (below), within `mute_timeout_ms` (150 ms).
+1. Mute (below), within `MUTE_TIMEOUT` (150 ms).
 2. Write `run/status.json`: `mode: dictating`, `since: now`,
-   `audio_start: t − preroll_ms`. Mute comes first, so the meeting hears
+   `audio_start: t − PREROLL`. Mute comes first, so the meeting hears
    nothing from the moment the tray shows Dictating (`dictation` AC-10).
-   The tray shows it at most about 200 ms after the threshold, if it
-   watches the file (request Q6; `dictation` AC-1).
+   The tray watches the file and shows it at most about 200 ms after the
+   threshold ([ADR-0018](0018-control.md); `dictation` AC-1).
 
 On `stop t`:
 
 1. Unmute at once (`dictation` AC-10: the meeting hears the owner again in
    1 s).
-2. Wait until `mic` covers `t + postroll_ms` (at most 2 s).
+2. Wait until `mic` covers `t + POSTROLL` (at most 2 s).
 3. Append the utterance, then write `mode: idle`. This order lets
    segmentation trust `idle` (ADR-0012, dictation mask).
 4. Queue a delivery for the utterance ID, with deadline `t + text_timeout_s`.
@@ -185,7 +185,7 @@ On `stop t`:
 On `cancel t` or a disconnect while dictating: unmute, write `mode: idle`,
 append nothing (`dictation` AC-9). The audio stays ambient.
 
-At `max_s` (120 s) after the press, the loop acts as on `stop` at that
+At `MAX_HOLD` (120 s) after the press, the loop acts as on `stop` at that
 time. A later `stop` is ignored. Whisper stays within its time budget.
 
 If the `mic` file does not cover the end in 2 s (capture stalled), the hold
@@ -196,7 +196,8 @@ fails: notification "dictation failed", no utterance.
 - `pactl --format=json list source-outputs`. Select every stream that:
   - records a source that is not a monitor (so screen recorders of system
     sound keep working);
-  - is not capture's own (`application.name = odsod-daemon-capture`);
+  - is not capture's own: `application.name` equals `CAPTURE_APP_NAME`,
+    imported from `components/capture/contract.py` (ADR-0010 seam);
   - is not muted already.
 - Write the selection to `run/muted.json` (atomic) before muting, so a
   crash between the two still leaves a record.
@@ -220,7 +221,7 @@ fails: notification "dictation failed", no utterance.
 
 #### Text wait and delivery
 
-- Delivery follows `text/` (`lib.streams.follow`, request Q4) for a record
+- Delivery follows `text/` (`lib.streams.follow`) for a record
   with `input` = the utterance ID.
 - Deliveries run in hold order, one at a time.
 
@@ -249,6 +250,12 @@ fails: notification "dictation failed", no utterance.
   6. On `paste-failed`, or no reply in 3 s: leave the text on the
      clipboard and notify "paste failed: the text is on the clipboard"
      (`dictation` AC-20).
+- **Timing log:** for each dictation, one log line (journald, no stream)
+  with the times of release, coverage reached, utterance append, text
+  record seen, `paste` sent and `pasted` received, as offsets from the
+  release in ms. bench and the owner read release-to-`pasted` from it, the
+  end-to-end measure of `dictation` AC-3. `pasted` proves the chord went
+  out; that the text shows in the app stays an owner check.
 - Paste with `Shift+Insert` works on every layout and in Konsole, so
   delivery never asks which window has focus (`dictation` AC-5).
 
@@ -291,17 +298,18 @@ Section `dictation`:
 ```json
 {
   "dictation": {
-    "preroll_ms": 300,
-    "postroll_ms": 150,
-    "max_s": 120,
     "text_timeout_s": 10,
-    "mute_timeout_ms": 150,
     "restore_delay_ms": 500,
     "probe_interval_s": 5
   }
 }
 ```
 
+- **Constants, not config** (owner decision, 2026-11-23): `PREROLL`
+  (300 ms), `POSTROLL` (150 ms), `MAX_HOLD` (120 s) and `MUTE_TIMEOUT`
+  (150 ms) live in `components/dictation/`. segmentation's dictation mask
+  is safe only while they fit its guard and stale constants
+  ([ADR-0012](0012-speech.md)). A test there checks the budget.
 - The 10 s text wait is an owner decision (PRD). The hold threshold lives
   in the keys service, not here (ADR-0007).
 - The dictation language, presence gate and cleanup limit are in the
@@ -311,12 +319,15 @@ Section `dictation`:
 
 Component tests use a fake keys socket (a Unix socket server that plays
 scripted messages with times), a fake `pactl`, fake `wl-copy` and
-`wl-paste` that keep the selections in a temp dir, fake `notify-send`, the
-fake clock and a temp root. `text/` records are written by the test.
+`wl-paste` that keep the selections in a temp dir, fake `notify-send` and
+a temp root. They run on the virtual-time event loop of `lib.clock`
+(ADR-0010), so waits and timeouts take no real time. `text/` records are
+written by the test. Latency targets (AC-1 in real time, AC-3, AC-21) are
+bench measures and owner checks, not CI tests.
 
 | Test                                                                          | Checks           |
 | ----------------------------------------------------------------------------- | ---------------- |
-| Loop: start → status `dictating` within 200 ms of fake time, after mute       | AC-1, AC-10      |
+| Loop: start → mute, then status `dictating` (order and fields)                | AC-1, AC-10      |
 | Utterance starts at press minus pre-roll, not at the threshold                | AC-2             |
 | Order: utterance appended before status `idle`                                | AC-24 (via mask) |
 | `empty` text pastes nothing; clipboard untouched                              | AC-7             |
@@ -334,10 +345,13 @@ fake clock and a temp root. `text/` records are written by the test.
 | `dictation last` prints late text; `--json`                                   | AC-19            |
 | Capture inactive or inference unreachable: socket closed; `keys` reason       | AC-23            |
 | Paste waits while a new hold is active                                        | AC-13            |
+| Timing log line has every step offset for one dictation                       | AC-3 (measure)   |
 
 System tests (root `tests/`): keys fake, capture fake, speech with fake
-servers and dictation together. Hold, speak (fixture), release: text in the
-clipboard fake within 2 s of fake time while ambient work is queued (AC-4).
+servers and dictation together. They run in real time with small config
+values and check order and outcomes, not latency. Hold, speak (fixture),
+release: the fixture text reaches the clipboard fake once, ahead of the
+queued ambient work (AC-4).
 Session killed during a dictation: streams unmuted by `unmute-stale` with
 no session restart (AC-17). Session down: keys fake reports no client, and
 the keys state machine gives plain Alt (AC-14, ADR-0007 tests).
@@ -348,8 +362,9 @@ the keys state machine gives plain Alt (AC-14, ADR-0007 tests).
   commands with the fakes above. No keyboard, mic, PipeWire or Wayland
   session is needed.
 - The owner checks on a real host: paste in Chrome, Obsidian and Konsole
-  with the Swedish layout (AC-5), the Meet and Teams mute (AC-10), and the
-  clipboard history (AC-12). These spikes run before dictation ships.
+  with the Swedish layout (AC-5), the Meet and Teams mute (AC-10), the
+  clipboard history (AC-12), and release-to-paste time from the timing log
+  (AC-3). These spikes run before dictation ships.
 
 ## Alternatives considered
 
