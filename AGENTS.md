@@ -18,4 +18,5 @@ Read first:
   owner-facing behavior.
 
 Work comes from one plan in `docs/plans/`. Run `mise run build` before you
-push any change. It is the CI gate.
+push any change. It is the CI gate. Every change goes through a pull
+request; never push to `main`.
