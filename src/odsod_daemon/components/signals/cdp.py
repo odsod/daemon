@@ -34,7 +34,9 @@ class Tab:
 async def list_tabs(port: int, *, timeout_s: float = TAB_LIST_TIMEOUT_S) -> list[Tab]:
     url = f"http://127.0.0.1:{port}/json/list"
     try:
-        async with httpx.AsyncClient(timeout=timeout_s) as client:
+        # Plain HTTP on 127.0.0.1: no CA file to read, so a reinstall that
+        # replaces the package under a running pipeline cannot crash a poll.
+        async with httpx.AsyncClient(timeout=timeout_s, verify=False) as client:
             response = await client.get(url)
             response.raise_for_status()
             data = response.json()
