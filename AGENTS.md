@@ -22,7 +22,7 @@ Read first:
 | Path                                   | Holds                                                                                    |
 | -------------------------------------- | ---------------------------------------------------------------------------------------- |
 | `src/odsod_daemon/components/<name>/`  | One component each: `contract.py`, `config.py`, `service.py`, pure core, `tests/`        |
-| `src/odsod_daemon/services/`           | The three systemd services (`capture`, `pipeline`, `tray`) and their runner              |
+| `src/odsod_daemon/services/`           | The systemd services (`capture`, `pipeline`, `session`, `tray`) and their runner         |
 | `src/odsod_daemon/lib/`                | Shared mechanisms: streams, paths, config, glossary, health files, inference             |
 | `src/odsod_daemon/cli.py`              | `odsodctl` commands                                                                      |
 | `src/odsod_daemon/components/install/` | systemd units and hot deploy (ADR-0020)                                                  |

@@ -9,7 +9,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
-SERVICES: tuple[str, ...] = ("capture", "pipeline", "tray")
+SERVICES: tuple[str, ...] = ("capture", "pipeline", "session", "tray")
 
 # Where the capture service's code starts. Install follows their
 # odsod_daemon imports to find the rest. Capture restarts only when these

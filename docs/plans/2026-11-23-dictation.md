@@ -108,3 +108,6 @@ mise run build
   Without the keys service it reports `keys-socket-missing` (Error) all day,
   so status and the tray show Error. Ship `session` together with `keys`,
   when the owner switches keyboards. The trial above needs both.
+- 2026-11-24: `session` is in `install.contract.SERVICES`. Deploy it only
+  after the keys cutover (keys plan, Progress log step 7), so the session
+  finds the keys socket at once.
