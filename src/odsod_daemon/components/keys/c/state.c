@@ -569,4 +569,6 @@ void ks_device_lost(struct ks_state *state, long t_ms, struct ks_outputs *out)
 	state->alt.state = KS_ALT_IDLE;
 	state->alt_deadline = -1;
 	state->chord_deadline = -1;
+	/* No key is held now, so a paste that waited for a modifier runs. */
+	maybe_paste(state, t_ms, out);
 }

@@ -1,0 +1,13 @@
+# A paste waits for a held modifier. The keyboard goes away: nothing is held,
+# so the paste runs at once.
+0 in sock connect
+0 in key KEY_CAPSLOCK down
+0 out key KEY_LEFTCTRL down
+100 in sock paste
+200 in lost
+200 out key KEY_LEFTCTRL up
+200 out key KEY_LEFTSHIFT down
+200 out key KEY_INSERT down
+200 out key KEY_INSERT up
+200 out key KEY_LEFTSHIFT up
+200 out sock pasted
