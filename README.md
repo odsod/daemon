@@ -1,4 +1,4 @@
-# daemon
+# odsod/daemon
 
 My personal daemon: one system of long-running services on my hosts that
 handle input, audio and text. Built for one setup: Fedora, KDE Plasma on
