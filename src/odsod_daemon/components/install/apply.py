@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import hashlib
 import os
 from collections.abc import Callable
@@ -10,7 +11,7 @@ from pathlib import Path
 
 import odsod_daemon
 from odsod_daemon.components.install.contract import (
-    CAPTURE_SCOPE,
+    CAPTURE_ROOTS,
     SERVICES,
     InstallRecord,
     PreviousCommit,
@@ -52,18 +53,67 @@ def changed(candidate: InstallRecord, current: InstallRecord | None) -> bool:
     )
 
 
+def shipped(path: Path) -> bool:
+    """Skip what the wheel leaves out, so a source tree and the installed
+    package give the same digests."""
+    return path.is_file() and not {"__pycache__", "tests", "testdata"} & set(path.parts)
+
+
+def capture_files(package: Path) -> set[str]:
+    """The files under CAPTURE_ROOTS and every package module they import."""
+
+    def module_file(name: str) -> str | None:
+        parts = name.split(".")[1:]
+        base = package.joinpath(*parts)
+        for candidate in (base / "__init__.py", base.with_suffix(".py")):
+            if candidate.is_file():
+                return candidate.relative_to(package).as_posix()
+        return None
+
+    found: set[str] = set()
+    todo = [
+        path.relative_to(package).as_posix()
+        for path in sorted(package.rglob("*"))
+        if shipped(path)
+        and path.relative_to(package).as_posix().startswith(CAPTURE_ROOTS)
+    ]
+    while todo:
+        name = todo.pop()
+        if name in found:
+            continue
+        found.add(name)
+        if not name.endswith(".py"):
+            continue
+        here = ["odsod_daemon", *Path(name).parent.parts]
+        for node in ast.walk(ast.parse((package / name).read_text())):
+            modules: list[str] = []
+            if isinstance(node, ast.Import):
+                modules = [alias.name for alias in node.names]
+            elif isinstance(node, ast.ImportFrom):
+                base = node.module or ""
+                if node.level:
+                    parent = here[: len(here) - node.level + 1]
+                    base = ".".join([*parent, base] if base else parent)
+                modules = [base, *(f"{base}.{alias.name}" for alias in node.names)]
+            for module in modules:
+                if module.startswith("odsod_daemon"):
+                    file = module_file(module)
+                    if file:
+                        todo.append(file)
+    return found
+
+
 def digests(package: Path) -> dict[str, str]:
-    """Hash the installed code: capture's scope and the whole package."""
+    """Hash the installed code: capture's files and the whole package."""
+    scope = capture_files(package)
     whole, capture = hashlib.sha256(), hashlib.sha256()
     for path in sorted(package.rglob("*")):
-        # Skip what the wheel leaves out, so a source tree and the installed
-        # package give the same digests.
-        if not path.is_file() or {"__pycache__", "tests", "testdata"} & set(path.parts):
+        if not shipped(path):
             continue
         name = path.relative_to(package).as_posix()
         entry = name.encode() + b"\0" + path.read_bytes() + b"\0"
         whole.update(entry)
-        if name.startswith(CAPTURE_SCOPE):
+        if name in scope:
             capture.update(entry)
     return {"all": whole.hexdigest(), "capture": capture.hexdigest()}
 
