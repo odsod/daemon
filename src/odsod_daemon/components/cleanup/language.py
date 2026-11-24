@@ -24,3 +24,12 @@ def code(language: str | None) -> str:
     if len(value) == 2 and value.isascii() and value.isalpha():
         return "jv" if value == "jw" else value
     return _CODES.get(value, "und")
+
+
+_NAMES_BY_CODE = {code: name for name, code in _CODES.items()}
+
+
+def name(code: str) -> str | None:
+    """The English name of an ISO 639-1 code, or None when unknown."""
+    found = _NAMES_BY_CODE.get(code)
+    return found.capitalize() if found else None

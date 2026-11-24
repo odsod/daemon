@@ -4,6 +4,7 @@ from pathlib import Path
 
 from jinja2 import Environment, StrictUndefined
 
+from odsod_daemon.components.cleanup import language
 from odsod_daemon.components.segmentation.config import Speech
 from odsod_daemon.components.transcription.host import fingerprint
 from odsod_daemon.lib import paths
@@ -24,7 +25,14 @@ def render(dictation: bool, speech: Speech, glossary: list[str]) -> tuple[str, s
     return text, fingerprint(text)
 
 
-def messages(system: str, text: str) -> list[dict[str, str]]:
+def messages(system: str, text: str, code: str = "und") -> list[dict[str, str]]:
+    """Name the whisper language: without it the model translates English
+    to Swedish (live meeting, 2026-11-24)."""
+    spoken = language.name(code)
+    if spoken:
+        system += (
+            f"\nThe transcript is in {spoken}. Reply in {spoken}. Never translate."
+        )
     return [
         {"role": "system", "content": system},
         {"role": "user", "content": f"<transcript>{text}</transcript>"},

@@ -75,7 +75,7 @@ Records and fields beyond the seam:
 | `utterances/ambient/` | `utterance` | `vad`: mean speech probability (2 decimals). `cut`: `pause`, `forced`, `mask` (dictation window) or `end-of-audio`                  |
 | `coverage/`           | `covered`   | Seam: `channel`, `end`. No utterance of that channel will start before `end`                                                        |
 | `asr/<backend>/`      | `asr`       | `channel`, `start`, `end` (copied from the utterance), `ms` (request time), `attempts`, `gate` (dictation: peak speech probability) |
-| `text/`               | `text`      | `raw_reason` (when `raw`): `timeout`, `llm-empty`, `guard-length`, `guard-number`. `ms`. `prompt` (hash of the rendered prompt)     |
+| `text/`               | `text`      | `raw_reason` (when `raw`): `timeout`, `llm-empty`, `guard-length`, `guard-number`, `guard-overlap`. `ms`. `prompt` (hash of the rendered prompt)     |
 
 - `covered` is written at each utterance (with `end` = the utterance end)
   and at least every 60 s while the channel advances. It has its own
@@ -141,7 +141,7 @@ components/transcription/
 components/cleanup/
 ├── __init__.py, contract.py (TextRecord)
 ├── filters.py      pure: phantom phrases, glossary echo
-├── guard.py        pure: length ratio, numbers
+├── guard.py        pure: length ratio, numbers, word overlap
 ├── language.py     pure: whisper language field → ISO 639-1 code
 ├── prompt.py       render templates with the glossary
 ├── prompts/        cleanup.md, cleanup-dictation.md (jinja2)
