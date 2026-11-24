@@ -1,0 +1,15 @@
+# Space repeat is swallowed both while pending and while Meta is held.
+0 in key KEY_SPACE down
+200 in key KEY_SPACE repeat
+300 in key KEY_SPACE up
+300 out key KEY_SPACE down
+300 out key KEY_SPACE up
+400 in key KEY_SPACE down
+600 in key KEY_A down
+600 out key KEY_LEFTMETA down
+600 out key KEY_A down
+650 in key KEY_SPACE repeat
+700 in key KEY_A up
+700 out key KEY_A up
+700 out key KEY_LEFTMETA up
+750 in key KEY_SPACE up

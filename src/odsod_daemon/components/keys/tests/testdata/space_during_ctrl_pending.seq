@@ -1,0 +1,21 @@
+# Space returns early from handle_space and does not interrupt a pending Ctrl tap.
+0 in key KEY_CAPSLOCK down
+0 out key KEY_LEFTCTRL down
+50 in key KEY_SPACE down
+100 in key KEY_SPACE up
+100 out key KEY_SPACE down
+100 out key KEY_SPACE up
+150 in key KEY_CAPSLOCK up
+150 out key KEY_LEFTCTRL up
+150 out key KEY_ESC down
+150 out key KEY_ESC up
+200 in key KEY_LEFTCTRL down
+200 out key KEY_LEFTCTRL down
+250 in key KEY_SPACE down
+300 in key KEY_SPACE up
+300 out key KEY_SPACE down
+300 out key KEY_SPACE up
+350 in key KEY_LEFTCTRL up
+350 out key KEY_LEFTCTRL up
+350 out key KEY_ESC down
+350 out key KEY_ESC up
