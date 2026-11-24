@@ -461,8 +461,13 @@ static int setup_socket(void)
 		close(fd);
 		return -1;
 	}
-	(void)chmod(SOCKET_PATH, 0600);
-	(void)chown(SOCKET_PATH, owner_uid, (gid_t)-1);
+	if (chmod(SOCKET_PATH, 0600) < 0 ||
+	    chown(SOCKET_PATH, owner_uid, (gid_t)-1) < 0) {
+		perror("own dictation socket");
+		close(fd);
+		unlink(SOCKET_PATH);
+		return -1;
+	}
 	if (listen(fd, 4) < 0) {
 		perror("listen dictation socket");
 		close(fd);
