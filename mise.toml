@@ -9,7 +9,7 @@ uv run ruff format --check .
 uv run pyright
 uv run lint-imports
 mise run keys:compile
-uv run pytest -m 'not timing'
+uv run pytest -m 'not timing and not live'
 """
 
 [tasks."keys:compile"]
