@@ -102,8 +102,13 @@ def control(fake_control, monkeypatch):
 
 
 def deploy(commit="a", source: Literal["git", "dev"] = "git"):
+    """Each commit installs its own code, so a new commit restarts all."""
+    package = Path(os.environ["ODSOD_DAEMON_ROOT"]).parent / f"package-{commit}"
+    (package / "components/capture").mkdir(parents=True, exist_ok=True)
+    (package / "components/capture/channel.py").write_text(commit)
     installer.install_user(
         command=Path("/usr/bin/true"),
+        package=package,
         candidate=InstallRecord(
             source=source,
             commit=commit,
