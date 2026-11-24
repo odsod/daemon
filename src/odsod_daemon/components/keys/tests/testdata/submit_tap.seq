@@ -1,0 +1,18 @@
+# A Left Alt tap after the dictation stop and before the paste gives Enter
+# 150 ms after the paste. The tap itself sends nothing. dictation AC-29.
+0 in sock connect
+0 in key KEY_LEFTALT down
+500 in key KEY_LEFTALT up
+350 out sock start 0
+500 out sock stop 500
+800 in key KEY_LEFTALT down
+900 in key KEY_LEFTALT up
+1500 in sock paste
+1500 out key KEY_LEFTSHIFT down
+1500 out key KEY_INSERT down
+1500 out key KEY_INSERT up
+1500 out key KEY_LEFTSHIFT up
+1500 out sock pasted
+1650 in tick
+1650 out key KEY_ENTER down
+1650 out key KEY_ENTER up

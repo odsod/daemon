@@ -193,6 +193,21 @@ components/keys/
   `paste-failed modifier-held` and sends nothing (`dictation` AC-13).
 - The service tracks the physical key state itself, so no other process
   polls it.
+
+#### Enter after the paste: a Left Alt tap while the text is pending
+
+- A dictation `stop` opens a 12 s submit window. A Left Alt tap alone in
+  the window sends nothing and marks the dictation for Enter. The paste,
+  a failed paste, the end of the window, a disconnect or a lost keyboard
+  closes it. Outside the window a tap is a plain Alt tap, so normal taps
+  get no delay.
+- After a marked paste, the service sends `Enter` 150 ms later, so the app
+  applies the paste first (Voxtype issue 862: Enter right after a paste can
+  land before the text). With a modifier held it waits in 50 ms steps for
+  up to 1.5 s after the paste, then drops the Enter: Enter with a modifier
+  is another command.
+- The session needs no change: the keys service owns the tap and the
+  Enter (`dictation` AC-29).
 - `Shift+Insert` pastes in GUI apps and in terminals such as Konsole, on
   every layout ([OpenWhispr](../research/openwhispr.md),
   [Handy](../research/handy.md)). No per-app key choice, so no lookup of
@@ -283,6 +298,8 @@ components/keys/
 | Space hold (Meta)   | 150 ms |
 | Dictation threshold | 350 ms |
 | Paste modifier wait | 1.5 s  |
+| Submit window       | 12 s   |
+| Enter after paste   | 150 ms |
 | Escape chord hold   | 3 s    |
 
 - A change needs a rebuild and `install --system`. Per-app remaps and a

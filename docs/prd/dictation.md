@@ -23,6 +23,9 @@
   the tray shows Dictating. No window opens.
 - Owner speaks and releases Left Alt → the text appears at the cursor of the
   active app, in GUI apps and terminals alike.
+- Owner taps Left Alt after the release and before the text appears → the
+  text appears, then Enter, so a chat or an agent prompt gets it sent. A
+  tap after the text appeared is a plain Alt tap.
 - The text starts with the first word the owner spoke after pressing Left
   Alt, not after the threshold.
 - The text is clean English: punctuation, no "uh" or "um", and names and
@@ -136,6 +139,9 @@ targets for the owner to confirm.
     the inference host busy. _Check: system test._
 28. **AC-28** Pasted text holds no "uh", "um" or "erm", also when cleanup
     gives no text in time. _Check: system test._
+29. **AC-29** A Left Alt tap between the release and the paste gives one
+    Enter 150 ms after the paste, and no Alt. No paste: no Enter. A tap
+    after the paste is a plain Alt tap. _Check: system test (keys replay)._
 
 ## Boundaries
 

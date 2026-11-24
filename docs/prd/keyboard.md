@@ -25,7 +25,8 @@
 - Caps Lock or Left Ctrl tapped alone → Esc. With another key → Ctrl and
   that key.
 - Esc → Caps Lock.
-- Left Alt tapped → an Alt tap, as before. Left Alt with another key → the
+- Left Alt tapped → an Alt tap, as before, except while a dictation's text
+  is pending: then it asks for Enter after the paste (`dictation` PRD). Left Alt with another key → the
   Alt chord (`Alt+Tab` works). Left Alt held alone past the hold threshold
   → dictation starts, and no app sees the Alt.
 - Left Alt with a mouse click, drag or scroll → the app gets Alt with it

@@ -1,0 +1,17 @@
+# The paste closes the window: a later Left Alt tap is a plain Alt tap.
+# dictation AC-29.
+0 in sock connect
+0 in key KEY_LEFTALT down
+500 in key KEY_LEFTALT up
+350 out sock start 0
+500 out sock stop 500
+600 in sock paste
+600 out key KEY_LEFTSHIFT down
+600 out key KEY_INSERT down
+600 out key KEY_INSERT up
+600 out key KEY_LEFTSHIFT up
+600 out sock pasted
+800 in key KEY_LEFTALT down
+900 in key KEY_LEFTALT up
+900 out key KEY_LEFTALT down
+900 out key KEY_LEFTALT up
