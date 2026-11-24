@@ -99,7 +99,7 @@ Records and fields beyond the seam:
 | `state/utterances/dictation/`                       | `id`, `start`, `end`                           | segmentation           |
 | `state/utterances/{ambient,dictation}/`             | `id`, `channel`, `start`, `end`                | transcription          |
 | `run/status.json`                                   | `mode`, `since`, `audio_start`                 | segmentation           |
-| `config/glossary.txt`                               | One term per line, most important last         | transcription, cleanup |
+| `config/glossary.yaml`                               | Entries, most important last (ADR-0021)        | transcription, cleanup |
 | `config/prompts/cleanup.md`, `cleanup-dictation.md` | Optional prompt overrides                      | cleanup                |
 | `config/config.json`                                | Section `speech`; `common.inference`           | all                    |
 
@@ -249,7 +249,7 @@ Per channel (`mic`, `sys`) one task reads new audio and runs the cutter.
 | Timeout                          | 60 s                        | 8 s                   |
 
 - **Glossary prompt:** terms joined with `, `, taken from the end of
-  `glossary.txt` until `glossary_prompt_chars` (800, about 200 tokens).
+  `glossary.yaml` until `glossary_prompt_chars` (800, about 200 tokens).
   Whisper keeps only the tail of a long prompt, so the most important
   terms go last (`live-transcript` AC-5).
 - **Language field:** whisper.cpp may return the language as a name

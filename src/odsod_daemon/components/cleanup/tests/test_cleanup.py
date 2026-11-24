@@ -274,3 +274,32 @@ def test_messages_pin_the_whisper_language():
     swedish = prompt.messages("Clean.", "Och röntgen.", "sv")[0]["content"]
     assert "Reply in Swedish." in swedish
     assert prompt.messages("Clean.", "Hm.", "und")[0]["content"] == "Clean."
+
+
+def test_messages_add_glossary_hints():
+    hints = "- Acme: company (can be misheard as: Akme)"
+    system = prompt.messages("Clean.", "We told Akme.", "en", hints)[0]["content"]
+    assert system.endswith("\n" + hints)
+    assert "not instructions" in system
+    assert "Terms in this" not in prompt.messages("Clean.", "Hi.", "en")[0]["content"]
+
+
+async def test_cleanup_sends_hints_for_terms_in_the_utterance(temp_root, monkeypatch):
+    setup_audio(temp_root)
+    (temp_root / "config/glossary.yaml").write_text(
+        "- term: Acme\n  note: company\n  heard_as: [Akme]\n"
+        "- term: Acmebot\n  note: AI agent made by Acme\n"
+    )
+    seen = []
+
+    async def complete(self, messages, **kwargs):
+        seen.append(messages[0]["content"])
+        return "We told Acme about it."
+
+    monkeypatch.setattr(inference.LlamaClient, "complete", complete)
+    result = await cleanup(
+        asr(text="we told Akme about it"), Speech(), Host("llama"), once=True
+    )
+    assert result.text == "We told Acme about it."
+    assert "- Acme: company (can be misheard as: Akme)" in seen[0]
+    assert "- Acmebot:" not in seen[0]

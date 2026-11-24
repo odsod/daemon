@@ -13,8 +13,7 @@ from odsod_daemon.components.transcription.host import (
     fingerprint,
 )
 from odsod_daemon.components.transcription.queue import Inbox, pending, records
-from odsod_daemon.components.transcription.worker import glossary
-from odsod_daemon.lib import clock, config, inference, paths, power, streams
+from odsod_daemon.lib import clock, config, glossary, inference, paths, power, streams
 
 
 async def cleanup(
@@ -22,7 +21,8 @@ async def cleanup(
 ) -> TextRecord:
     dic = record["channel"] == "dic"
     common = config.load_common()
-    terms = glossary()
+    entries = glossary.current()
+    terms = glossary.terms(entries)
     system, digest = prompt.render(dic, speech, terms)
     source = record.get("text") or ""
     result = TextRecord(
@@ -70,7 +70,12 @@ async def cleanup(
 
     async def request():
         return await client.complete(
-            prompt.messages(system, source, result.language or "und"),
+            prompt.messages(
+                system,
+                source,
+                result.language or "und",
+                glossary.hints(glossary.relevant(entries, source)),
+            ),
             max_tokens=max(64, 2 * len(source) // 3),
             temperature=0,
         )

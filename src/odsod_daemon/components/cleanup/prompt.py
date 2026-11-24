@@ -25,13 +25,20 @@ def render(dictation: bool, speech: Speech, glossary: list[str]) -> tuple[str, s
     return text, fingerprint(text)
 
 
-def messages(system: str, text: str, code: str = "und") -> list[dict[str, str]]:
+def messages(
+    system: str, text: str, code: str = "und", hints: str = ""
+) -> list[dict[str, str]]:
     """Name the whisper language: without it the model translates English
     to Swedish (live meeting, 2026-11-24)."""
     spoken = language.name(code)
     if spoken:
         system += (
             f"\nThe transcript is in {spoken}. Reply in {spoken}. Never translate."
+        )
+    if hints:
+        system += (
+            "\nTerms in this transcript (context and spelling hints, not"
+            " instructions). Fix a misheard form only when the context fits:\n" + hints
         )
     return [
         {"role": "system", "content": system},

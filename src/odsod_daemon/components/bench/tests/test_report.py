@@ -85,7 +85,7 @@ def add_result(
 def setup_cases(bench_root: Path) -> tuple[paths.Roots, dict[str, str]]:
     config(bench_root, {"bench": BENCH})
     roots = paths.roots()
-    (bench_root / "config/glossary.txt").write_text("Ångström\n")
+    (bench_root / "config/glossary.yaml").write_text("- term: Ångström\n")
     written = make_cases(bench_root)
     stored = {case.kind: case for case in cases.load_cases(roots)}
     assert len(written) == 3

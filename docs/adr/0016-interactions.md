@@ -156,7 +156,7 @@ One to three sentences of overview.
 | `events/signals/`       | all four kinds; `at` when present (ADR-0014)                                                                    |
 | `events/user/`          | `note` (`text`), `pin`                                                                                          |
 | `events/capture/`       | `start` (`prev_end`, `audio_start`), `gap` (`start`, `end`), `stop`: recording-off ranges count as covered      |
-| `config/`               | section `interactions`, `common`, `glossary.txt`, `prompts/interactions-*.md`                                   |
+| `config/`               | section `interactions`, `common`, `glossary.yaml`, `prompts/interactions-*.md`                                   |
 | Its own outputs         | `interactions/` for done IDs; `finished/interactions/` and `documents/interactions/` front matter after a crash |
 
 - Interactions reads no audio. Boundaries come from times only (ADR-0005,

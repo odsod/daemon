@@ -63,7 +63,7 @@ def test_prompt_overrides_and_setup(temp_root):
     (prompts / "interactions-summarize.md").write_text(
         "{{ owner_name }} {{ glossary | join(',') }}"
     )
-    (roots.config / "glossary.txt").write_text("First\nLast\n")
+    (roots.config / "glossary.yaml").write_text("- term: First\n- term: Last\n")
     one = Summarizer(
         InteractionsConfig(owner_name="Oscar"), roots, "http://localhost:8179"
     )

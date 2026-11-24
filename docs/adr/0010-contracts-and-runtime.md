@@ -63,7 +63,7 @@ them.
 | `run/paused`                                                          | control                                                 | capture unit, control                                                    |
 | `state/install/current`                                               | install                                                 | control, bench                                                           |
 | `state/install/previous-commit`                                       | install                                                 | control                                                                  |
-| `config/glossary.txt`                                                 | owner                                                   | speech, interactions, bench                                              |
+| `config/glossary.yaml`                                                 | owner                                                   | speech, interactions, bench                                              |
 | `speech` config section, prompts `cleanup.md`, `cleanup-dictation.md` | owner (speech owns the schema)                          | speech, bench (sandbox overrides)                                        |
 | Keys package-data constants                                           | keys (`contract.py`)                                    | install (`install --system` builds and installs keys)                    |
 | Keys socket                                                           | keys                                                    | dictation ([ADR-0007](0007-keys-service.md))                             |
@@ -212,8 +212,9 @@ Mic muted as `mic-muted`.
 - `odsodctl config check` loads every section and reports all errors. A
   service refuses to start on an invalid section of its own and writes the
   error to its log.
-- `config/glossary.txt`: one term per line, most important last. speech,
-  interactions and bench read it.
+- `config/glossary.yaml`: entries with `term`, `note` and `heard_as`, most
+  important last ([ADR-0021](0021-glossary.md)). speech, interactions and
+  bench read it through `lib.glossary`.
 - `config/prompts/<name>.md`: optional prompt overrides. The subsystem that
   owns the prompt names it.
 

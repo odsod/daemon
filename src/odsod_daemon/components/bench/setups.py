@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from odsod_daemon.components.bench.contract import CaseKind, ModelRef, SetupManifest
 from odsod_daemon.components.install.contract import InstallRecord
-from odsod_daemon.lib import inference, paths
+from odsod_daemon.lib import glossary, inference, paths
 
 LIVE_AMBIENT_PROMPT = "cleanup"
 LIVE_DICTATION_PROMPT = "cleanup-dictation"
@@ -121,8 +121,8 @@ def _digest(data: bytes) -> str:
 
 
 def glossary_sha256(roots: paths.Roots) -> str:
-    path = roots.config / "glossary.txt"
-    return _digest(path.read_bytes() if path.exists() else b"")
+    found = glossary.path(roots)
+    return _digest(found.read_bytes() if found is not None else b"")
 
 
 def prompt_files(setup: Setup) -> dict[str, str]:

@@ -98,7 +98,7 @@ def test_case_directory_holds_everything(bench_root):
     config(bench_root, {"bench": BENCH})
     roots = paths.roots()
     start, end = case_source(bench_root)
-    (bench_root / "config/glossary.txt").write_text("Ångström\n")
+    (bench_root / "config/glossary.yaml").write_text("- term: Ångström\n")
     case_id = cases.top_up(roots, make_targets(), seed=7)[0]
     directory = cases.case_dir(roots, case_id)
 

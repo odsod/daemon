@@ -49,7 +49,7 @@ def test_fingerprint_changes_with_the_setup(bench_root, change):
 def test_fingerprint_changes_with_glossary_prompt_and_commit(bench_root):
     roots = setups.paths.roots()
     base = setups.manifest(write_setup(bench_root), roots).fingerprint
-    (bench_root / "config/glossary.txt").write_text("Ångström\n")
+    (bench_root / "config/glossary.yaml").write_text("- term: Ångström\n")
     assert setups.manifest(write_setup(bench_root), roots).fingerprint != base
 
     base = setups.manifest(write_setup(bench_root), roots).fingerprint
