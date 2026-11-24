@@ -18,8 +18,10 @@ def installed(tmp_path: Path, monkeypatch):
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "home/.local/share"))
     monkeypatch.setenv("ODSOD_DAEMON_ROOT", str(tmp_path / "root"))
     monkeypatch.setenv("PATH", f"{BIN}:{os.environ['PATH']}")
-    for name in ("components/capture/channel.py", "components/cleanup/guard.py"):
-        edit(tmp_path / "package" / name, "v1")
+    pkg = tmp_path / "package"
+    edit(pkg / "components/capture/channel.py", "from odsod_daemon.lib import audio")
+    for name in ("components/cleanup/guard.py", "lib/audio.py", "lib/glossary.py"):
+        edit(pkg / name, "v1")
     return tmp_path / "root"
 
 
@@ -55,7 +57,7 @@ def test_idempotent_and_commit_change(installed):
         c.startswith(("restart ", "daemon-reload")) for c in calls(installed)
     )
     assert current.stat().st_mtime_ns == stamp
-    edit(package(installed) / "components/capture/channel.py", "v2")
+    edit(package(installed) / "components/capture/channel.py", "import os")
     apply(record("b"))
     previous = documents.read_json(installed / "state/install/previous-commit")
     assert previous["commit"] == "a"
@@ -84,7 +86,7 @@ def test_hot_deploy_keeps_capture_recording(installed):
 
 
 @pytest.mark.parametrize(
-    "name", ["components/capture/channel.py", "lib/audio.py", "services/runner.py"]
+    "name", ["components/capture/x.py", "lib/audio.py", "services/runner.py"]
 )
 def test_capture_scope_change_restarts_capture(installed, name):
     apply(record(source="dev"))
@@ -92,6 +94,25 @@ def test_capture_scope_change_restarts_capture(installed, name):
     edit(package(installed) / name, "v2")
     apply(record(source="dev"))
     assert "restart odsod-daemon-capture.service" in calls(installed)
+
+
+def test_lib_module_capture_does_not_import_keeps_capture(installed):
+    apply(record(source="dev"))
+    (installed / "systemctl.log").unlink()
+    edit(package(installed) / "lib/glossary.py", "v2")
+    apply(record(source="dev"))
+    assert "restart odsod-daemon-capture.service" not in calls(installed)
+    assert "restart odsod-daemon-pipeline.service" in calls(installed)
+
+
+def test_capture_files_follow_imports():
+    from odsod_daemon.components.install.apply import capture_files
+
+    package = Path(__file__).resolve().parents[3]
+    files = capture_files(package)
+    assert {"components/capture/service.py", "lib/audio.py"} <= files
+    assert "lib/textmatch.py" not in files
+    assert not any(f.startswith("components/cleanup/") for f in files)
 
 
 def test_record_without_digests_restarts_all(installed):
@@ -118,7 +139,7 @@ def test_logged_out(installed):
 
 def test_failure_names_step_and_keeps_record(installed, monkeypatch):
     apply(record())
-    edit(package(installed) / "components/capture/channel.py", "v2")
+    edit(package(installed) / "components/capture/channel.py", "import os")
     monkeypatch.setenv("FAKE_SYSTEMCTL_FAIL", "restart odsod-daemon-pipeline.service")
     with pytest.raises(ApplyError, match=r"failed at step 6.*Restart"):
         apply(record("b"))

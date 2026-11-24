@@ -25,12 +25,14 @@ Accepted. Amends step 6 of "Install steps" in
 
 ## Decision
 
-- `install.contract.CAPTURE_SCOPE` lists the package paths that capture
-  runs: `components/capture/`, `services/capture.py`, `services/runner.py`
-  and `lib/`.
+- `install.contract.CAPTURE_ROOTS` names where capture's code starts:
+  `components/capture/`, `services/capture.py` and `services/runner.py`.
+  Install follows their `odsod_daemon` imports (static, with `ast`) to find
+  the rest, such as the `lib/` modules capture uses.
 - At install, `odsodctl install` hashes the installed package: `capture`
-  over `CAPTURE_SCOPE`, `all` over every file. It writes both in
-  `install/current` as `digests`.
+  over those files, `all` over every file. It skips `tests/`, `testdata/`
+  and `__pycache__`, as the wheel does, so `src/` and the installed package
+  hash the same. It writes both in `install/current` as `digests`.
 - Step 6 restarts:
   - capture, when its digest or its unit file changed;
   - every other service, when the `all` digest or its unit file changed;
@@ -47,8 +49,9 @@ Accepted. Amends step 6 of "Install steps" in
 
 - Restart nothing and let services reload code: Python cannot swap loaded
   modules safely.
-- Per-service import graph: the CLI imports all components, so every
-  change would restart capture.
+- Runtime import graph of each service: the CLI imports all components,
+  so every change would restart capture. The static graph from capture's
+  own files is small.
 - Diff commits with Git: Git installs have no workspace, and a dev deploy
   can be dirty. Digests of the installed files work for both.
 
@@ -61,7 +64,9 @@ Accepted. Amends step 6 of "Install steps" in
   only the standard library, so it never loads the new files.
 - A dependency change in `uv.lock` alone does not restart capture. Capture
   keeps the loaded versions until its next restart.
-- A change in `lib/` restarts capture, also when capture does not use the
-  changed module. The scope stays coarse until that costs real gaps.
+- A new or changed `lib/` module that capture does not import leaves
+  capture running.
+- An import that capture adds at runtime with `importlib` is not followed.
+  Capture has none.
 - After a pipeline restart, signals finds the speaking class again when
   people speak; a few seconds of speaking events can be lost.
