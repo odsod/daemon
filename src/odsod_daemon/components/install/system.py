@@ -79,7 +79,41 @@ def install_system(
     if changed:
         _systemctl("restart", SYSTEM_UNIT)
         restarted = True
+    give_back(Path(sys.prefix), uid, gid)
     return SystemInstall(binary_changed, unit_changed, restarted)
+
+
+def give_back(venv: Path, uid: int, gid: int) -> int:
+    """Chown files root wrote into the owner's venv, such as __pycache__.
+
+    Python running as root writes bytecode next to the owner's modules, and
+    the next user deploy cannot replace those files. Only a venv the owner
+    owns is touched.
+    """
+    try:
+        if venv.stat().st_uid != uid:
+            return 0
+    except OSError:
+        return 0
+    count = 0
+    for root, dirs, files in os.walk(venv):
+        for name in [*dirs, *files]:
+            path = os.path.join(root, name)
+            try:
+                if _file_uid(path) == 0:
+                    _lchown(path, uid, gid)
+                    count += 1
+            except OSError:
+                continue
+    return count
+
+
+def _file_uid(path: str) -> int:
+    return os.lstat(path).st_uid
+
+
+def _lchown(path: str, uid: int, gid: int) -> None:
+    os.lchown(path, uid, gid)
 
 
 def _owner(env: Mapping[str, str]) -> tuple[int, int, str]:
