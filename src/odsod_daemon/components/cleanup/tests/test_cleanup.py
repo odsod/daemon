@@ -77,6 +77,48 @@ def test_guards(source, reply, reason):
     assert guard.clean("<think>analysis</think>\u200bQuestion?") == "Question?"
 
 
+@pytest.mark.parametrize(
+    "source,reply,reason",
+    [
+        # Live meetings 2026-11-24: English words inside Swedish speech.
+        ("Ge bättre invoicing.", "Ge bättre fakturering.", "guard-english"),
+        (
+            "Det är många olika software system.",
+            "Det är många olika mjukvarusystem.",
+            "guard-english",
+        ),
+        (
+            "Technician Hours, hur de jobbar.",
+            "Teknikertimmar, hur de jobbar.",
+            "guard-english",
+        ),
+        # Kept English, fixed Swedish spelling, filler gone: no guard.
+        ("Vi kör en Merge sen allting", "Vi kör en Merge sen allt.", None),
+        ("Hur farorligt!", "Hur farligt!", None),
+        ("Jag bara antar det.", "Jag antar det.", None),
+    ],
+)
+def test_english_guard_on_swedish_lines(source, reply, reason, monkeypatch):
+    """ADR-0012: in a Swedish line, a dropped English word means cleanup
+    translated it, so the whisper text is kept."""
+    words = {"invoicing", "software", "system", "technician", "hours", "merge"}
+    monkeypatch.setattr(guard, "english", lambda: frozenset(words))
+    assert guard.reason(source, reply, "sv") == reason
+    assert guard.reason(source, reply, "en") is None
+
+
+def test_english_guard_is_off_without_a_word_list(monkeypatch, tmp_path):
+    """ADR-0012: no word list on the host turns the English guard off."""
+    monkeypatch.setattr(guard, "WORDS", tmp_path / "missing")
+    guard.english.cache_clear()
+    try:
+        assert (
+            guard.reason("Ge bättre invoicing.", "Ge bättre fakturering.", "sv") is None
+        )
+    finally:
+        guard.english.cache_clear()
+
+
 def test_prompt_override_and_question(temp_root):
     text, digest = prompt.render(True, Speech(), ["Silero"])
     assert "Never answer questions" in text and "Silero" in text
