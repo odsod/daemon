@@ -1,6 +1,8 @@
 """The shared speech section and per-channel segmentation settings."""
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+from odsod_daemon.lib import inference
 
 
 class Settings(BaseModel):
@@ -52,12 +54,29 @@ class Dictation(BaseModel):
     cleanup_timeout_ms: float = Field(default=1000, gt=0)
 
 
+class Parakeet(BaseModel):
+    """The CPU speech-to-text server for dictation (ADR-0022)."""
+
+    enabled: bool = False
+    listen: list[str] = Field(default_factory=lambda: ["127.0.0.1"], min_length=1)
+    port: int = Field(default=8180, ge=1, le=65535)
+    threads: int = Field(default=8, ge=1)
+
+    @field_validator("listen")
+    @classmethod
+    def _private(cls, value: list[str]) -> list[str]:
+        for address in value:
+            inference.check_url(f"http://{address}")
+        return value
+
+
 class Speech(BaseModel):
     backend: str = Field(default="whisper", pattern=r"^[a-zA-Z0-9_-]+$")
     prompt_languages: list[str] = Field(default_factory=lambda: ["Swedish", "English"])
     segmentation: Segmentation = Field(default_factory=Segmentation)
     ambient: Ambient = Field(default_factory=Ambient)
     dictation: Dictation = Field(default_factory=Dictation)
+    parakeet: Parakeet = Field(default_factory=Parakeet)
     glossary_prompt_chars: int = Field(default=800, ge=0)
     attempts: int = Field(default=3, ge=1)
     phantoms: list[str] = Field(

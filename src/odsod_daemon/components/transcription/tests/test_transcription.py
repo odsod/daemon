@@ -309,3 +309,53 @@ async def test_missing_old_hour_expires(temp_root, monkeypatch):
         once=False,
     )
     assert result.outcome == "expired"
+
+
+async def test_dictation_url_runs_dictation_beside_ambient(temp_root, monkeypatch):
+    """PRD dictation AC-27: a dictation never waits for an ambient request."""
+    import asyncio
+
+    start, end = setup_audio(temp_root)
+    mic = temp_root / "state/audio/mic"
+    mic.mkdir(parents=True, exist_ok=True)
+    for file in (temp_root / "state/audio/sys").glob("*.pcm"):
+        (mic / file.name).write_bytes(file.read_bytes())
+    conf_path = temp_root / "config/config.json"
+    conf = json.loads(conf_path.read_text())
+    whisper_url = conf["common"]["inference"]["whisper_url"]
+    dictation_url = "http://127.0.0.1:8180/v1/audio/transcriptions"
+    conf["common"]["inference"]["dictation_url"] = dictation_url
+    conf_path.write_text(json.dumps(conf))
+    for kind, channel in (("ambient", "sys"), ("dictation", "dic")):
+        streams.append(
+            streams.day_path(temp_root / f"state/utterances/{kind}", start.date()),
+            utterance(start, end, channel, kind),
+        )
+    dictated = asyncio.Event()
+    calls = []
+
+    async def response(self, audio, **kwargs):
+        calls.append(self.url)
+        if self.url == whisper_url:
+            # Blocks until dictation is done: a shared loop would deadlock here.
+            await asyncio.wait_for(dictated.wait(), 5)
+            return inference.WhisperResponse(text="Ambient", language="english")
+        dictated.set()
+        return inference.WhisperResponse(text="Dictated", language="en")
+
+    monkeypatch.setattr(inference.WhisperClient, "transcribe", response)
+    monkeypatch.setattr(
+        "odsod_daemon.components.transcription.worker.presence",
+        lambda *args: (True, 0.9),
+    )
+    await run(Speech(), once=True)
+    assert sorted(calls) == sorted([whisper_url, dictation_url])
+    rows = [
+        json.loads(line)
+        for file in (temp_root / "state/asr/whisper").glob("*.jsonl")
+        for line in file.read_text().splitlines()
+    ]
+    assert {r["input"]: r["text"] for r in rows} == {
+        "ambient": "Ambient",
+        "dictation": "Dictated",
+    }

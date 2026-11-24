@@ -24,6 +24,7 @@ SUBSYSTEMS = {
     "segmentation": "speech",
     "transcription": "speech",
     "cleanup": "speech",
+    "parakeet": "speech",
     "dictation": "dictation",
     "unmute_stale": "dictation",
     "signals": "signals",

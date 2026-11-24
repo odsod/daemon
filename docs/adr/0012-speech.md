@@ -108,6 +108,8 @@ Records and fields beyond the seam:
 - whisper-server (whisper.cpp) at `common.inference.whisper_url`, through
   `lib.inference`. Speech segments audio itself, so the server needs no
   server-side VAD. The `machine` repo runs it without `--vad`.
+- For dictation, the `parakeet` server at `common.inference.dictation_url`
+  when it is set ([ADR-0022](0022-dictation-asr.md)).
 - llama-server at `common.inference.llama_url`, OpenAI chat completions,
   with 2 parallel slots (set in the `machine` repo).
 - Silero VAD v5 as an ONNX file, shipped as package data in

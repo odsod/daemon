@@ -5,6 +5,7 @@ from __future__ import annotations
 from odsod_daemon.components import (
     cleanup,
     interactions,
+    parakeet,
     publish,
     segmentation,
     signals,
@@ -19,6 +20,7 @@ COMPONENTS = [
     segmentation,
     transcription,
     cleanup,
+    parakeet,
     signals,
     transcript,
     interactions,

@@ -106,8 +106,9 @@ The name follows the Unix term
 9. **Dictation goes first on each host.** Each host queues its work by urgency:
    dictation, then live transcription, then batch work. Across hosts there is
    no priority queue:
-   - Whisper requests are one utterance each, so dictation waits at most for
-     one short request from another host.
+   - Dictation speech-to-text runs on its own CPU server on the inference
+     host, so it never waits for an ambient whisper request
+     ([ADR-0022](0022-dictation-asr.md)).
    - The inference host runs llama-server with 2 parallel slots, so dictation
      cleanup never waits behind a batch summary.
    - Dictation cleanup has a 1 s limit. After it, dictation uses the raw ASR
@@ -250,7 +251,7 @@ benchmark: reads stored audio and results
 - Rejected: one more service. Short whisper requests, 2 llama-server slots
   and the 1 s cleanup limit keep dictation inside its target. If that wait
   still hurts, a second inference server just for dictation is the next
-  step.
+  step. That step is taken: [ADR-0022](0022-dictation-asr.md).
 
 ### Diarization in v1
 

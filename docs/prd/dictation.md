@@ -4,7 +4,8 @@
 - Updated: 2026-11-24
 - Design: [ADR-0002](../adr/0002-high-level-architecture.md),
   [ADR-0005](../adr/0005-components-and-implementation.md),
-  [ADR-0007](../adr/0007-keys-service.md)
+  [ADR-0007](../adr/0007-keys-service.md),
+  [ADR-0022](../adr/0022-dictation-asr.md)
 
 ## Problem
 
@@ -39,7 +40,8 @@
 - After the paste → the owner's clipboard holds what it held before. The
   dictated text is not in the clipboard history.
 - Dictation goes ahead of all other transcription work on the host, and
-  also when another host runs long batch work on the inference host.
+  also when another host runs long batch work or ambient transcription on
+  the inference host.
 - Recording is paused, or no inference host is reachable → Left Alt is a
   plain Alt, with no dictation. The tray shows why.
 - The mic is muted (the hardware mute key) → a hold unmutes the mic for the
@@ -130,6 +132,8 @@ targets for the owner to confirm.
 26. **AC-26** A stop or crash of the session service during a hold that
     unmuted the mic mutes the mic again within 10 s. _Check: system test;
     manual on the owner's laptop._
+27. **AC-27** AC-3 holds while another host's ambient transcription keeps
+    the inference host busy. _Check: system test._
 
 ## Boundaries
 

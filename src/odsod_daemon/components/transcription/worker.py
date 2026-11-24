@@ -1,5 +1,9 @@
-"""One Whisper request at a time, with dictation first on every dequeue."""
+"""One request at a time per server, with dictation first on every dequeue.
 
+With `dictation_url` set, dictation has its own loop and server (ADR-0022).
+"""
+
+import asyncio
 from collections.abc import Awaitable, Callable
 
 from odsod_daemon.components.cleanup.language import code
@@ -46,9 +50,10 @@ async def transcribe(
     roots = paths.roots()
     dic = record["channel"] == "dic"
     common = config.load_common()
+    url = common.inference.dictation() if dic else common.inference.whisper_url
     request_fields = fields(dic, speech, glossary())
     setup = {
-        "url": common.inference.whisper_url,
+        "url": url,
         "fields": request_fields,
         "speech": speech.model_dump(),
     }
@@ -87,7 +92,7 @@ async def transcribe(
             result.outcome = "empty"
             return result
     client = inference.WhisperClient(
-        common.inference.whisper_url,
+        url,
         timeout_s=speech.dictation.timeout_s if dic else 60,
     )
     encoded = wav(pcm)
@@ -135,11 +140,35 @@ async def run(speech: Speech, *, once: bool = False) -> None:
     roots = paths.roots()
     inputs = [roots.state / f"utterances/{kind}" for kind in ("dictation", "ambient")]
     output = roots.state / "asr" / speech.backend
-    host = Host("whisper")
+    common = config.load_common()
+    if common.inference.dictation_url is None:
+        await serve(speech, inputs, output, Host("whisper"), "whisper_url", once=once)
+        return
+    async with asyncio.TaskGroup() as group:
+        group.create_task(
+            serve(
+                speech, inputs[:1], output, Host("parakeet"), "dictation_url", once=once
+            )
+        )
+        group.create_task(
+            serve(speech, inputs[1:], output, Host("whisper"), "whisper_url", once=once)
+        )
+
+
+async def serve(
+    speech: Speech,
+    inputs: list,
+    output,
+    host: Host,
+    key: str,
+    *,
+    once: bool,
+) -> None:
+    """Work through `inputs`; a dictation input always goes first."""
 
     async def wait_for_power() -> None:
         began = clock.monotonic()
-        url = config.load_common().inference.whisper_url
+        url = getattr(config.load_common().inference, key)
         while inference.is_loopback(url) and not power.on_mains():
             if once and clock.monotonic() - began >= 60:
                 raise HostUnavailable("on battery; work remains pending")
@@ -151,10 +180,12 @@ async def run(speech: Speech, *, once: bool = False) -> None:
             result.model_dump(mode="json"),
         )
 
+    dictation = [d for d in inputs if d.name == "dictation"]
+
     async def dictation_first() -> None:
         # Recheck before retries and the fallback request, not just on dequeue.
         await wait_for_power()
-        while todo := pending(records(inputs[0]), records(output)):
+        while dictation and (todo := pending(records(dictation[0]), records(output))):
             append(
                 await transcribe(
                     todo[0], speech, host, once=once, before_request=wait_for_power
