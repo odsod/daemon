@@ -491,7 +491,7 @@ class Collector:
             if self._discovery_since is None:
                 self._discovery_since = now
             elif now - self._discovery_since >= self.config.no_indicator_after_s:
-                self._set_fault(ref.platform)
+                self._set_fault(ref.platform, now)
             return
 
         self._discovery_since = None
@@ -508,10 +508,28 @@ class Collector:
             self._discovery = None
             self._speaker_at = now
             self._discovery_since = now
-            self._set_fault(ref.platform)
+            self._set_fault(ref.platform, now)
 
-    def _set_fault(self, platform: str) -> None:
-        if self._fault:
+    def _remote_speech(self, now: float) -> bool:
+        """True if the sys channel had speech in the last window.
+
+        Without it the meeting is just silent, as when everyone works, so a
+        missing indicator says nothing about a UI change."""
+        since = datetime.fromtimestamp(now - self.config.no_indicator_after_s, UTC)
+        records = streams.read_days(
+            self.roots.state / "utterances" / "ambient",
+            since.date(),
+            clock.utc_now().date(),
+        )
+        return any(
+            r.get("kind") == "utterance"
+            and r.get("channel") == "sys"
+            and clock.parse_iso(r["end"]) >= since
+            for r in records
+        )
+
+    def _set_fault(self, platform: str, now: float) -> None:
+        if self._fault or not self._remote_speech(now):
             return
         self._fault = True
         health = healthfile.HealthFile(self.health_path, SERVICE)

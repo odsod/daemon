@@ -82,6 +82,8 @@ Records, with fields beyond the seam marked _extra_:
 - Its own stream `events/signals/` for today and yesterday (UTC), at start,
   to rebuild the open meeting. This is its own output, not a seam.
 - `config/config.json`, section `signals`.
+- `utterances/ambient/` (`kind`, `channel`, `end`), only before it reports
+  `no-speaking-indicator`: a fault needs `sys` speech in the last 5 min.
 - It reads no other stream. It needs no audio and no text.
 
 ### Outside dependencies
@@ -264,7 +266,9 @@ Meet: the Go recorder's method, kept as is:
 
 - `no-speaking-indicator` applies only while a meeting is active with at
   least 2 participant tiles, so a meeting where the owner waits alone gives
-  no Warning. The fault clears on the next confirmed speaker or at
+  no Warning. It also needs a `sys` utterance that ended in the last 5 min:
+  a silent meeting, where everyone works, is normal and gives no Warning.
+  Only remote speech with no indicator points to a UI change. The fault clears on the next confirmed speaker or at
   `meeting-end`.
 - Fault message: "Meeting tab open, no speaking indicator for 5 min
   (`<platform>` UI change?)". `fix` is null: no command fixes a UI change.
