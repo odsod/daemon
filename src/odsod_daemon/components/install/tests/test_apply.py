@@ -170,3 +170,14 @@ def test_only_changed_service_restarts(installed, monkeypatch):
     assert "daemon-reload" in log
     assert "restart odsod-daemon-pipeline.service" in log
     assert "restart odsod-daemon-capture.service" not in log
+
+
+def test_digests_skip_files_the_wheel_leaves_out(tmp_path):
+    from odsod_daemon.components.install.apply import digests
+
+    edit(tmp_path / "lib/audio.py", "code")
+    before = digests(tmp_path)
+    edit(tmp_path / "lib/tests/test_audio.py", "test")
+    edit(tmp_path / "lib/inference/testdata/reply.json", "{}")
+    edit(tmp_path / "lib/__pycache__/audio.pyc", "bytes")
+    assert digests(tmp_path) == before

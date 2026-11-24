@@ -56,7 +56,9 @@ def digests(package: Path) -> dict[str, str]:
     """Hash the installed code: capture's scope and the whole package."""
     whole, capture = hashlib.sha256(), hashlib.sha256()
     for path in sorted(package.rglob("*")):
-        if not path.is_file() or "__pycache__" in path.parts:
+        # Skip what the wheel leaves out, so a source tree and the installed
+        # package give the same digests.
+        if not path.is_file() or {"__pycache__", "tests", "testdata"} & set(path.parts):
             continue
         name = path.relative_to(package).as_posix()
         entry = name.encode() + b"\0" + path.read_bytes() + b"\0"
