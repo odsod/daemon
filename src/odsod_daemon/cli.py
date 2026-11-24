@@ -30,7 +30,7 @@ from odsod_daemon.components.transcript.cli import app as transcript_app
 from odsod_daemon.components.unmute_stale.cli import app as unmute_stale_app
 from odsod_daemon.components.version.cli import app as version_app
 from odsod_daemon.lib import cli as output
-from odsod_daemon.lib import config
+from odsod_daemon.lib import config, glossary
 from odsod_daemon.services import SERVICES
 from odsod_daemon.services.runner import (
     ComponentNotBuilt,
@@ -127,6 +127,10 @@ def config_check(
 ) -> None:
     """Load every config section and report all errors."""
     errors = config.check(_section_models())
+    try:
+        glossary.load()
+    except ValueError as error:
+        errors.append(str(error))
     result = CheckResult(ok=not errors, errors=errors)
     output.emit(result, as_json=as_json, text=_check_text)
     if not result.ok:

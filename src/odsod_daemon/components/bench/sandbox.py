@@ -19,7 +19,7 @@ from odsod_daemon.components.bench.contract import (
     Outcome,
     SetupManifest,
 )
-from odsod_daemon.lib import audio, clock, documents, paths, streams
+from odsod_daemon.lib import audio, clock, documents, glossary, paths, streams
 
 GAP_S = 5
 """Synthetic seconds between two cases (ADR-0019)."""
@@ -123,9 +123,9 @@ def _write_config(
     conf["speech"] = settings
     documents.write_json(base / "config/config.json", conf)
 
-    glossary = roots.config / "glossary.txt"
-    if glossary.exists():
-        documents.write(base / "config/glossary.txt", glossary.read_bytes())
+    found = glossary.path(roots)
+    if found is not None:
+        documents.write(base / "config" / found.name, found.read_bytes())
 
     for lane, live_name in PROMPTS.items():
         name = _prompt_sources(setup).get(lane)

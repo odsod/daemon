@@ -15,15 +15,11 @@ from odsod_daemon.components.transcription.presence import presence
 from odsod_daemon.components.transcription.queue import Inbox, pending, records
 from odsod_daemon.components.transcription.request import fields, wav
 from odsod_daemon.lib import audio, clock, config, inference, paths, power, streams
+from odsod_daemon.lib import glossary as lib_glossary
 
 
 def glossary() -> list[str]:
-    path = paths.roots().config / "glossary.txt"
-    return (
-        [line.strip() for line in path.read_text().splitlines() if line.strip()]
-        if path.exists()
-        else []
-    )
+    return lib_glossary.terms(lib_glossary.current())
 
 
 def available(state, channel, start, end) -> bool:

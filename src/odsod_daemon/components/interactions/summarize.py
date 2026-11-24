@@ -68,6 +68,7 @@ class Summarizer:
 
         from jinja2 import Environment, StrictUndefined
 
+        from odsod_daemon.lib import glossary as lib_glossary
         from odsod_daemon.lib import inference
 
         self.config = config
@@ -75,10 +76,7 @@ class Summarizer:
             url, model=config.model, timeout_s=config.request_timeout_s
         )
         shipped = Path(__file__).parent / "prompts"
-        glossary_path = roots.config / "glossary.txt"
-        glossary = (
-            glossary_path.read_text().splitlines() if glossary_path.exists() else []
-        )
+        glossary = lib_glossary.terms(lib_glossary.current(roots))
         self.prompts = {}
         for name in ("summarize", "combine"):
             override = roots.config / "prompts" / f"interactions-{name}.md"

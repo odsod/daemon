@@ -39,7 +39,7 @@ RUNCFG = [
     ("run/muted.json", "muted"),
     ("run/paused", "paused"),
     ("config/config.json", "config.json"),
-    ("config/glossary.txt", "glossary"),
+    ("config/glossary.yaml", "glossary"),
     ("config/prompts/", "prompts"),
 ]
 
@@ -310,7 +310,7 @@ RUNROWS = {
     "run/muted.json": ["W DICTATION"],
     "run/paused": ["W CONTROL"],
     "config/config.json": ["W OWNER"],
-    "config/glossary.txt": ["W OWNER"],
+    "config/glossary.yaml": ["W OWNER"],
     "config/prompts/": ["W OWNER"],
 }
 for i, (path, _) in enumerate(RUNCFG):

@@ -290,7 +290,7 @@
 <text x="1246.5" y="775" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#1b1b1b">config/config.json</text>
 <text x="1246.5" y="794" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="middle" fill="#1b1b1b">W OWNER</text>
 <rect x="1330" y="755" width="157" height="62" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
-<text x="1408.5" y="775" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#1b1b1b">config/glossary.txt</text>
+<text x="1408.5" y="775" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#1b1b1b">config/glossary.yaml</text>
 <text x="1408.5" y="794" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="middle" fill="#1b1b1b">W OWNER</text>
 <rect x="1492" y="755" width="157" height="62" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.6"/>
 <text x="1570.5" y="775" font-family="'Courier New', Courier, monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#1b1b1b">config/prompts/</text>

@@ -14,7 +14,7 @@ from odsod_daemon.components.bench.contract import (
     Live,
     ReportRow,
 )
-from odsod_daemon.lib import paths
+from odsod_daemon.lib import glossary, paths
 
 
 @dataclass(frozen=True)
@@ -128,10 +128,7 @@ class Bucket:
 
 
 def glossary_terms(roots: paths.Roots) -> list[str]:
-    path = roots.config / "glossary.txt"
-    if not path.exists():
-        return []
-    return [line.strip() for line in path.read_text().splitlines() if line.strip()]
+    return glossary.terms(glossary.current(roots))
 
 
 def _latency(result: BenchResult, case: BenchCase, roots: paths.Roots) -> int | None:

@@ -88,7 +88,7 @@ The setup manifest, in each result:
 | `kind`            | `asr` or `pipeline`                                                                      |
 | `model`           | ASR model name and `revision`; for `pipeline` also the LLM `model` and `revision`        |
 | `prompt_sha256`   | Hash of the rendered cleanup prompt (`pipeline`), or null                                |
-| `glossary_sha256` | Hash of `config/glossary.txt` as used                                                    |
+| `glossary_sha256` | Hash of `config/glossary.yaml` as used                                                    |
 | `settings`        | The full ASR and cleanup settings, as JSON                                               |
 | `commit`          | The daemon commit (`odsodctl version`)                                                   |
 | `fingerprint`     | SHA-256 of the canonical JSON of all fields above except `name`, first 16 hex characters |
@@ -106,7 +106,7 @@ The setup manifest, in each result:
 | `state/asr/<backend>/`                                             | `input`, `outcome`, `text`, `language`, `setup`                                                              | Live ASR text per backend          |
 | `state/interactions/`                                              | `id`, `start`, `end`, `outcome`, `document`                                                                  | Interaction candidates             |
 | `state/documents/interactions/`                                    | The document by name                                                                                         | `document.md` of interaction cases |
-| `config/glossary.txt`                                              | One term per line                                                                                            | Setups; glossary measure           |
+| `config/glossary.yaml`                                              | Entries (ADR-0021)                                                                                            | Setups; glossary measure           |
 | `config/prompts/<name>.md`                                         | A prompt file that a setup names                                                                             | `pipeline` setups                  |
 | `config/config.json`                                               | Sections `bench`, `common` (`host`, `inference`) and `speech` (whole section, as a base for setup overrides) | Setups; case source                |
 | `config/prompts/cleanup.md`, `config/prompts/cleanup-dictation.md` | The live prompt names of speech ([ADR-0012](0012-speech.md))                                                 | Base prompts of a setup            |
@@ -269,7 +269,7 @@ Steps, for one sandbox:
 1. Make a temp dir with `state/`, `run/` and `config/`.
 2. `config/config.json`: the host's config, with `common.inference` set to
    the setup URLs and the `speech` section merged with the setup
-   `settings`. `config/glossary.txt`: a copy of the host's glossary. The
+   `settings`. `config/glossary.yaml`: a copy of the host's glossary. The
    setup prompt, if any, goes to its name under `config/prompts/`.
 3. Give each case a synthetic time near now: the sandbox base time (the
    current hour, from `lib.clock`) plus a fixed slot per case, with 5 s
