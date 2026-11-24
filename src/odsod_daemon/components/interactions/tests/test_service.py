@@ -211,3 +211,23 @@ def test_done_interaction_across_retention_start_is_not_found_again(worker):
         ),
     )
     assert worker.pending() == []
+
+
+def test_detection_runs_at_most_every_30_s(worker, monkeypatch):
+    """Detection costs about 1 s on a full day; new coverage records mark the
+    view dirty several times a second, so it must not run on every wakeup."""
+    calls = []
+    real = service.detect
+    monkeypatch.setattr(
+        service, "detect", lambda *a, **k: calls.append(1) or real(*a, **k)
+    )
+    moment = [1000.0]
+    monkeypatch.setattr(service.clock, "monotonic", lambda: moment[0])
+    for _ in range(5):
+        worker.view.dirty = True
+        worker.pending()
+    assert len(calls) == 1
+    moment[0] += service.DETECT_EVERY_S
+    worker.view.dirty = True
+    worker.pending()
+    assert len(calls) == 2
