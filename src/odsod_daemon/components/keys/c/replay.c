@@ -9,7 +9,8 @@
  * Test driver: feeds the in lines of a sequence file to the state machine and
  * prints its outputs as out lines. Timers fire on the next input, so a
  * sequence that waits for a timer uses an in tick line. An in stop line
- * calls ks_release_all(), as service shutdown does.
+ * calls ks_release_all(), as service shutdown does. An in lost line calls
+ * ks_device_lost(), as a keyboard disconnect does.
  */
 
 static int value_of(const char *name)
@@ -154,6 +155,7 @@ int main(int argc, char **argv)
 				break;
 			}
 		} else if (strcmp(kind, "tick") == 0 ||
+			   strcmp(kind, "lost") == 0 ||
 			   strcmp(kind, "stop") == 0) {
 			if (fields != 3) {
 				status = fail(path, line_no, "bad timer or stop line");
@@ -181,6 +183,8 @@ int main(int argc, char **argv)
 
 		if (strcmp(kind, "stop") == 0) {
 			ks_release_all(&state, ms, &out);
+		} else if (strcmp(kind, "lost") == 0) {
+			ks_device_lost(&state, ms, &out);
 		} else {
 			ks_handle(&state, &in, &out);
 			for (int i = 0; i < out.count; i++) {

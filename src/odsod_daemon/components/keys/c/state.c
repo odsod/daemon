@@ -547,3 +547,26 @@ void ks_release_all(struct ks_state *state, long t_ms, struct ks_outputs *out)
 	out->count = 0;
 	release_all(state, t_ms, out);
 }
+
+/*
+ * A keyboard that disappeared cannot report its releases, so nothing may
+ * stay down and no pending tap may fire from fake input.
+ */
+void ks_device_lost(struct ks_state *state, long t_ms, struct ks_outputs *out)
+{
+	out->count = 0;
+	for (int code = 0; code <= KEY_MAX; code++) {
+		if (state->out_down[code])
+			out_key(state, out, t_ms, code, 0);
+	}
+	if (state->alt.state == KS_ALT_DICTATE)
+		out_sock(out, KS_OUT_SOCK_STOP, t_ms, t_ms, NULL);
+	memset(state->keys_down, 0, sizeof(state->keys_down));
+	state->capslock.state = KS_CTRL_IDLE;
+	state->leftctrl.state = KS_CTRL_IDLE;
+	state->space.state = KS_SPACE_IDLE;
+	state->space.queued_count = 0;
+	state->alt.state = KS_ALT_IDLE;
+	state->alt_deadline = -1;
+	state->chord_deadline = -1;
+}

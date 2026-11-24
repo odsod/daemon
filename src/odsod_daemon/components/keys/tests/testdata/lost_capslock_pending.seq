@@ -1,0 +1,5 @@
+# A lost Caps Lock tap gives no Esc, only the Ctrl it already emitted.
+0 in key KEY_CAPSLOCK down
+0 out key KEY_LEFTCTRL down
+100 in lost
+100 out key KEY_LEFTCTRL up

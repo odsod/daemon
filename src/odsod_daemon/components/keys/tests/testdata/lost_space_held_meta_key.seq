@@ -1,0 +1,9 @@
+# A lost keyboard releases the Meta layer; no tap reaches the virtual keyboard.
+# KEY_INSERT is the higher code: KEY_UP has no name in keynames.h.
+0 in key KEY_SPACE down
+400 in key KEY_INSERT down
+400 out key KEY_LEFTMETA down
+400 out key KEY_INSERT down
+500 in lost
+500 out key KEY_INSERT up
+500 out key KEY_LEFTMETA up
