@@ -24,7 +24,8 @@
   first in this order wins: Error, Dictating, Warning, Paused, Mic muted,
   Running. Dictating is the owner's own action and lasts seconds, so it
   shows over a Warning.
-- Warning causes: the backlog grows, the inference host is out of reach, a
+- Warning causes: the backlog grows, the inference host or its dictation
+  speech server is out of reach, a
   target is missing or full, a meeting mute failed, or a meeting tab shows
   no speaking indicator for 5 min. A mic that gives only zeros shows Mic
   muted, as a hardware mute (`ambient-recording`). Error
@@ -122,7 +123,8 @@ to confirm. Detection times for silent mics and stalls are in the
 - What each recording problem is, and when it is detected → the
   `ambient-recording` PRD.
 - Other Warning causes: a failed meeting mute (`dictation`), the inference
-  host out of reach (`live-transcript`), a missing target (`publishing`),
+  host or its dictation speech server out of reach (`live-transcript`,
+  `dictation`), a missing target (`publishing`),
   documents waiting over 24 h (`interactions`).
 - The dev mark → the `install-and-upgrade` PRD.
 - Dictation failures and their notifications → the `dictation` PRD.

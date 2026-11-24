@@ -108,7 +108,8 @@ Proposed
 - When the keys service exits, the kernel releases its keyboard grabs. The
   keyboard works unmapped until the restart, and nothing stays stuck.
 - The session unit has `ExecStopPost=odsodctl unmute-stale`. It unmutes
-  every stream listed in `run/muted.json` each time the service stops, also
+  every stream listed in `run/muted.json`, and mutes its `source` again,
+  each time the service stops, also
   after a crash and after the start limit. It loads no Qt and no dictation
   code. Dictation also unmutes stale streams when it starts.
 - External faults are not crashes. When the inference host is out of reach,
@@ -138,14 +139,14 @@ notify unit do.
   with the systemd unit states. The tray and `odsodctl status` use
   the `health` component, so they always agree.
 
-| State     | Condition                                                                                                                                                                                                                                                           | Exit code |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
-| Error     | Capture failed, stalled or hit its start limit; any service hit its start limit; keys socket missing                                                                                                                                                                | 2         |
-| Dictating | Session state                                                                                                                                                                                                                                                       | 0         |
-| Warning   | Backlog grows; inference host unreachable; a publish target missing or full; a meeting mute failed; the mic gives only digital silence that the owner did not mute (hardware switch?); a meeting tab with no speaking indicator for 5 min; stale mutes were cleared | 1         |
-| Paused    | `run/paused` exists and capture is stopped                                                                                                                                                                                                                          | 0         |
-| Mic muted | The owner muted the mic source. Shown as a mark, not an alarm                                                                                                                                                                                                       | 0         |
-| Running   | Capture active and audio fresh                                                                                                                                                                                                                                      | 0         |
+| State     | Condition                                                                                                                                                                                                                                                                                                    | Exit code |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------- |
+| Error     | Capture failed, stalled or hit its start limit; any service hit its start limit; keys socket missing                                                                                                                                                                                                         | 2         |
+| Dictating | Session state                                                                                                                                                                                                                                                                                                | 0         |
+| Warning   | Backlog grows; inference host unreachable; the dictation speech server unavailable; a publish target missing or full; a meeting mute failed; the mic gives only digital silence that the owner did not mute (hardware switch?); a meeting tab with no speaking indicator for 5 min; stale mutes were cleared | 1         |
+| Paused    | `run/paused` exists and capture is stopped                                                                                                                                                                                                                                                                   | 0         |
+| Mic muted | The owner muted the mic source. Shown as a mark, not an alarm                                                                                                                                                                                                                                                | 0         |
+| Running   | Capture active and audio fresh                                                                                                                                                                                                                                                                               | 0         |
 
 - When several states apply, the first row wins.
 - "Stale mutes were cleared" clears after 10 min or at the next dictation.

@@ -259,16 +259,16 @@ components/keys/
 
 ### Failure modes
 
-| Fault                                  | What the service does                                                     | Signal to the owner                         |
-| -------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------- |
-| Crash                                  | The kernel releases the grabs; the plain keyboard works; systemd restarts | `OnFailure=` notification after start limit |
-| Keys lost or stuck, no crash           | Escape chord releases the grabs and exits                                 | systemd restarts it                         |
-| `/dev/uinput` cannot be opened         | Exits non-zero before any grab                                            | unit failed → Error                         |
-| Device removed or read error           | Drops the device                                                          | none                                        |
-| Client slow (write would block)        | Drops the client                                                          | session reconnects                          |
-| Peer with another UID                  | Closes the connection                                                     | log line                                    |
-| `paste` while a modifier is held 1.5 s | `paste-failed modifier-held`                                              | dictation notifies                          |
-| No client                              | Left Alt is plain Alt                                                     | session's `keys` reason                     |
+| Fault                                  | What the service does                                                                                               | Signal to the owner                         |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| Crash                                  | The kernel releases the grabs; the plain keyboard works; systemd restarts                                           | `OnFailure=` notification after start limit |
+| Keys lost or stuck, no crash           | Escape chord releases the grabs and exits                                                                           | systemd restarts it                         |
+| `/dev/uinput` cannot be opened         | Exits non-zero before any grab                                                                                      | unit failed → Error                         |
+| Device removed or read error           | Drops the device; a lost keyboard releases held keys, stops a dictation, resets overloads and sends a waiting paste | none                                        |
+| Client slow (write would block)        | Drops the client                                                                                                    | session reconnects                          |
+| Peer with another UID                  | Closes the connection                                                                                               | log line                                    |
+| `paste` while a modifier is held 1.5 s | `paste-failed modifier-held`                                                                                        | dictation notifies                          |
+| No client                              | Left Alt is plain Alt                                                                                               | session's `keys` reason                     |
 
 - On `SIGTERM` the service releases every grab and sends key-up for every
   key it holds down, so no key stays down (`keyboard` AC-14).

@@ -81,7 +81,7 @@ Proposed
 | `run/muted.json`           | `streams` (`id`, `app`) and `source`: at dictation start and in `unmute-stale` |
 | systemd unit state         | `odsod-daemon-capture.service` active (`lib.systemd`)                          |
 | Inference host             | Reachable (`lib.inference.reachable`); `lib.power.on_mains()`                  |
-| `config/config.json`       | Section `dictation`; `common.inference.whisper_url`                            |
+| `config/config.json`       | Section `dictation`; `common.inference.dictation_url`, else `whisper_url`      |
 | PipeWire (through `pactl`) | Source outputs: ID, `application.name`, `node.name`, mute flag, monitor or not |
 
 - `odsodctl dictation last` reads `utterances/dictation/` and `text/` only.
@@ -129,9 +129,9 @@ components/unmute_stale/
 
 - Every 2 s, `gate.py` decides whether to hold the keys socket open:
   - capture unit active (it is stopped while paused, ADR-0004);
-  - the whisper URL is reachable: TCP connect within 1 s, checked every
-    5 s;
-  - not (on battery and the whisper URL is a loopback address), the same
+  - the dictation URL (`dictation_url`, else `whisper_url`) is reachable:
+    TCP connect within 1 s, checked every 5 s;
+  - not (on battery and that URL is a loopback address), the same
     rule as speech ([ADR-0012](0012-speech.md)).
 - All true: connect. Any false: disconnect, so Left Alt is a plain Alt
   (ADR-0007), and set `keys` in `run/status.json` to `paused` or
@@ -186,7 +186,7 @@ On `cancel t` or a disconnect while dictating: unmute, write `mode: idle`,
 append nothing (`dictation` AC-9). The audio stays ambient.
 
 At `MAX_HOLD` (120 s) after the press, the loop acts as on `stop` at that
-time. A later `stop` is ignored. Whisper stays within its time budget.
+time. A later `stop` is ignored. Speech-to-text stays within its time budget.
 
 If the `mic` file does not cover the end in 2 s (capture stalled), the hold
 fails: notification "dictation failed", no utterance.

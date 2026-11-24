@@ -118,13 +118,13 @@ and [ADR-0012](0012-speech.md) for dictation.
 
 ### Failure modes
 
-| Fault                                | What happens                                                     | Code / signal                           |
-| ------------------------------------ | ---------------------------------------------------------------- | --------------------------------------- |
-| Model download fails or hash differs | Retry with backoff; server answers 503                           | `parakeet-model` (Warning)              |
-| Bind fails (address not up yet)      | Retry every 5 s                                                  | `parakeet-listen` (Warning) after 60 s  |
-| Model fails to load                  | Component raises; the pipeline restarts                          | unit failure                            |
-| Server unreachable from a host       | Dictation off on that host                                       | `keys: no-inference`                    |
-| Server answers 5xx or times out      | Same retries and `timeout_s` as whisper for dictation (ADR-0012) | `inference-unreachable`, key `parakeet` |
+| Fault                                | What happens                                                     | Code / signal                                                       |
+| ------------------------------------ | ---------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Model download fails or hash differs | Retry with backoff; server answers 503                           | `parakeet-unavailable`, key `model` (Warning)                       |
+| Bind fails (address not up yet)      | Retry every 5 s                                                  | `parakeet-unavailable`, key `listen-<address>` (Warning) after 60 s |
+| Model fails to load                  | Component raises; the pipeline restarts                          | unit failure                                                        |
+| Server unreachable from a host       | Dictation off on that host                                       | `keys: no-inference`                                                |
+| Server answers 5xx or times out      | Same retries and `timeout_s` as whisper for dictation (ADR-0012) | `inference-unreachable`, key `parakeet`                             |
 
 ## Consequences
 
