@@ -26,6 +26,7 @@ static const struct key_name key_names[] = {
 	{"KEY_SPACE", KEY_SPACE},
 	{"KEY_TAB", KEY_TAB},
 	{"KEY_INSERT", KEY_INSERT},
+	{"KEY_ENTER", KEY_ENTER},
 	{"KEY_1", KEY_1},
 	{"KEY_A", KEY_A},
 	{"KEY_B", KEY_B},

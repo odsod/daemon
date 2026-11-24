@@ -1,0 +1,15 @@
+# A paste that fails sends no Enter. dictation AC-29.
+0 in sock connect
+0 in key KEY_LEFTALT down
+500 in key KEY_LEFTALT up
+350 out sock start 0
+500 out sock stop 500
+800 in key KEY_LEFTALT down
+900 in key KEY_LEFTALT up
+1000 in key KEY_RIGHTSHIFT down
+1000 out key KEY_RIGHTSHIFT down
+1100 in sock paste
+3000 in tick
+2600 out sock paste-failed modifier-held
+4000 in key KEY_RIGHTSHIFT up
+4000 out key KEY_RIGHTSHIFT up

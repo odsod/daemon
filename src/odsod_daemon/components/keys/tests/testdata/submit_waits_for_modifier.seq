@@ -1,0 +1,22 @@
+# Enter with a held modifier is another command, so Enter waits for the
+# release. dictation AC-29.
+0 in sock connect
+0 in key KEY_LEFTALT down
+500 in key KEY_LEFTALT up
+350 out sock start 0
+500 out sock stop 500
+800 in key KEY_LEFTALT down
+900 in key KEY_LEFTALT up
+1500 in sock paste
+1500 out key KEY_LEFTSHIFT down
+1500 out key KEY_INSERT down
+1500 out key KEY_INSERT up
+1500 out key KEY_LEFTSHIFT up
+1500 out sock pasted
+1600 in key KEY_RIGHTSHIFT down
+1600 out key KEY_RIGHTSHIFT down
+1720 in key KEY_RIGHTSHIFT up
+1720 out key KEY_RIGHTSHIFT up
+1750 in tick
+1750 out key KEY_ENTER down
+1750 out key KEY_ENTER up

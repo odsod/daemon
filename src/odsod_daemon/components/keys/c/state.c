@@ -248,6 +248,20 @@ static void send_paste(struct ks_state *state, struct ks_outputs *out,
 	out_key(state, out, t_ms, KEY_INSERT, 0);
 	out_key(state, out, t_ms, KEY_LEFTSHIFT, 0);
 	out_sock(out, KS_OUT_SOCK_PASTED, t_ms, 0, NULL);
+	if (state->submit) {
+		state->enter_deadline = t_ms + KS_ENTER_DELAY_MS;
+		state->enter_until = t_ms + KS_PASTE_WAIT_MS;
+	}
+	state->submit = 0;
+	state->submit_window = -1;
+}
+
+static void clear_submit(struct ks_state *state)
+{
+	state->submit = 0;
+	state->submit_window = -1;
+	state->enter_deadline = -1;
+	state->enter_until = -1;
 }
 
 static void maybe_paste(struct ks_state *state, long t_ms,
@@ -298,13 +312,20 @@ static void fire_chord(struct ks_state *state, long t_ms,
 	state->chord_deadline = -1;
 	state->paste_pending = 0;
 	state->paste_deadline = -1;
+	clear_submit(state);
 }
 
 static void advance(struct ks_state *state, long t_ms, struct ks_outputs *out)
 {
 	for (;;) {
-		enum { FIRE_NONE, FIRE_ALT, FIRE_CHORD, FIRE_PASTE } fire =
-			FIRE_NONE;
+		enum {
+			FIRE_NONE,
+			FIRE_ALT,
+			FIRE_CHORD,
+			FIRE_PASTE,
+			FIRE_WINDOW,
+			FIRE_ENTER,
+		} fire = FIRE_NONE;
 		long best = 0;
 
 		if (state->chord_deadline >= 0 &&
@@ -325,6 +346,18 @@ static void advance(struct ks_state *state, long t_ms, struct ks_outputs *out)
 			best = state->paste_deadline;
 			fire = FIRE_PASTE;
 		}
+		if (state->submit_window >= 0 &&
+		    state->submit_window <= t_ms &&
+		    (fire == FIRE_NONE || state->submit_window < best)) {
+			best = state->submit_window;
+			fire = FIRE_WINDOW;
+		}
+		if (state->enter_deadline >= 0 &&
+		    state->enter_deadline <= t_ms &&
+		    (fire == FIRE_NONE || state->enter_deadline < best)) {
+			best = state->enter_deadline;
+			fire = FIRE_ENTER;
+		}
 
 		if (fire == FIRE_NONE)
 			return;
@@ -341,10 +374,29 @@ static void advance(struct ks_state *state, long t_ms, struct ks_outputs *out)
 			state->alt_deadline = -1;
 			continue;
 		}
+		if (fire == FIRE_WINDOW) {
+			state->submit = 0;
+			state->submit_window = -1;
+			continue;
+		}
+		if (fire == FIRE_ENTER) {
+			if (!modifier_held(state)) {
+				out_key(state, out, best, KEY_ENTER, 1);
+				out_key(state, out, best, KEY_ENTER, 0);
+				state->enter_deadline = -1;
+			} else if (best + 50 <= state->enter_until) {
+				/* Enter with a modifier is another command: wait. */
+				state->enter_deadline = best + 50;
+			} else {
+				state->enter_deadline = -1;
+			}
+			continue;
+		}
 		state->paste_pending = 0;
 		state->paste_deadline = -1;
 		out_sock(out, KS_OUT_SOCK_PASTE_FAILED, best, 0,
 			 "modifier-held");
+		clear_submit(state);
 	}
 }
 
@@ -374,11 +426,18 @@ static void handle_left_alt(struct ks_state *state, struct ks_outputs *out,
 
 	switch (state->alt.state) {
 	case KS_ALT_PENDING:
+		if (state->submit_window >= 0) {
+			/* A tap while the text is pending: Enter after the paste. */
+			state->submit = 1;
+			break;
+		}
 		process_key(state, out, t_ms, KEY_LEFTALT, 1);
 		process_key(state, out, t_ms, KEY_LEFTALT, 0);
 		break;
 	case KS_ALT_DICTATE:
 		out_sock(out, KS_OUT_SOCK_STOP, t_ms, t_ms, NULL);
+		state->submit = 0;
+		state->submit_window = t_ms + KS_SUBMIT_WINDOW_MS;
 		break;
 	case KS_ALT_CHORD:
 		process_key(state, out, t_ms, KEY_LEFTALT, 0);
@@ -471,6 +530,7 @@ static void handle_disconnect(struct ks_state *state)
 		state->alt.state = KS_ALT_SWALLOW;
 	state->paste_pending = 0;
 	state->paste_deadline = -1;
+	clear_submit(state);
 }
 
 static void handle_paste(struct ks_state *state, long t_ms,
@@ -489,6 +549,7 @@ void ks_init(struct ks_state *state)
 	state->alt_deadline = -1;
 	state->chord_deadline = -1;
 	state->paste_deadline = -1;
+	clear_submit(state);
 }
 
 void ks_handle(struct ks_state *state, const struct ks_input *in,
@@ -536,6 +597,12 @@ int ks_deadline(const struct ks_state *state, long *t_ms)
 	if (state->paste_pending && state->paste_deadline >= 0 &&
 	    (best < 0 || state->paste_deadline < best))
 		best = state->paste_deadline;
+	if (state->submit_window >= 0 &&
+	    (best < 0 || state->submit_window < best))
+		best = state->submit_window;
+	if (state->enter_deadline >= 0 &&
+	    (best < 0 || state->enter_deadline < best))
+		best = state->enter_deadline;
 	if (best < 0)
 		return 0;
 	*t_ms = best;
@@ -569,6 +636,7 @@ void ks_device_lost(struct ks_state *state, long t_ms, struct ks_outputs *out)
 	state->alt.state = KS_ALT_IDLE;
 	state->alt_deadline = -1;
 	state->chord_deadline = -1;
+	clear_submit(state);
 	/* No key is held now, so a paste that waited for a modifier runs. */
 	maybe_paste(state, t_ms, out);
 }

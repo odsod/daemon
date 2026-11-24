@@ -12,6 +12,10 @@
 #define KS_SPACE_HOLD_MS 150
 #define KS_ALT_MS 350
 #define KS_PASTE_WAIT_MS 1500
+/* After a dictation stop, a Left Alt tap within this window asks for Enter. */
+#define KS_SUBMIT_WINDOW_MS 12000
+/* Enter waits this long after the paste, so the app applies the paste first. */
+#define KS_ENTER_DELAY_MS 150
 #define KS_ESCAPE_MS 3000
 #define KS_MAX_OUTPUTS 128
 #define KS_MAX_QUEUE 16
@@ -104,6 +108,11 @@ struct ks_state {
 
 	int paste_pending;
 	long paste_deadline;
+
+	long submit_window;
+	int submit;
+	long enter_deadline;
+	long enter_until;
 };
 
 void ks_init(struct ks_state *state);

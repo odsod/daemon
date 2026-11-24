@@ -1,0 +1,11 @@
+# With no paste in 12 s after the stop, a Left Alt tap is a plain Alt tap.
+# dictation AC-29.
+0 in sock connect
+0 in key KEY_LEFTALT down
+500 in key KEY_LEFTALT up
+350 out sock start 0
+500 out sock stop 500
+12600 in key KEY_LEFTALT down
+12700 in key KEY_LEFTALT up
+12700 out key KEY_LEFTALT down
+12700 out key KEY_LEFTALT up
