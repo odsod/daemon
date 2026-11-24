@@ -66,7 +66,9 @@ def test_first_install_writes_the_binary_and_units(
     assert "ExecStart=/usr/local/bin/odsod-daemon-keys" in unit
     assert "Restart=always" in unit
     assert "Nice=-20" in unit
-    assert "RuntimeDirectory=odsod-daemon-keys" in unit
+    # systemd sets a RuntimeDirectory= owner again before ExecStart, so the
+    # socket would be root's (live laptop, 2026-11-24).
+    assert "RuntimeDirectory" not in unit
     assert f"chown {entry.pw_uid}:{entry.pw_gid} /run/odsod-daemon-keys" in unit
 
     dropin = (prefix / install_system.DROPIN_PATH).read_text(encoding="utf-8")
