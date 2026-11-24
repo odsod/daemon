@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import hashlib
 import os
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
+import odsod_daemon
 from odsod_daemon.components.install.contract import (
+    CAPTURE_SCOPE,
     SERVICES,
     InstallRecord,
     PreviousCommit,
@@ -49,6 +52,20 @@ def changed(candidate: InstallRecord, current: InstallRecord | None) -> bool:
     )
 
 
+def digests(package: Path) -> dict[str, str]:
+    """Hash the installed code: capture's scope and the whole package."""
+    whole, capture = hashlib.sha256(), hashlib.sha256()
+    for path in sorted(package.rglob("*")):
+        if not path.is_file() or "__pycache__" in path.parts:
+            continue
+        name = path.relative_to(package).as_posix()
+        entry = name.encode() + b"\0" + path.read_bytes() + b"\0"
+        whole.update(entry)
+        if name.startswith(CAPTURE_SCOPE):
+            capture.update(entry)
+    return {"all": whole.hexdigest(), "capture": capture.hexdigest()}
+
+
 class ApplyError(RuntimeError):
     """An install failed at a named step without replacing current."""
 
@@ -57,6 +74,7 @@ def install_user(
     *,
     command: Path,
     candidate: InstallRecord | None = None,
+    package: Path | None = None,
     progress: Callable[[str], None] = print,
 ) -> None:
     roots = paths.roots()
@@ -71,7 +89,10 @@ def install_user(
             if current_path.exists()
             else None
         )
+        source.digests = digests(package or Path(odsod_daemon.__file__).parent)
+        old = current.digests if current is not None else {}
         identity_changed = changed(source, current)
+        code_changed = source.digests != old
         step, name = 2, "Render"
         progress("[2/7] Render")
         files = render(command)
@@ -100,16 +121,24 @@ def install_user(
         graphical = systemd.control(
             "is-active", "graphical-session.target", check=False
         )
-        restart_all = identity_changed or source.source == "dev"
+        restarted = []
         for service in SERVICES:
             if service == "keys":
                 continue
             unit = f"odsod-daemon-{service}.service"
-            if restart_all or any(p.name == unit for p in changes.writes):
+            scope = "capture" if service == "capture" else "all"
+            if old.get(scope) != source.digests[scope] or any(
+                p.name == unit for p in changes.writes
+            ):
+                restarted.append(service)
                 action = (
                     "restart" if service == "pipeline" or graphical else "try-restart"
                 )
                 systemd.control(action, unit)
+        if "capture" in restarted:
+            progress("capture restarted: recording has a gap of about 2 s")
+        elif restarted:
+            progress(f"restarted {', '.join(restarted)}; capture kept recording")
         systemd.control("start", "odsod-daemon.target")
         if graphical:
             for service in SERVICES:
@@ -124,7 +153,7 @@ def install_user(
             documents.write_json(
                 roots.state / "install/previous-commit", previous.model_dump()
             )
-        if identity_changed or source.source == "dev":
+        if identity_changed or code_changed or source.source == "dev":
             documents.write_json(current_path, source.model_dump())
     except Exception as error:
         rerun = (

@@ -1,8 +1,9 @@
 # PRD: Install and upgrade
 
 - Status: Accepted
-- Updated: 2026-11-23
+- Updated: 2026-11-24
 - Design: [ADR-0006](../adr/0006-installation.md),
+  [ADR-0020](../adr/0020-hot-deploy.md),
   [ADR-0004](../adr/0004-orchestration-with-systemd.md)
 
 ## Problem
@@ -34,7 +35,9 @@
   The host runs that commit.
 - Owner or an agent develops on a host → `mise run deploy` in the repo
   installs the local work as the live system. Each code change needs
-  `deploy` again. The next `daemon:setup` from the `machine` repo puts
+  `deploy` again. Only the services whose code changed restart. A change
+  outside capture leaves no recording gap, also during a meeting. The
+  deploy says when capture restarts. The next `daemon:setup` from the `machine` repo puts
   `main` back.
 - A host runs local work → `odsodctl version` says so, with the workspace
   and commit. The tray shows a dev mark and `odsodctl status` shows `dev`.
@@ -93,6 +96,10 @@ during an upgrade is `ambient-recording` AC-4.
 15. **AC-15** After a failed upgrade, `odsodctl status` names the
     `daemon:setup` command and the commit id that ran before. _Check:
     system test._
+
+16. **AC-16** A deploy or upgrade that changes no capture code restarts
+    no capture service, so recording has no gap. The output names the
+    services that restarted. _Check: system test._
 
 ## Boundaries
 

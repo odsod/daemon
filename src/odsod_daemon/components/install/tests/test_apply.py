@@ -18,7 +18,14 @@ def installed(tmp_path: Path, monkeypatch):
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "home/.local/share"))
     monkeypatch.setenv("ODSOD_DAEMON_ROOT", str(tmp_path / "root"))
     monkeypatch.setenv("PATH", f"{BIN}:{os.environ['PATH']}")
+    for name in ("components/capture/channel.py", "components/cleanup/guard.py"):
+        edit(tmp_path / "package" / name, "v1")
     return tmp_path / "root"
+
+
+def edit(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text)
 
 
 def record(commit="a", source: Source = "git"):
@@ -26,7 +33,12 @@ def record(commit="a", source: Source = "git"):
 
 
 def apply(candidate):
-    install_user(command=Path("/usr/bin/true"), candidate=candidate)
+    package = Path(os.environ["ODSOD_DAEMON_ROOT"]).parent / "package"
+    install_user(command=Path("/usr/bin/true"), candidate=candidate, package=package)
+
+
+def package(root: Path) -> Path:
+    return root.parent / "package"
 
 
 def calls(root):
@@ -43,6 +55,7 @@ def test_idempotent_and_commit_change(installed):
         c.startswith(("restart ", "daemon-reload")) for c in calls(installed)
     )
     assert current.stat().st_mtime_ns == stamp
+    edit(package(installed) / "components/capture/channel.py", "v2")
     apply(record("b"))
     previous = documents.read_json(installed / "state/install/previous-commit")
     assert previous["commit"] == "a"
@@ -50,10 +63,45 @@ def test_idempotent_and_commit_change(installed):
     assert "restart odsod-daemon-pipeline.service" in calls(installed)
 
 
-def test_dev_always_restarts(installed):
+def test_commit_without_code_change_restarts_nothing(installed):
+    apply(record())
+    (installed / "systemctl.log").unlink()
+    apply(record("b"))
+    assert not any(c.startswith("restart ") for c in calls(installed))
+    assert documents.read_json(installed / "state/install/current")["commit"] == "b"
+
+
+def test_hot_deploy_keeps_capture_recording(installed):
+    """PRD install-and-upgrade AC-16: no capture restart, no gap."""
     apply(record(source="dev"))
     (installed / "systemctl.log").unlink()
+    edit(package(installed) / "components/cleanup/guard.py", "v2")
     apply(record(source="dev"))
+    log = calls(installed)
+    assert "restart odsod-daemon-pipeline.service" in log
+    assert "restart odsod-daemon-tray.service" in log
+    assert "restart odsod-daemon-capture.service" not in log
+
+
+@pytest.mark.parametrize(
+    "name", ["components/capture/channel.py", "lib/audio.py", "services/runner.py"]
+)
+def test_capture_scope_change_restarts_capture(installed, name):
+    apply(record(source="dev"))
+    (installed / "systemctl.log").unlink()
+    edit(package(installed) / name, "v2")
+    apply(record(source="dev"))
+    assert "restart odsod-daemon-capture.service" in calls(installed)
+
+
+def test_record_without_digests_restarts_all(installed):
+    apply(record())
+    current = installed / "state/install/current"
+    old = documents.read_json(current)
+    del old["digests"]
+    documents.write_json(current, old)
+    (installed / "systemctl.log").unlink()
+    apply(record())
     assert "restart odsod-daemon-capture.service" in calls(installed)
     assert "restart odsod-daemon-pipeline.service" in calls(installed)
 
@@ -70,6 +118,7 @@ def test_logged_out(installed):
 
 def test_failure_names_step_and_keeps_record(installed, monkeypatch):
     apply(record())
+    edit(package(installed) / "components/capture/channel.py", "v2")
     monkeypatch.setenv("FAKE_SYSTEMCTL_FAIL", "restart odsod-daemon-pipeline.service")
     with pytest.raises(ApplyError, match=r"failed at step 6.*Restart"):
         apply(record("b"))
