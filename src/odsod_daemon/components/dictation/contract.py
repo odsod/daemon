@@ -46,3 +46,5 @@ class MutedDocument(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     streams: list[MutedStream] = []
+    # The mic source this hold unmuted; release and crash cleanup mute it again.
+    source: str | None = None

@@ -122,7 +122,8 @@ class Session:
 
     async def startup(self) -> None:
         try:
-            stale = bool(mute.read(self.mute.path).streams)
+            record = mute.read(self.mute.path)
+            stale = bool(record.streams or record.source)
         except OSError, ValueError:
             stale = False
         await self.unmute()

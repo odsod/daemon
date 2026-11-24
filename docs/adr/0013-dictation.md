@@ -41,10 +41,10 @@ Proposed
 
 ### Components
 
-| Component      | Runs in                                      | Job                                                            |
-| -------------- | -------------------------------------------- | -------------------------------------------------------------- |
-| `dictation`    | `session` service, `odsodctl dictation last` | The loop: socket, mute, utterance, text wait, paste, status    |
-| `unmute-stale` | command `odsodctl unmute-stale`              | Unmute the streams in `run/muted.json` after the session stops |
+| Component      | Runs in                                      | Job                                                                                  |
+| -------------- | -------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `dictation`    | `session` service, `odsodctl dictation last` | The loop: socket, mute, utterance, text wait, paste, status                          |
+| `unmute-stale` | command `odsodctl unmute-stale`              | Unmute the streams in `run/muted.json` and mute its `source` after the session stops |
 
 - Both have `SUBSYSTEM = "dictation"`.
 - `unmute-stale` runs as `ExecStopPost=` of the session unit (ADR-0004). It
@@ -78,7 +78,7 @@ Proposed
 | Keys socket                | `start`, `stop`, `cancel` with wall-clock times; `pasted`, `paste-failed`      |
 | `state/audio/mic/`         | File size only: wait until it covers `end` (`lib.audio`)                       |
 | `state/text/`              | `input`, `outcome`, `text`, `raw`                                              |
-| `run/muted.json`           | `streams` (`id`, `app`): at dictation start and in `unmute-stale`              |
+| `run/muted.json`           | `streams` (`id`, `app`) and `source`: at dictation start and in `unmute-stale` |
 | systemd unit state         | `odsod-daemon-capture.service` active (`lib.systemd`)                          |
 | Inference host             | Reachable (`lib.inference.reachable`); `lib.power.on_mains()`                  |
 | `config/config.json`       | Section `dictation`; `common.inference.whisper_url`                            |
@@ -112,7 +112,7 @@ components/dictation/
 ├── service.py     wires the loop to the socket, files, pactl and the clipboard
 ├── keys_client.py socket connect, line codec (models from keys.contract)
 ├── gate.py        pure: capture active, inference reachable, battery → connect or not
-├── pactl.py       list, mute and unmute source outputs (stdlib only)
+├── pactl.py       list, mute and unmute source outputs and the mic (stdlib only)
 ├── mute.py        mute set: record, mute, unmute; stale cleanup
 ├── delivery.py    save clipboard, write text, paste, restore
 ├── notify.py      notify-send
@@ -210,6 +210,18 @@ fails: notification "dictation failed", no utterance.
   still exists with the same `application.name`. PipeWire can reuse an ID
   for a new stream, and the check keeps the owner's own mutes. A stream
   that ended is not an error. Then write `streams: []`.
+- **Muted mic** (owner decision, 2026-11-24): the hardware mute key mutes
+  the default source, and capture then shows Mic muted. At the same time as
+  the stream list, read `pactl get-default-source` and that source's mute
+  flag. If it is muted, the record gets `source: <name>`. After all streams
+  are muted, unmute it with `pactl set-source-mute <name> 0`, so a meeting
+  never hears the open mic (`dictation` AC-25). An unmuted mic is not
+  touched. The pre-roll before the press holds only silence, so the first
+  word can be cut.
+- **Unmute** also mutes a recorded `source` again, even when a stream
+  unmute fails. A mute key press during the hold is lost: the release mutes
+  the mic. The service start and `unmute-stale` restore the same way, so a
+  crash leaves no open mic (`dictation` AC-26).
 - **Fail open:** a failed or late mute sets `mute-failed` (Warning).
   Dictation goes on (`dictation` AC-16). The next dictation with a full
   mute clears it.

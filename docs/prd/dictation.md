@@ -1,7 +1,7 @@
 # PRD: Dictation
 
 - Status: Accepted
-- Updated: 2026-11-23
+- Updated: 2026-11-24
 - Design: [ADR-0002](../adr/0002-high-level-architecture.md),
   [ADR-0005](../adr/0005-components-and-implementation.md),
   [ADR-0007](../adr/0007-keys-service.md)
@@ -42,6 +42,10 @@
   also when another host runs long batch work on the inference host.
 - Recording is paused, or no inference host is reachable → Left Alt is a
   plain Alt, with no dictation. The tray shows why.
+- The mic is muted (the hardware mute key) → a hold unmutes the mic for the
+  dictation, after the meeting is muted. The release mutes the mic again.
+  Words in the first moment after the press can be lost, because the mic
+  gave only silence before it.
 
 ### When something fails
 
@@ -50,7 +54,8 @@
 - Muting the meeting fails → dictation still works, and the tray shows
   Warning.
 - A crash during dictation → the meeting hears the owner again within 10 s,
-  also when the session service does not come back.
+  also when the session service does not come back. A mic that the hold
+  unmuted is muted again at the same time.
 - Cleanup of the text is slow → the raw speech-to-text text is pasted, with
   no cleanup, rather than nothing.
 - The inference host does not answer in 10 s → nothing is pasted, and a
@@ -119,6 +124,12 @@ targets for the owner to confirm.
     shows the reason. _Check: system test._
 24. **AC-24** A dictation made during a meeting appears in no interaction
     document or summary. _Check: system test._
+25. **AC-25** With the mic muted, a hold unmutes the mic only after every
+    meeting stream is muted, and the release mutes the mic again. With the
+    mic not muted, dictation does not change the mic. _Check: system test._
+26. **AC-26** A stop or crash of the session service during a hold that
+    unmuted the mic mutes the mic again within 10 s. _Check: system test;
+    manual on the owner's laptop._
 
 ## Boundaries
 

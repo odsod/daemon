@@ -21,6 +21,16 @@ if name == "pactl":
     if args[:2] == ["--format=json", "list"]:
         path = root / (args[2] + ".json")
         print(path.read_text() if path.exists() else "[]")
+    elif args[:1] == ["get-default-source"]:
+        path = root / "default-source.txt"
+        print(path.read_text().strip() if path.exists() else "")
+    elif args[:1] == ["set-source-mute"]:
+        path = root / "sources.json"
+        items = json.loads(path.read_text())
+        for item in items:
+            if item.get("name") == args[1]:
+                item["mute"] = args[2] == "1"
+        path.write_text(json.dumps(items))
     else:
         path = root / "source-outputs.json"
         items = json.loads(path.read_text())

@@ -60,6 +60,23 @@ async def outputs() -> list[Stream]:
     ]
 
 
+async def muted_source() -> str | None:
+    """The default source's name when it is muted, as a hardware mute key does."""
+    name, sources = await asyncio.gather(
+        command("pactl", "get-default-source"),
+        command("pactl", "--format=json", "list", "sources"),
+    )
+    default = name.decode().strip()
+    for source in json.loads(sources):
+        if source.get("name") == default:
+            return default if source.get("mute") else None
+    return None
+
+
+async def set_source_mute(name: str, muted: bool) -> None:
+    await command("pactl", "set-source-mute", name, "1" if muted else "0")
+
+
 async def set_mute(stream_id: str, muted: bool) -> None:
     await command("pactl", "set-source-output-mute", stream_id, "1" if muted else "0")
 

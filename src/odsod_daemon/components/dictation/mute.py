@@ -19,7 +19,11 @@ def read(path: Path) -> MutedDocument:
 
 
 async def restore(record: MutedDocument) -> None:
-    await pactl.unmute([(s.id, s.app) for s in record.streams])
+    try:
+        await pactl.unmute([(s.id, s.app) for s in record.streams])
+    finally:
+        if record.source:
+            await pactl.set_source_mute(record.source, True)
 
 
 class Mute:
@@ -31,20 +35,30 @@ class Mute:
         self.count = 0
         try:
             async with asyncio.timeout(MUTE_TIMEOUT):
+                streams, source = await asyncio.gather(
+                    pactl.outputs(), pactl.muted_source()
+                )
                 selected = [
                     MutedStream(id=s.id, app=s.app)
-                    for s in await pactl.outputs()
+                    for s in streams
                     if not s.monitor and not s.muted and s.app != CAPTURE_APP_NAME
                 ]
+                # The record names the mic before it is unmuted (ADR-0013).
                 documents.write_json(
-                    self.path, MutedDocument(streams=selected).model_dump()
+                    self.path,
+                    MutedDocument(streams=selected, source=source).model_dump(),
                 )
                 self.count = len(selected)
                 results = await asyncio.gather(
                     *(pactl.set_mute(s.id, True) for s in selected),
                     return_exceptions=True,
                 )
-                return not any(isinstance(r, BaseException) for r in results)
+                if any(isinstance(r, BaseException) for r in results):
+                    return False
+                # Meetings are deaf before the mic opens.
+                if source:
+                    await pactl.set_source_mute(source, False)
+                return True
         except OSError, TimeoutError, ValueError:
             return False
 

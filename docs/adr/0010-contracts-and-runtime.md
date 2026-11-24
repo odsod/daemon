@@ -153,7 +153,7 @@ Notes:
 | `run/status.json`               | `mode` (`idle`, `dictating`), `since`, `keys` (`connected`, `paused`, `no-inference`, `no-socket`), `audio_start` (while `dictating`) |
 | `state/install/current`         | `source` (`git`, `dev`), `commit`, `workspace` (or null), `dirty`, `installed_at`                                                     |
 | `state/install/previous-commit` | `commit`, `source`                                                                                                                    |
-| `run/muted.json`                | `streams`: list of `id` (PipeWire stream ID) and `app`                                                                                |
+| `run/muted.json`                | `streams`: list of `id` (PipeWire stream ID) and `app`; `source`: the mic name a hold unmuted, or null                                |
 | `run/paused`                    | `since`                                                                                                                               |
 
 - A service rewrites its whole health file on each change, and at least

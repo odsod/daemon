@@ -256,6 +256,14 @@ async def test_dictation_speech_and_paste(
 
 @pytest.mark.looptime(False)
 async def test_dictation_crash_cleanup_without_restart(temp_root, desktop):
+    """PRD dictation AC-17, AC-26: a crash leaves no muted meeting and no open
+    mic that the hold unmuted."""
+    # The owner's hardware mute is on.
+    (desktop / "default-source.txt").write_text("mic\n")
+    documents.write_json(
+        desktop / "sources.json",
+        [{"index": 1, "name": "mic", "mute": True, "monitor_of_sink": None}],
+    )
     server = inference.ReplayServer([])
     configure(temp_root, server, server)
     fake = Keys()
@@ -290,6 +298,7 @@ async def test_dictation_crash_cleanup_without_restart(temp_root, desktop):
             )
         )
         assert documents.read_json(desktop / "source-outputs.json")[0]["mute"]
+        assert not documents.read_json(desktop / "sources.json")[0]["mute"]
         record = (temp_root / "run/muted.json").read_bytes()
         os.killpg(process.pid, signal.SIGKILL)
         process.wait(timeout=5)
@@ -302,6 +311,7 @@ async def test_dictation_crash_cleanup_without_restart(temp_root, desktop):
         )
         assert result.returncode == 0, result.stderr
         assert not documents.read_json(desktop / "source-outputs.json")[0]["mute"]
+        assert documents.read_json(desktop / "sources.json")[0]["mute"]
         assert (temp_root / "run/muted.json").read_bytes() == record
         await until(lambda: fake.writer is None)
         # A later start clears the record and reports the recovered mutes.

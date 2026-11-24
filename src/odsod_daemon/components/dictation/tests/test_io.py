@@ -178,3 +178,65 @@ async def test_copy_returns_while_a_forked_child_holds_the_pipes(tmp_path, monke
     async with asyncio.timeout(1):
         await delivery.copy(False, delivery.Selection(delivery.TEXT, b"hello"))
         await delivery.copy(True, delivery.Selection(delivery.TEXT, b""))
+
+
+def _sources(desktop, muted):
+    (desktop / "default-source.txt").write_text("mic\n")
+    (desktop / "sources.json").write_text(
+        json.dumps(
+            [{"index": 1, "name": "mic", "mute": muted, "monitor_of_sink": None}]
+        )
+    )
+    (desktop / "source-outputs.json").write_text(
+        json.dumps(
+            [
+                {
+                    "index": 7,
+                    "source": 1,
+                    "mute": False,
+                    "properties": {"application.name": "meeting"},
+                }
+            ]
+        )
+    )
+
+
+def _calls(desktop):
+    return [
+        json.loads(line) for line in (desktop / "calls.jsonl").read_text().splitlines()
+    ]
+
+
+@pytest.mark.looptime(False)
+async def test_a_hold_lifts_a_mic_mute_and_puts_it_back(
+    desktop, temp_root, monkeypatch
+):
+    """PRD dictation AC-25: a muted mic is unmuted for the hold, after the
+    meeting streams are muted and after the record names it; release mutes it
+    again."""
+    _sources(desktop, muted=True)
+    monkeypatch.setattr(mute, "MUTE_TIMEOUT", 2)
+    path = temp_root / "run/muted.json"
+    manager = mute.Mute(path)
+    assert await manager.start()
+    assert mute.read(path).source == "mic"
+    assert not json.loads((desktop / "sources.json").read_text())[0]["mute"]
+    changes = [c for c in _calls(desktop) if c[1].startswith("set-source")]
+    assert changes == [
+        ["pactl", "set-source-output-mute", "7", "1"],
+        ["pactl", "set-source-mute", "mic", "0"],
+    ]
+    await manager.stop()
+    assert json.loads((desktop / "sources.json").read_text())[0]["mute"]
+    assert mute.read(path).source is None
+
+
+@pytest.mark.looptime(False)
+async def test_a_live_mic_is_left_alone(desktop, temp_root, monkeypatch):
+    """PRD dictation AC-25: an unmuted mic stays as it is."""
+    _sources(desktop, muted=False)
+    monkeypatch.setattr(mute, "MUTE_TIMEOUT", 2)
+    manager = mute.Mute(temp_root / "run/muted.json")
+    assert await manager.start()
+    await manager.stop()
+    assert not any(c[1] == "set-source-mute" for c in _calls(desktop))
