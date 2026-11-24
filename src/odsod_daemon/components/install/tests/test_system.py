@@ -171,3 +171,27 @@ def test_units_are_written_with_the_owner_mode(
         install_system.NOTIFY_PATH,
     ):
         assert (prefix / path).stat().st_mode & 0o777 == 0o644
+
+
+def test_give_back_chowns_only_root_files_in_the_owners_venv(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from odsod_daemon.components.install import system
+
+    venv = tmp_path / "venv"
+    cache = venv / "lib/site-packages/odsod_daemon/__pycache__"
+    cache.mkdir(parents=True)
+    (cache / "cli.cpython-314.pyc").write_bytes(b"")
+    (venv / "lib/site-packages/odsod_daemon/cli.py").write_text("")
+    me = os.getuid()
+    root_owned = {str(cache), str(cache / "cli.cpython-314.pyc")}
+    chowned = []
+    monkeypatch.setattr(
+        system, "_file_uid", lambda p: 0 if p in root_owned else os.lstat(p).st_uid
+    )
+    monkeypatch.setattr(system, "_lchown", lambda p, u, g: chowned.append((p, u, g)))
+    assert system.give_back(venv, me, 1234) == 2
+    assert sorted(p for p, _, _ in chowned) == sorted(root_owned)
+    assert {(u, g) for _, u, g in chowned} == {(me, 1234)}
+    chowned.clear()
+    assert system.give_back(venv, me + 1, 1234) == 0 and not chowned
