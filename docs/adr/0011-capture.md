@@ -42,8 +42,10 @@ Proposed
 | ----------- | ---------------------------------------------- | ------------------------------------------------------- |
 | `capture`   | `capture` service (`odsod-daemon-capture`)     | Run one `pw-record` per channel; write the audio buffer |
 | `retention` | command `odsodctl retention`, run by its timer | Delete audio hour files older than the retention period |
+| `audio`     | command `odsodctl audio play\|export <id>`     | Cut one utterance (with `--pad`) to a WAV or `pw-play`  |
 
-- Both have `SUBSYSTEM = "capture"`.
+- All three have `SUBSYSTEM = "capture"`. `audio` reads `utterances/` for
+  the utterance's end and only reads the audio buffer.
 - The capture service holds only the `capture` component, so changes
   elsewhere never cause audio gaps (ADR-0002, principle 13).
 
@@ -242,18 +244,18 @@ stdout and gives each block to `anchor.py`, with its arrival time from
 
 ### Failure modes
 
-| Fault                                    | What capture does                                                            | Code              |
-| ---------------------------------------- | ---------------------------------------------------------------------------- | ----------------- |
-| `pw-record` exits or stalls              | Restarts it after 10 s; `gap` with reason `stall`                            | none (self-heals) |
-| Stall not fixed by the restart           | Stops the watchdog ping; systemd restarts the service at 30 s                | none              |
-| No new audio for 60 s on a channel       | Fault, Error. Restarts go on until the start limit                           | `capture-stalled` |
-| Mic gives only zeros for 5 s, not muted  | Fault, Mark (hardware mute). Recording goes on                                     | `mic-silent`      |
-| Owner mutes the default source           | Mark. Recording goes on (zeros)                                              | `mic-muted`       |
-| Clock step or card drift                 | Re-anchors: hole or dropped blocks. `gap` with reason `clock` if 1 s or more | none              |
-| Resume from suspend                      | Restarts `pw-record`; `gap` with reason `suspend`                            | none              |
-| Disk full or write error                 | Raises: the process exits non-zero; systemd restarts it; start limit → Error | none (unit state) |
-| No PipeWire at start                     | `pw-record` gives no block; stall path above                                 | `capture-stalled` |
-| Retention cannot delete a file           | Logs and goes on with the other files; exits non-zero at the end             | none (timer log)  |
+| Fault                                   | What capture does                                                            | Code              |
+| --------------------------------------- | ---------------------------------------------------------------------------- | ----------------- |
+| `pw-record` exits or stalls             | Restarts it after 10 s; `gap` with reason `stall`                            | none (self-heals) |
+| Stall not fixed by the restart          | Stops the watchdog ping; systemd restarts the service at 30 s                | none              |
+| No new audio for 60 s on a channel      | Fault, Error. Restarts go on until the start limit                           | `capture-stalled` |
+| Mic gives only zeros for 5 s, not muted | Fault, Mark (hardware mute). Recording goes on                               | `mic-silent`      |
+| Owner mutes the default source          | Mark. Recording goes on (zeros)                                              | `mic-muted`       |
+| Clock step or card drift                | Re-anchors: hole or dropped blocks. `gap` with reason `clock` if 1 s or more | none              |
+| Resume from suspend                     | Restarts `pw-record`; `gap` with reason `suspend`                            | none              |
+| Disk full or write error                | Raises: the process exits non-zero; systemd restarts it; start limit → Error | none (unit state) |
+| No PipeWire at start                    | `pw-record` gives no block; stall path above                                 | `capture-stalled` |
+| Retention cannot delete a file          | Logs and goes on with the other files; exits non-zero at the end             | none (timer log)  |
 
 - A disk-full fault code is left out on purpose. It is rare, and the unit
   failure shows Error and names the journal.

@@ -63,7 +63,7 @@ them.
 | `run/paused`                                                          | control                                                 | capture unit, control                                                    |
 | `state/install/current`                                               | install                                                 | control, bench                                                           |
 | `state/install/previous-commit`                                       | install                                                 | control                                                                  |
-| `config/glossary.yaml`                                                 | owner                                                   | speech, interactions, bench                                              |
+| `config/glossary.yaml`                                                | owner                                                   | speech, interactions, bench                                              |
 | `speech` config section, prompts `cleanup.md`, `cleanup-dictation.md` | owner (speech owns the schema)                          | speech, bench (sandbox overrides)                                        |
 | Keys package-data constants                                           | keys (`contract.py`)                                    | install (`install --system` builds and installs keys)                    |
 | Keys socket                                                           | keys                                                    | dictation ([ADR-0007](0007-keys-service.md))                             |
@@ -296,6 +296,7 @@ Mic muted as `mic-muted`.
 | `dictation last`                                   | dictation  | Yes      |                                                    |
 | `unmute-stale`                                     | dictation  | No       | `ExecStopPost` of the session unit                 |
 | `retention`                                        | capture    | No       | Run by the retention timer                         |
+| `audio play\|export <id> [--pad]`                  | capture    | Yes      | Re-listen to one utterance                         |
 | `shortcuts`                                        | shortcuts  | Yes      |                                                    |
 | `bench cases\|list\|run\|accept\|delete\|report`   | bench      | Yes      | Extra `bench`                                      |
 | `install [--system]`                               | install    | No       |                                                    |

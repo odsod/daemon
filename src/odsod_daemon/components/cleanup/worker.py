@@ -101,6 +101,8 @@ async def cleanup(
                 result.raw, result.raw_reason, result.text = True, why, source
             else:
                 result.text = reply
+                if reply != source:
+                    result.heard = source
     except TimeoutError, HostUnavailable:
         if not dic:
             raise

@@ -20,6 +20,7 @@ SUBSYSTEMS = {
     "keys": "keys",
     "capture": "capture",
     "retention": "capture",
+    "audio": "capture",
     "segmentation": "speech",
     "transcription": "speech",
     "cleanup": "speech",

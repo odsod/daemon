@@ -70,12 +70,12 @@ Proposed
 
 Records and fields beyond the seam:
 
-| Stream                | Kind        | Extra fields                                                                                                                        |
-| --------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `utterances/ambient/` | `utterance` | `vad`: mean speech probability (2 decimals). `cut`: `pause`, `forced`, `mask` (dictation window) or `end-of-audio`                  |
-| `coverage/`           | `covered`   | Seam: `channel`, `end`. No utterance of that channel will start before `end`                                                        |
-| `asr/<backend>/`      | `asr`       | `channel`, `start`, `end` (copied from the utterance), `ms` (request time), `attempts`, `gate` (dictation: peak speech probability) |
-| `text/`               | `text`      | `raw_reason` (when `raw`): `timeout`, `llm-empty`, `guard-length`, `guard-number`, `guard-overlap`. `ms`. `prompt` (hash of the rendered prompt)     |
+| Stream                | Kind        | Extra fields                                                                                                                                                                                          |
+| --------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `utterances/ambient/` | `utterance` | `vad`: mean speech probability (2 decimals). `cut`: `pause`, `forced`, `mask` (dictation window) or `end-of-audio`                                                                                    |
+| `coverage/`           | `covered`   | Seam: `channel`, `end`. No utterance of that channel will start before `end`                                                                                                                          |
+| `asr/<backend>/`      | `asr`       | `channel`, `start`, `end` (copied from the utterance), `ms` (request time), `attempts`, `gate` (dictation: peak speech probability)                                                                   |
+| `text/`               | `text`      | `raw_reason` (when `raw`): `timeout`, `llm-empty`, `guard-length`, `guard-number`, `guard-overlap`. `ms`. `prompt` (hash of the rendered prompt). `heard`: the ASR text, only when cleanup changed it |
 
 - `covered` is written at each utterance (with `end` = the utterance end)
   and at least every 60 s while the channel advances. It has its own
@@ -99,7 +99,7 @@ Records and fields beyond the seam:
 | `state/utterances/dictation/`                       | `id`, `start`, `end`                           | segmentation           |
 | `state/utterances/{ambient,dictation}/`             | `id`, `channel`, `start`, `end`                | transcription          |
 | `run/status.json`                                   | `mode`, `since`, `audio_start`                 | segmentation           |
-| `config/glossary.yaml`                               | Entries, most important last (ADR-0021)        | transcription, cleanup |
+| `config/glossary.yaml`                              | Entries, most important last (ADR-0021)        | transcription, cleanup |
 | `config/prompts/cleanup.md`, `cleanup-dictation.md` | Optional prompt overrides                      | cleanup                |
 | `config/config.json`                                | Section `speech`; `common.inference`           | all                    |
 

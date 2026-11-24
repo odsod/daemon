@@ -15,6 +15,7 @@ from types import ModuleType
 import typer
 from pydantic import BaseModel
 
+from odsod_daemon.components.audio.cli import app as audio_app
 from odsod_daemon.components.bench.cli import app as bench_app
 from odsod_daemon.components.dictation.cli import app as dictation_app
 from odsod_daemon.components.install.cli import app as install_app
@@ -52,6 +53,7 @@ app.add_typer(config_app, name="config")
 app.add_typer(note_app, name="note")
 app.add_typer(pin_app, name="pin")
 app.add_typer(transcript_app, name="transcript")
+app.add_typer(audio_app, name="audio")
 app.add_typer(bench_app, name="bench")
 
 # Each component plan enables its own line below.

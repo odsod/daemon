@@ -114,6 +114,10 @@ host for 14 days, which the owner accepts.
 20. **AC-20** After 24 h of recording, a resume from suspend, or a 1 s step
     of the clock, the audio of a given time differs from that time by at
     most 200 ms. _Check: system test._
+21. **AC-21** `odsodctl audio play <id>` plays one utterance, and
+    `odsodctl audio export <id> -o <file>` writes it as a WAV file, with 1 s
+    of context on each side (`--pad`). The ID is the one shown in the
+    transcript and the interaction document. _Check: system test._
 
 ## Boundaries
 

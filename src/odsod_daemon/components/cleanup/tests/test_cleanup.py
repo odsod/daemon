@@ -303,3 +303,16 @@ async def test_cleanup_sends_hints_for_terms_in_the_utterance(temp_root, monkeyp
     assert result.text == "We told Acme about it."
     assert "- Acme: company (can be misheard as: Akme)" in seen[0]
     assert "- Acmebot:" not in seen[0]
+    assert result.heard == "we told Akme about it"
+
+
+async def test_heard_is_empty_when_cleanup_keeps_the_text(temp_root, monkeypatch):
+    """Only a changed line keeps the ASR text, so documents stay small."""
+    setup_audio(temp_root)
+
+    async def complete(self, messages, **kwargs):
+        return "How many people live here?"
+
+    monkeypatch.setattr(inference.LlamaClient, "complete", complete)
+    result = await cleanup(asr(), Speech(), Host("llama"), once=True)
+    assert result.heard is None
