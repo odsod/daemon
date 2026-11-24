@@ -19,6 +19,10 @@ class MeetingRef(BaseModel):
 
 
 class MeetingInfo(MeetingRef):
+    """The document's meeting block: no raw event fields."""
+
+    model_config = ConfigDict(extra="ignore")
+
     title: str
 
 

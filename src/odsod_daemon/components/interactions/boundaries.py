@@ -43,6 +43,8 @@ class Boundary:
     meeting: Record | None
     end_cause: EndCause
     inputs: list[str]
+    # The meeting start, when this is the meeting's first interaction.
+    meeting_start: datetime | None = None
 
 
 def detect(
@@ -126,7 +128,11 @@ def detect(
             ident = (
                 start.strftime("%Y%m%dT%H%M%S.") + f"{start.microsecond // 1000:03d}Z"
             )
-            opened = Boundary(ident, start, end, meeting_at(events, start), None, [])
+            meeting = meeting_at(events, start)
+            opened = Boundary(ident, start, end, meeting, None, [])
+            began = at(meeting) if meeting else None
+            if began and began < start and (not result or result[-1].end < began):
+                opened.meeting_start = began
         opened.inputs.append(utterance["id"])
         opened.end = max(opened.end, end)
     if opened and horizon >= opened.end:
