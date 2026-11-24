@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import html
 import re
+import resource
 import shutil
 import subprocess
 from pathlib import Path
@@ -27,6 +28,29 @@ pytestmark = [
 _TITLE = re.compile(r"<title>(.*?)</title>", re.DOTALL)
 
 
+def no_core_pipe() -> None:
+    """Headless Chrome 158 segfaults now and then. With a pipe core_pattern,
+    RLIMIT_CORE=1 makes the kernel skip the dump, so systemd-coredump and
+    KDE DrKonqi never see the crash and show no popup. 0 is not enough: the
+    pipe still runs and DrKonqi still starts."""
+    resource.setrlimit(resource.RLIMIT_CORE, (1, 1))
+
+
+def run_chrome(args: list[str]) -> str:
+    """Run Chrome once more after a crash, so a flaky segfault fails no test."""
+
+    def run() -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            args, capture_output=True, text=True, timeout=120, preexec_fn=no_core_pipe
+        )
+
+    result = run()
+    if result.returncode < 0:
+        result = run()
+    result.check_returncode()
+    return result.stdout
+
+
 def evaluate(page: Path, expression: str, tmp_path: Path) -> str:
     assert CHROME is not None
     script = f"<script>document.title = 'SIGNALS:' + ({expression});</script>"
@@ -38,7 +62,7 @@ def evaluate(page: Path, expression: str, tmp_path: Path) -> str:
     html_path = tmp_path / f"{page.stem}-page.html"
     html_path.write_text(source, encoding="utf-8")
 
-    output = subprocess.run(
+    output = run_chrome(
         [
             CHROME,
             "--headless=new",
@@ -51,12 +75,8 @@ def evaluate(page: Path, expression: str, tmp_path: Path) -> str:
             "--virtual-time-budget=1000",
             "--dump-dom",
             html_path.as_uri(),
-        ],
-        capture_output=True,
-        text=True,
-        timeout=120,
-        check=True,
-    ).stdout
+        ]
+    )
     match = _TITLE.search(output)
     assert match is not None, output[:200]
     title = html.unescape(match.group(1))
