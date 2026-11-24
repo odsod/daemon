@@ -7,9 +7,9 @@ StartLimitBurst=5
 
 [Service]
 Type=simple
-RuntimeDirectory=odsod-daemon-keys
-RuntimeDirectoryMode=0755
-ExecStartPre=/bin/sh -c 'mkdir -p /run/odsod-daemon-keys && chown {{uid}}:{{gid}} /run/odsod-daemon-keys'
+# Made here, not by systemd: systemd sets its own runtime dir owner again
+# before ExecStart, and the socket gets the owner of this directory.
+ExecStartPre=/bin/sh -c 'mkdir -p -m 0755 /run/odsod-daemon-keys && chown {{uid}}:{{gid}} /run/odsod-daemon-keys'
 ExecStart=/usr/local/bin/odsod-daemon-keys
 Restart=always
 RestartSec=1

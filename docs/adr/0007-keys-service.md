@@ -70,7 +70,7 @@ Proposed
 | ------------------------------ | ----------------------------------------------------------- |
 | `/dev/uinput` virtual keyboard | All remapped key events and the paste chord                 |
 | Dictation socket               | `start`, `stop`, `cancel`, `pasted`, `paste-failed` (below) |
-| `/run/odsod-daemon-keys/`      | The socket file only (`RuntimeDirectory=`)                  |
+| `/run/odsod-daemon-keys/`      | The socket file only (`ExecStartPre=` makes it, owner's)    |
 | stdout (journald)              | Device changes, client connects, key latency on request     |
 
 - The keys service keeps no files and writes no health file (ADR-0003). The
@@ -91,7 +91,9 @@ Proposed
 ### Outside dependencies
 
 - Linux evdev and uinput ioctls, inotify, Unix sockets. libc only.
-- systemd: the system unit, `RuntimeDirectory=odsod-daemon-keys`,
+- systemd: the system unit, `ExecStartPre=` makes
+  `/run/odsod-daemon-keys/` with the owner's uid and gid (not
+  `RuntimeDirectory=`: systemd sets its owner again before `ExecStart`),
   `Nice=-20`, `Restart=always`, `OnFailure=` drop-in (ADR-0004).
 - `gcc` at install time (`-Wall -Wextra -Werror`), from the host.
 
