@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -8,7 +9,7 @@ import pytest
 
 from odsod_daemon.components.signals.collector import Collector
 from odsod_daemon.components.signals.config import SignalsConfig
-from odsod_daemon.lib import clock, documents, healthfile, paths
+from odsod_daemon.lib import clock, documents, healthfile, paths, streams
 
 pytestmark = pytest.mark.looptime(False)
 
@@ -58,6 +59,35 @@ def collector(fake: Any) -> Collector:
     return Collector(config, roots=paths.roots())
 
 
+def remote_speech(root: Path, at: float) -> None:
+    """One sys utterance that ends at wall time `at`."""
+    moment = datetime.fromtimestamp(at, UTC)
+    streams.append(
+        streams.day_path(root / "state" / "utterances" / "ambient", moment.date()),
+        {
+            "kind": "utterance",
+            "id": f"sys-{at}",
+            "channel": "sys",
+            "start": clock.iso(moment - timedelta(seconds=2)),
+            "end": clock.iso(moment),
+        },
+    )
+
+
+async def test_silent_meeting_reports_no_fault(fake_cdp: Any, temp_root: Path) -> None:
+    """Nobody talks for 5 min, as when everyone works: no Warning."""
+    fake_cdp.add_tab("Meet \u2013 Standup", MEET_URL)
+    fake_cdp.script(snapshots=[TWO])
+    signals = collector(fake_cdp)
+    start = clock.wall()
+    await signals.start(start)
+    remote_speech(temp_root, start - 400)
+    for offset in (0, 150, 301):
+        await signals.tab_tick(start + offset)
+
+    assert faults(temp_root) == []
+
+
 async def test_no_speaking_indicator_reports_a_fault(
     fake_cdp: Any, temp_root: Path
 ) -> None:
@@ -66,6 +96,7 @@ async def test_no_speaking_indicator_reports_a_fault(
     signals = collector(fake_cdp)
     start = clock.wall()
     await signals.start(start)
+    remote_speech(temp_root, start + 200)
     for offset in (0, 150, 301):
         await signals.tab_tick(start + offset)
 
@@ -86,6 +117,7 @@ async def test_a_confirmed_speaker_clears_the_fault(
     signals = collector(fake_cdp)
     start = clock.wall()
     await signals.start(start)
+    remote_speech(temp_root, start + 200)
     for offset in (0, 301):
         await signals.tab_tick(start + offset)
     assert health(temp_root)["faults"]
@@ -98,7 +130,7 @@ async def test_a_confirmed_speaker_clears_the_fault(
     fake_cdp.script(polls=[SPEAKING])
     await signals.speaking_tick(start + 304.25)
     await signals.speaking_tick(start + 304.5)
-    assert health(temp_root)["faults"] == []
+    assert faults(temp_root) == []
 
 
 async def test_waiting_alone_then_a_join_gives_no_immediate_fault(
@@ -127,13 +159,14 @@ async def test_meeting_end_clears_the_fault(fake_cdp: Any, temp_root: Path) -> N
     signals = collector(fake_cdp)
     start = clock.wall()
     await signals.start(start)
+    remote_speech(temp_root, start + 200)
     for offset in (0, 301):
         await signals.tab_tick(start + offset)
     assert health(temp_root)["faults"]
 
     fake_cdp.tabs.clear()
     await signals.tab_tick(start + 302)
-    assert health(temp_root)["faults"] == []
+    assert faults(temp_root) == []
 
 
 async def test_the_fault_file_keeps_other_faults(
@@ -149,6 +182,7 @@ async def test_the_fault_file_keeps_other_faults(
     signals = collector(fake_cdp)
     start = clock.wall()
     await signals.start(start)
+    remote_speech(temp_root, start + 200)
     for offset in (0, 301):
         await signals.tab_tick(start + offset)
 
