@@ -1,7 +1,7 @@
 # hyprwhspr
 
 - Repo: https://github.com/goodroot/hyprwhspr @ `62ee89920d47b403d3d2b3b5e16dbc0b9a380d61` (studied 2026-11-22)
-- License: MIT ([LICENSE](https://github.com/goodroot/hyprwhspr/blob/62ee89920d47b403d3d2b3b5e16dbc0b9a380d61/LICENSE)). Stars: 1,288. Last release: `v1.57.0` (2026-11-22, https://github.com/goodroot/hyprwhspr/releases/tag/v1.57.0). Stack: Python 3.11-3.15, PortAudio (`sounddevice`), NumPy, `soxr`, `evdev`, `pyudev`, GTK4 + `gtk4-layer-shell` + PyCairo (optional overlay), `pywhispercpp` / `onnx-asr` / `faster-whisper` / `transformers` / `llama-server` / `parakeet.cpp` / REST / WebSocket backends ([README.md](https://github.com/goodroot/hyprwhspr/blob/62ee89920d47b403d3d2b3b5e16dbc0b9a380d61/README.md#L50-L62), [lib/src/backends/__init__.py](https://github.com/goodroot/hyprwhspr/blob/62ee89920d47b403d3d2b3b5e16dbc0b9a380d61/lib/src/backends/__init__.py#L20-L29)).
+- License: MIT ([LICENSE](https://github.com/goodroot/hyprwhspr/blob/62ee89920d47b403d3d2b3b5e16dbc0b9a380d61/LICENSE)). Stars: 1,288. Last release: `v1.57.0` (2026-11-22, https://github.com/goodroot/hyprwhspr/releases/tag/v1.57.0). Stack: Python 3.11-3.15, PortAudio (`sounddevice`), NumPy, `soxr`, `evdev`, `pyudev`, GTK4 + `gtk4-layer-shell` + PyCairo (optional overlay), `pywhispercpp` / `onnx-asr` / `faster-whisper` / `transformers` / `llama-server` / `parakeet.cpp` / REST / WebSocket backends ([README.md](https://github.com/goodroot/hyprwhspr/blob/62ee89920d47b403d3d2b3b5e16dbc0b9a380d61/README.md#L50-L62), [lib/src/backends/**init**.py](https://github.com/goodroot/hyprwhspr/blob/62ee89920d47b403d3d2b3b5e16dbc0b9a380d61/lib/src/backends/__init__.py#L20-L29)).
 
 ## Scope
 

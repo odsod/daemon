@@ -78,7 +78,9 @@ Records, with fields beyond the seam marked _extra_:
 ### Reads
 
 - Chrome's CDP HTTP endpoint `http://127.0.0.1:<port>/json/list` and the
-  tab WebSocket. Only `localhost`.
+  tab WebSocket. Only `localhost`. Plain HTTP, so the client reads no CA
+  file (`verify=False`): a reinstall that replaces the CA bundle cannot
+  crash the tab list.
 - Its own stream `events/signals/` for today and yesterday (UTC), at start,
   to rebuild the open meeting. This is its own output, not a seam.
 - `config/config.json`, section `signals`.

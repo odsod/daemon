@@ -289,9 +289,9 @@ benchmark: reads stored audio and results
   a broken message queue.
 - More requests per hour of audio than long chunks, so the shared GPU carries
   more load.
-- Dictation can take up to about 1 s longer when another host is
-  transcribing. Under load, dictation can paste raw ASR text without
-  cleanup.
+- Dictation has its own CPU speech-to-text server, so another host's
+  transcription does not delay it (ADR-0022). Under load, dictation can
+  paste raw ASR text without cleanup.
 - Away from the tailnet, or with the inference host down, there is no
   transcription and no dictation.
 - Live text has no speaker names. Names appear when the batch pass finishes.

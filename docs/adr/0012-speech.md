@@ -44,17 +44,19 @@ Proposed
 
 ### Components
 
-| Component       | Service    | Job                                                           |
-| --------------- | ---------- | ------------------------------------------------------------- |
-| `segmentation`  | `pipeline` | Silero VAD on `mic` and `sys`; write ambient utterances       |
-| `transcription` | `pipeline` | Send each pending utterance to whisper-server; write ASR text |
-| `cleanup`       | `pipeline` | Filter and clean ASR text with llama-server; write `text/`    |
+| Component       | Service    | Job                                                              |
+| --------------- | ---------- | ---------------------------------------------------------------- |
+| `segmentation`  | `pipeline` | Silero VAD on `mic` and `sys`; write ambient utterances          |
+| `transcription` | `pipeline` | Send each pending utterance to whisper-server; write ASR text    |
+| `cleanup`       | `pipeline` | Filter and clean ASR text with llama-server; write `text/`       |
+| `parakeet`      | `pipeline` | CPU speech-to-text for dictation, inference host only (ADR-0022) |
 
-- All three have `SUBSYSTEM = "speech"`. They may import each other's
+- All four have `SUBSYSTEM = "speech"`. They may import each other's
   internals (ADR-0009, rule 2). transcription uses the Silero wrapper of
   segmentation for the dictation presence gate.
 - Version 1 runs one ASR backend. Its name is the config value
   `speech.backend` (default `whisper`), so the stream is `asr/whisper/`.
+  Dictation records from `parakeet` land in the same stream.
   No live shadow backends; bench runs other setups offline
   ([ADR-0019](0019-bench.md)).
 
@@ -66,7 +68,8 @@ Proposed
 | `state/coverage/<day>.jsonl`           | Stream   | `segmentation`  |
 | `state/asr/<backend>/<day>.jsonl`      | Stream   | `transcription` |
 | `state/text/<day>.jsonl`               | Stream   | `cleanup`       |
-| `run/health/pipeline.json` (one fault) | Document | all three       |
+| `state/models/parakeet-tdt-0.6b-v2/`   | Files    | `parakeet`      |
+| `run/health/pipeline.json`             | Document | all four        |
 
 Records and fields beyond the seam:
 
@@ -235,11 +238,14 @@ Per channel (`mic`, `sys`) one task reads new audio and runs the cutter.
   request in flight, because whisper-server serves one at a time. Before
   each request the worker takes the head of the queue again, so a new
   dictation waits for at most one ambient request (about 0.5 s for 28 s of
-  audio on the inference GPU) (`dictation` AC-4).
+  audio on the inference GPU) (`dictation` AC-4). With
+  `common.inference.dictation_url` set, dictation has a loop of its own
+  against that server and waits for no ambient request (ADR-0022).
 - **Audio:** `lib.audio` cuts the range from `mic` or `sys` (dictation:
   `mic`) and wraps it as WAV in memory. A range whose hour file is gone gets
   outcome `expired` with no request.
-- **Request fields** (POST to `common.inference.whisper_url`, a full
+- **Request fields** (POST to `common.inference.whisper_url`, or for
+  dictation to `dictation_url` when set, a full
   endpoint URL, such as `.../v1/audio/transcriptions` on the owner's
   server; `response_format = verbose_json`, `temperature = 0`, no previous-text context):
 
@@ -327,9 +333,11 @@ The worker tells host faults from input faults:
   `raw: true` and a `raw_reason`, when:
   - its length is outside 0.5 to 2.0 times the input length;
   - it drops a number of the input;
+  - fewer than half of the reply's words are in the input
+    (`guard-overlap`);
   - in a Swedish line, it drops an English word of 5 or more ASCII letters
     (in the host list `/usr/share/dict/words`) and keeps no word that
-    contains it (`guard-english`). The model translates English terms in
+    contains it, or of 4 or more letters that it contains (`guard-english`). The model translates English terms in
     Swedish speech ("invoicing" to "fakturering"), and the owner wants them
     kept. Bench on 718 held-out Swedish lines: 17 kept as raw text, 15 of
     them translations. No word list on the host: this check is off.
@@ -375,8 +383,8 @@ For a 15 s dictation (`dictation` AC-3, 2 s from release):
 | ----------------------------------------- | ------------- |
 | Coverage of release plus 150 ms post-roll | 250 ms        |
 | Utterance append and wake (×3 file hops)  | 60 ms         |
-| Wait for an ambient request in flight     | 0 to 500 ms   |
-| whisper-server, 15 s of audio             | 300 to 600 ms |
+| Wait for an ambient request in flight     | 0 (ADR-0022)  |
+| parakeet on the inference CPU, 15 s       | 200 to 600 ms |
 | Cleanup (limit 1 s)                       | 300 ms        |
 | Paste                                     | 50 ms         |
 
@@ -386,17 +394,17 @@ For a 15 s dictation (`dictation` AC-3, 2 s from release):
 
 ### Failure modes
 
-| Fault                                                      | What speech does                                               | Code                                               |
-| ---------------------------------------------------------- | -------------------------------------------------------------- | -------------------------------------------------- |
-| whisper-server or llama-server down, or 429, 502, 503, 504 | Waits, probes with backoff; dictation cleanup pastes raw text  | `inference-unreachable` (key `whisper` or `llama`) |
-| Rejected request (400, 413, 422, bad reply)                | `failed` record at once                                        | none                                               |
-| 500 or read timeout                                        | Up to 3 attempts, then `failed`                                | none                                               |
-| Audio of a pending utterance expired                       | `expired` record, no request                                   | none                                               |
-| On battery with a loopback whisper URL                     | No request; work waits                                         | none                                               |
-| Silence hallucination                                      | Filters or the LLM give `empty`                                | none                                               |
-| LLM rewrites too much                                      | Guard writes the raw text                                      | none                                               |
-| Silero model fails to load                                 | Raises; the pipeline exits and systemd restarts it             | none (unit state)                                  |
-| Crash at any point                                         | Restart rebuilds pending sets from files; one record per input | none                                               |
+| Fault                                                                | What speech does                                               | Code                                                           |
+| -------------------------------------------------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------- |
+| whisper-server, parakeet or llama-server down, or 429, 502, 503, 504 | Waits, probes with backoff; dictation cleanup pastes raw text  | `inference-unreachable` (key `whisper`, `parakeet` or `llama`) |
+| Rejected request (400, 413, 422, bad reply)                          | `failed` record at once                                        | none                                                           |
+| 500 or read timeout                                                  | Up to 3 attempts, then `failed`                                | none                                                           |
+| Audio of a pending utterance expired                                 | `expired` record, no request                                   | none                                                           |
+| On battery with a loopback whisper or dictation URL                  | No request; work waits                                         | none                                                           |
+| Silence hallucination                                                | Filters or the LLM give `empty`                                | none                                                           |
+| LLM rewrites too much                                                | Guard writes the raw text                                      | none                                                           |
+| Silero model fails to load                                           | Raises; the pipeline exits and systemd restarts it             | none (unit state)                                              |
+| Crash at any point                                                   | Restart rebuilds pending sets from files; one record per input | none                                                           |
 
 - Backlog size is control's state, not a speech fault
   ([ADR-0018](0018-control.md)).
@@ -446,8 +454,9 @@ Section `speech`:
 - The defaults are the study's starting values (Meetily, Handy, YazSes,
   OpenWhispr).
 - The dictation mask timings are constants, not config (see Segmentation).
-- `common.inference.whisper_url` and `llama_url` are full endpoint URLs
-  (ADR-0010).
+- `common.inference.whisper_url`, `llama_url` and `dictation_url` are full
+  endpoint URLs (ADR-0010). `speech.parakeet` holds the dictation server
+  (ADR-0022).
 
 ### Tests
 

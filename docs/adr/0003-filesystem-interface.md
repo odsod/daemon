@@ -20,12 +20,12 @@ Proposed
 
 ### Roots
 
-| Root      | Location                                             | Synced            | Content                                |
-| --------- | ---------------------------------------------------- | ----------------- | -------------------------------------- |
-| `state/`  | `$XDG_STATE_HOME/odsod-daemon/`, mode `0700`         | No                | Audio, streams, documents, bench cases |
-| `run/`    | `$XDG_RUNTIME_DIR/odsod-daemon/` (tmpfs)             | No                | Live status, health, mute, pause flag  |
-| `config/` | `$XDG_CONFIG_HOME/odsod-daemon/`                     | No                | Config, glossary, prompts              |
-| targets   | Directories set in config, for example a vault inbox | Not by the daemon | Copies of finished documents           |
+| Root      | Location                                             | Synced            | Content                                        |
+| --------- | ---------------------------------------------------- | ----------------- | ---------------------------------------------- |
+| `state/`  | `$XDG_STATE_HOME/odsod-daemon/`, mode `0700`         | No                | Audio, streams, documents, bench cases, models |
+| `run/`    | `$XDG_RUNTIME_DIR/odsod-daemon/` (tmpfs)             | No                | Live status, health, mute, pause flag          |
+| `config/` | `$XDG_CONFIG_HOME/odsod-daemon/`                     | No                | Config, glossary, prompts                      |
+| targets   | Directories set in config, for example a vault inbox | Not by the daemon | Copies of finished documents                   |
 
 The services only read `config/`. Only the owner edits it.
 
@@ -161,10 +161,11 @@ dictation socket ([ADR-0007](0007-keys-service.md)).
 - `state/interactions/` holds one record per finished interaction: its range
   and outcome (`ok` with the document name, or `skipped` for greetings and
   noise).
-- `run/muted.json` lists the capture streams that dictation muted. It is
-  empty when nothing is muted. When the session service stops for any
-  reason, `odsodctl unmute-stale` reads it and unmutes those streams, so a
-  crash never leaves the meeting deaf to the owner. tmpfs clears it at
+- `run/muted.json` lists the capture streams that dictation muted, and the
+  mic `source` that dictation unmuted. It is empty when nothing is muted.
+  When the session service stops for any reason, `odsodctl unmute-stale`
+  reads it, unmutes those streams and mutes that source again, so a crash
+  never leaves the meeting deaf to the owner or the mic open. tmpfs clears it at
   reboot, when the streams are gone too.
 - Utterance records hold the ID, channel, start and end. Readers cut the audio
   themselves.
@@ -205,6 +206,8 @@ dictation socket ([ADR-0007](0007-keys-service.md)).
   not depend on capture running, so a paused or stopped host keeps no old
   audio.
 - Streams and documents stay. They are small text.
+- `state/models/` holds pinned model files that a component downloads
+  (ADR-0022). Retention never reads it.
 - Bench cases stay until deleted, with their audio. Each case directory is
   self-contained: the audio slice, the ASR text, the reference, its review
   state (draft or accepted, and by whom) and the source (host, time,

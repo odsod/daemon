@@ -181,6 +181,7 @@ precedence of states
 | `capture-stalled`       | capture  | Error    |
 | `mic-silent`            | capture  | Mark     |
 | `inference-unreachable` | pipeline | Warning  |
+| `parakeet-unavailable`  | pipeline | Warning  |
 | `target-missing`        | pipeline | Warning  |
 | `no-speaking-indicator` | pipeline | Warning  |
 | `interactions-waiting`  | pipeline | Warning  |
@@ -201,8 +202,8 @@ Mic muted as `mic-muted`.
 - One file, `config/config.json`. The top level holds one section per
   subsystem, named as the subsystem, plus `common`.
 - `common`: `host` (default: the hostname), `retention_days` (14),
-  `inference` (`whisper_url`, `llama_url`, both localhost or tailnet,
-  ADR-0002). Each URL is the full endpoint, such as
+  `inference` (`whisper_url`, `llama_url`, optional `dictation_url`
+  (ADR-0022), all localhost or tailnet, ADR-0002). Each URL is the full endpoint, such as
   `http://host:8178/v1/audio/transcriptions`, not a base URL.
 - `lib.pending` reads `common.retention_days` once, so every consumer uses
   the same pending window.
@@ -220,21 +221,21 @@ Mic muted as `mic-muted`.
 
 ### `lib/` mechanisms
 
-| Module       | Gives                                                                                                                  |
-| ------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| `paths`      | The roots from the XDG variables. `ODSOD_DAEMON_ROOT` overrides all three, for tests and the bench sandbox             |
-| `clock`      | `wall()`, `monotonic()`, `boottime()`, `sleep()` and `timeout()`. The only source of time for components               |
-| `streams`    | Append one record; read a day range; follow new lines within 20 ms of the write (inotify), a timer scan as backstop    |
-| `documents`  | Atomic write (temp name, rename); read                                                                                 |
-| `audio`      | Cut a time range of a channel; `covered_until(channel)` from the file size; wait until the file covers a time          |
-| `pending`    | Pending inputs: input IDs in the window minus output IDs; bounded retry with backoff                                   |
-| `config`     | Load a section into a model; list errors                                                                               |
-| `healthfile` | Set and clear faults of this service by `(code, key)`; rewrite the file                                                |
-| `inference`  | Async clients for whisper-server and llama-server; URL check; `reachable(url, timeout)`; `is_loopback(url)`; fakes     |
-| `systemd`    | Unit states over D-Bus, user and system bus (`ActiveState`, `SubState`, `Result`, `StateChangeTimestamp`); `sd_notify` |
-| `power`      | `on_mains()` from `/sys/class/power_supply`. Device batteries (scope `Device`, such as a pen or a mouse) do not count  |
-| `textmatch`  | `overlap(a, b)`: token overlap of two texts, 0.0 to 1.0. Each caller keeps its own threshold                           |
-| `cli`        | `--json` output: one result model renders as text or JSON                                                              |
+| Module       | Gives                                                                                                                             |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| `paths`      | The roots from the XDG variables. `ODSOD_DAEMON_ROOT` overrides all three, for tests and the bench sandbox                        |
+| `clock`      | `wall()`, `monotonic()`, `boottime()`, `sleep()` and `timeout()`. The only source of time for components                          |
+| `streams`    | Append one record; read a day range; follow new lines within 20 ms of the write (inotify), a timer scan as backstop               |
+| `documents`  | Atomic write (temp name, rename); read                                                                                            |
+| `audio`      | Cut a time range of a channel; `covered_until(channel)` from the file size; wait until the file covers a time                     |
+| `pending`    | Pending inputs: input IDs in the window minus output IDs; bounded retry with backoff                                              |
+| `config`     | Load a section into a model; list errors                                                                                          |
+| `healthfile` | Set and clear faults of this service by `(code, key)`; rewrite the file                                                           |
+| `inference`  | Async clients for whisper-server (and parakeet) and llama-server; URL check; `reachable(url, timeout)`; `is_loopback(url)`; fakes |
+| `systemd`    | Unit states over D-Bus, user and system bus (`ActiveState`, `SubState`, `Result`, `StateChangeTimestamp`); `sd_notify`            |
+| `power`      | `on_mains()` from `/sys/class/power_supply`. Device batteries (scope `Device`, such as a pen or a mouse) do not count             |
+| `textmatch`  | `overlap(a, b)`: token overlap of two texts, 0.0 to 1.0. Each caller keeps its own threshold                                      |
+| `cli`        | `--json` output: one result model renders as text or JSON                                                                         |
 
 - `pending` gives the mechanism; the consumer gives the input and output
   streams and its retry policy.

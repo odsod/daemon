@@ -44,6 +44,8 @@
   shows Error while dictation is unavailable.
 - The session service is down → Left Alt works as a plain Alt. Remaps still
   work.
+- A keyboard is unplugged while keys are held → no key stays stuck, and a
+  dictation in progress stops.
 - The keys service misbehaves without a crash (keys lost or stuck) → the
   owner holds both Shift keys and Esc for 3 s, and gets the plain keyboard
   back.

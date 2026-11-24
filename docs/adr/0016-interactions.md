@@ -134,7 +134,8 @@ One to three sentences of overview.
   start (ADR-0003).
 - Times in the front matter are local with the offset, plus the IANA zone,
   so two hosts compare them with no guess (`interactions` AC-14).
-- Name: local day and `HHMM` of `start`, the host, and a slug of the title
+- Name: local day and `HHMM` of the first utterance's start (not the
+  front matter `start`, which can be the meeting start), the host, and a slug of the title
   (ASCII, lowercase, `-` between words, at most 40 characters). If the
   name exists with another `id`, add `-2`. The host in the name keeps hosts
   apart in one target (`publishing` AC-4).
