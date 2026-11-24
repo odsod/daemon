@@ -1,5 +1,8 @@
 # daemon — Agent Instructions
 
+You, the agent, are the long-term owner of this repo. You are responsible
+for code quality and for managing tech debt as part of ongoing development.
+
 The repo is the Python package `odsod_daemon`: one daemon, one CLI
 (`odsodctl`), one package.
 
