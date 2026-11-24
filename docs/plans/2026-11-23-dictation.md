@@ -92,6 +92,36 @@ mise run build
 - 2026-11-23: Dictation utterance IDs now use the compact ADR-0003 form
   (`dic-20261122T143005.120Z`). Health tests follow the shipped service list.
   Done when passed: 42 component checks, 7 system checks, `mise run build`.
+- 2026-11-24: Live rehearsal, 5 runs, `uv run pytest -m live -s
+  tests/test_dictation_live.py`, against the real servers with the ambient
+  backlog at 0. Release to paste, p50 and max:
+  - 10.8 s of speech: 2925 and 3000 ms (ASR 1848 ms, cleanup 858 ms).
+  - 18.4 s of speech: 3506 and 3819 ms (ASR 2260 ms, cleanup at the 1 s
+    limit, so raw text).
+  - Cleanup timeout case: 2056 and 2072 ms (ASR 1840 ms).
+  - Silence: no paste, clipboard kept, 5 of 5.
+  - AC-3 (2 s) misses on an idle GPU. The loop adds about 120 ms.
+- 2026-11-24: Whisper alone (large-v3, idle server): 0.5 s clip 1458 ms,
+  5 s 1645 ms, 11 s 1872 ms. The encoder works on a full 30 s window, so
+  short speech costs about 1.45 s. A per-request `audio_ctx` sized to the
+  clip cuts this to 250 to 1080 ms, but large-v3 then returns empty or
+  broken text (English and Swedish). Not usable.
+- 2026-11-24: AC-3 options for the owner, with the numbers above:
+  1. Accept about 3 s for 10 s of speech (change AC-3 to a 3 s target).
+  2. A second whisper server with a smaller model for dictation only: the
+     encoder floor drops, quality on Swedish must be benched.
+  3. Skip cleanup for dictation: about 2.0 s, with raw ASR text.
+  4. VAD for dictation only: trims silence, does not touch the 1.45 s
+     floor. Small gain.
+- 2026-11-24: Keys port review (agent team): 7 old remap rules frozen as
+  `.seq` files, all pass. `io.c`: the escape chord now exits on socket
+  events and device drops; a lost keyboard resets the state and lifts
+  every held output key, with no fake key-ups through the tap logic (4
+  `lost_*.seq`); `EVIOCSCLOCKID` failure skips the device; startup counts
+  keyboards only. Open, not fixed: `SIGUSR1` `EINTR`, and the
+  `record_main` checks (dev tool).
+- 2026-11-24: New tests: AC-1 (53 to 106 ms to Dictating), AC-18, AC-20,
+  and the `live` marker (not in `mise run build`).
 
 ## Decisions to confirm
 
