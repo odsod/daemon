@@ -43,6 +43,7 @@ async def cleanup(
                 "prompt": digest,
                 "temperature": 0,
                 "enable_thinking": False,
+                "language_pin": True,
                 "speech": speech.model_dump(),
             }
         ),
@@ -69,7 +70,7 @@ async def cleanup(
 
     async def request():
         return await client.complete(
-            prompt.messages(system, source),
+            prompt.messages(system, source, result.language or "und"),
             max_tokens=max(64, 2 * len(source) // 3),
             temperature=0,
         )

@@ -59,6 +59,17 @@ def test_glossary_echo(text, expected):
         ("We have 12 people.", "We have 12 people.", None),
         ("A long source sentence.", "Short", "guard-length"),
         ("12 12 are here", "12 are here", "guard-number"),
+        # Live meeting 2026-11-24: the model translated English to Swedish.
+        ("That's it for me.", "Det är det för mig.", "guard-overlap"),
+        (
+            "additional connected cars access, I think,",
+            "Ytterligare tillgång till anslutna bilar, jag tror.",
+            "guard-overlap",
+        ),
+        ("continue the good work.", "Fortsätt det goda arbetet.", "guard-overlap"),
+        ("Just det, alltså inte alltid", "Precis så, alltså inte alltid", None),
+        ("um so we we ship it on friday", "So we ship it on Friday.", None),
+        ("på deras home-surf.", "På deras hemsida.", None),
     ],
 )
 def test_guards(source, reply, reason):
@@ -253,3 +264,13 @@ async def test_battery_pending_cleanup(temp_root, monkeypatch, channel, local):
     else:
         await lane(Speech(), channel == "dic", once=True)
         assert calls == [True]
+
+
+def test_messages_pin_the_whisper_language():
+    english = prompt.messages("Clean.", "That's it for me.", "en")[0]["content"]
+    assert english.endswith(
+        "The transcript is in English. Reply in English. Never translate."
+    )
+    swedish = prompt.messages("Clean.", "Och röntgen.", "sv")[0]["content"]
+    assert "Reply in Swedish." in swedish
+    assert prompt.messages("Clean.", "Hm.", "und")[0]["content"] == "Clean."

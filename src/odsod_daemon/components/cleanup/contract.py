@@ -7,7 +7,10 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict
 
 Outcome = Literal["ok", "empty", "expired", "failed"]
-RawReason = Literal["timeout", "llm-empty", "guard-length", "guard-number"] | None
+RawReason = (
+    Literal["timeout", "llm-empty", "guard-length", "guard-number", "guard-overlap"]
+    | None
+)
 
 
 class TextRecord(BaseModel):
