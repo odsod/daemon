@@ -72,7 +72,9 @@ The name follows the Unix term
 3. **Built for one system.** Fedora, KDE Plasma on Wayland, PipeWire and
    systemd. No portability layers.
 4. **Self-contained.** The repo ships everything it runs: code, units, models,
-   defaults. The `machine` repo installs and configures it.
+   defaults. It also builds and runs whisper-server and llama-server on the
+   inference host ([ADR-0023](0023-inference-servers.md)). The `machine`
+   repo installs the OS packages and configures the daemon.
 5. **Five ways to communicate, each in its place.**
    - **Files** between components on one host. Paths and formats are
      documented contracts.
@@ -109,8 +111,9 @@ The name follows the Unix term
    - Dictation speech-to-text runs on its own CPU server on the inference
      host, so it never waits for an ambient whisper request
      ([ADR-0022](0022-dictation-asr.md)).
-   - The inference host runs llama-server with 2 parallel slots, so dictation
-     cleanup never waits behind a batch summary.
+   - The inference host runs llama-server with 4 parallel slots, so dictation
+     cleanup never waits behind a batch summary
+     ([ADR-0023](0023-inference-servers.md)).
    - Dictation cleanup has a 1 s limit. After it, dictation uses the raw ASR
      text (owner decision, 2026-11-23).
 10. **Fast first, accurate later.** A live pass gives text only, within
@@ -248,7 +251,7 @@ benchmark: reads stored audio and results
 
 - An in-memory queue in front of the inference servers would give dictation
   priority across hosts.
-- Rejected: one more service. Short whisper requests, 2 llama-server slots
+- Rejected: one more service. Short whisper requests, 4 llama-server slots
   and the 1 s cleanup limit keep dictation inside its target. If that wait
   still hurts, a second inference server just for dictation is the next
   step. That step is taken: [ADR-0022](0022-dictation-asr.md).

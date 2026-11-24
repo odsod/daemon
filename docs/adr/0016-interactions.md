@@ -18,7 +18,7 @@ Proposed
   full context, hours later if need be. Quality comes before speed.
 - Meeting names come from the browser's speaking indicator (ADR-0014).
   Other voices are "Others". Diarization is cut from v1 (ADR-0002).
-- The inference host is shared. A summary holds one of two llama-server
+- The inference host is shared. A summary holds one of four llama-server
   slots for tens of seconds. On battery, the batch pass waits (ADR-0005).
 - The Go recorder already summarizes segments: one LLM call up to 35,000
   characters, map-reduce above, JSON with `title`, `summary` and `skip`, a
@@ -291,13 +291,15 @@ of the pending window, 14 days).
 #### Summary
 
 - Input text: `[HH:MM:SS] Name: text`, notes as `[HH:MM:SS] Note: text`.
-- `chunk_chars` must fit one llama-server slot. With `--parallel 2` and
-  `--ctx-size 32768`, a slot holds 16,384 tokens for the prompt, the
-  chunk and the reply. A spike on 2026-11-23 sent 35,000 Swedish
-  characters with the summary prompt: `usage.prompt_tokens` was 9,680
-  (135 for the fixed prompt), or 0.273 tokens per character. With 2,048
-  output tokens, a 16,384-token slot fits 37,000 characters and a
-  32,768-token slot fits 82,000. The default is 37,000, safe for both.
+- `chunk_chars` must fit one llama-server slot. With `--parallel 4`,
+  `--kv-unified` and `--ctx-size 32768`, the four slots share one unified KV cache of 32,768
+  tokens: each slot reports `n_ctx` 32,768 (`/slots`, 2026-11-24), and
+  parallel requests share the cache. A spike on 2026-11-23 sent 35,000
+  Swedish characters with the summary prompt: `usage.prompt_tokens` was
+  9,680 (135 for the fixed prompt), or 0.273 tokens per character. With
+  2,048 output tokens, a 16,384-token budget fits 37,000 characters and
+  32,768 tokens fit 82,000. The default is 37,000: it fits when two
+  requests share the cache.
 - Up to `chunk_chars` characters: one call with the
   `interactions-summarize` prompt.
 - Longer: split at line ends into chunks of at most `chunk_chars`,
@@ -352,8 +354,8 @@ of the pending window, 14 days).
   important last), `title_max_words`. Overrides in
   `config/prompts/interactions-summarize.md` and
   `config/prompts/interactions-combine.md` are templates too (ADR-0010).
-- Reasoning is off for these calls. The `machine` repo runs llama-server
-  with `--reasoning off` today. The request also sends
+- Reasoning is off for these calls. The daemon runs llama-server with
+  `--reasoning off` ([ADR-0023](0023-inference-servers.md)). The request also sends
   `chat_template_kwargs: {"enable_thinking": false}`, so a server restart
   with other flags does not turn it on.
 - Validation after the reply: strip reasoning blocks (`<think>…</think>`)

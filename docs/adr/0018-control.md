@@ -162,12 +162,18 @@ Expected units:
 | `odsod-daemon-session.service`  | user   | `graphical-session.target` is active                                 | `systemctl --user restart odsod-daemon-session`  |
 | `odsod-daemon-tray.service`     | user   | `graphical-session.target` is active                                 | `systemctl --user restart odsod-daemon-tray`     |
 | `odsod-daemon-keys.service`     | system | Always                                                               | `sudo systemctl restart odsod-daemon-keys`       |
+| `odsod-daemon-whisper.service`  | user   | `inference.enabled`                                                  | `systemctl --user restart odsod-daemon-whisper`  |
+| `odsod-daemon-llama.service`    | user   | `inference.enabled`                                                  | `systemctl --user restart odsod-daemon-llama`    |
 
 - Only shipped services are expected. `install.contract.SERVICES` lists
   the services this build ships, and install renders units only for them
   ([ADR-0006](0006-installation.md)). A unit whose service is not in the
   list is reported as `expected: false` and raises no Error. A shipped
   unit that is missing or down still gives Error.
+- `odsod-daemon-whisper.service` and `odsod-daemon-llama.service` are
+  expected only on a host with `inference.enabled`
+  ([ADR-0023](0023-inference-servers.md)). Elsewhere they are
+  `expected: false` and raise no Error.
 - Session and tray are not expected without a graphical session, such as a
   host reached over SSH with nobody logged in on screen. `status` then
   reports them as `expected: false` and raises no Error

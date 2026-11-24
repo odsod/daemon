@@ -7,7 +7,7 @@ import logging
 
 from odsod_daemon.components.parakeet import endpoint, model
 from odsod_daemon.components.segmentation.config import Parakeet, Speech
-from odsod_daemon.lib import clock, healthfile, paths
+from odsod_daemon.lib import clock, download, healthfile, paths
 
 log = logging.getLogger(__name__)
 
@@ -55,9 +55,9 @@ async def prepare(settings: Parakeet, recognizer: model.Recognizer) -> None:
     delay = 5.0
     while True:
         try:
-            await model.fetch(directory)
+            await download.fetch(directory, model.PINS)
             break
-        except model.ModelError as error:
+        except download.DownloadError as error:
             health("model", f"parakeet model: {error}")
             await clock.sleep(delay)
             delay = min(delay * 2, FETCH_RETRY_MAX_S)

@@ -4,6 +4,7 @@
 - Updated: 2026-11-24
 - Design: [ADR-0006](../adr/0006-installation.md),
   [ADR-0020](../adr/0020-hot-deploy.md),
+  [ADR-0023](../adr/0023-inference-servers.md),
   [ADR-0004](../adr/0004-orchestration-with-systemd.md)
 
 ## Problem
@@ -42,6 +43,12 @@
 - A host runs local work → `odsodctl version` says so, with the workspace
   and commit. The tray shows a dev mark and `odsodctl status` shows `dev`.
   This is not a Warning (owner decision, 2026-11-23).
+- Inference host → the owner runs `odsodctl inference setup` once, with
+  no root. It builds whisper-server and llama-server and gets their
+  models. A second run changes nothing. Then the owner sets
+  `inference.enabled` in the config, and the next install starts both
+  servers. A deploy that changes neither server restarts neither, so no
+  model reloads.
 - The first `daemon:setup` replaces the old remapper, KWin script and D-Bus
   service from the `machine` repo in one step, with no step by the owner.
 - Move from the old Go recorder → the new system records next to the old
@@ -100,6 +107,9 @@ during an upgrade is `ambient-recording` AC-4.
 16. **AC-16** A deploy or upgrade that changes no capture code restarts
     no capture service, so recording has no gap. The output names the
     services that restarted. _Check: system test._
+17. **AC-17** On the inference host, a deploy or upgrade that changes no
+    server binary and no server unit restarts no inference server. _Check:
+    system test._
 
 ## Boundaries
 

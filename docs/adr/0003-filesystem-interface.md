@@ -207,7 +207,10 @@ dictation socket ([ADR-0007](0007-keys-service.md)).
   audio.
 - Streams and documents stay. They are small text.
 - `state/models/` holds pinned model files that a component downloads
-  (ADR-0022). Retention never reads it.
+  (ADR-0022, ADR-0023). Retention never reads it.
+- `state/servers/` holds the source trees and builds of whisper-server and
+  llama-server on the inference host
+  ([ADR-0023](0023-inference-servers.md)). Retention never reads it.
 - Bench cases stay until deleted, with their audio. Each case directory is
   self-contained: the audio slice, the ASR text, the reference, its review
   state (draft or accepted, and by whom) and the source (host, time,

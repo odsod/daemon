@@ -1,14 +1,14 @@
-"""The pinned Parakeet model: download, check, load, recognize."""
+"""The pinned Parakeet model: pins, load, recognize."""
 
 from __future__ import annotations
 
 import asyncio
-import hashlib
 from pathlib import Path
 from typing import Any
 
-import httpx
 import numpy as np
+
+from odsod_daemon.lib import download
 
 NAME = "parakeet-tdt-0.6b-v2"
 REPO = "istupakov/parakeet-tdt-0.6b-v2-onnx"
@@ -32,49 +32,16 @@ FILES: dict[str, tuple[str, int]] = {
         652184014,
     ),
 }
+PINS = tuple(
+    download.Pin(name, f"{BASE_URL}/{name}", sha256, size)
+    for name, (sha256, size) in FILES.items()
+)
 # Below 0.1 s of audio there is no word to find.
 MIN_SAMPLES = 1600
 
 
-class ModelError(RuntimeError):
-    """A model file failed to download or does not match its pin."""
-
-
 class NotReady(RuntimeError):
     """The model is not loaded yet."""
-
-
-async def fetch(
-    directory: Path,
-    *,
-    base_url: str = BASE_URL,
-    files: dict[str, tuple[str, int]] = FILES,
-) -> None:
-    """Download each missing file, check its SHA-256, rename into place."""
-    directory.mkdir(parents=True, exist_ok=True)
-    timeout = httpx.Timeout(60)
-    async with httpx.AsyncClient(follow_redirects=True, timeout=timeout) as client:
-        for name, (sha256, size) in files.items():
-            target = directory / name
-            # The hash was checked before the rename; the size catches truncation.
-            if target.exists() and target.stat().st_size == size:
-                continue
-            partial = directory / f"{name}.part"
-            digest = hashlib.sha256()
-            try:
-                async with client.stream("GET", f"{base_url}/{name}") as response:
-                    response.raise_for_status()
-                    with partial.open("wb") as out:
-                        async for chunk in response.aiter_bytes(1 << 20):
-                            digest.update(chunk)
-                            out.write(chunk)
-            except httpx.HTTPError as error:
-                partial.unlink(missing_ok=True)
-                raise ModelError(f"{name}: {error}") from error
-            if digest.hexdigest() != sha256:
-                partial.unlink(missing_ok=True)
-                raise ModelError(f"{name}: SHA-256 does not match the pin")
-            partial.replace(target)
 
 
 class Recognizer:

@@ -21,7 +21,10 @@ def evaluate(snapshot: Snapshot, config: ControlConfig) -> StatusReport:
         active = raw.active_state if raw else "missing"
         since = timestamp(raw)
         expected = units.expected(
-            name, graphical=snapshot.graphical, paused=snapshot.paused_since is not None
+            name,
+            graphical=snapshot.graphical,
+            paused=snapshot.paused_since is not None,
+            inference=snapshot.inference,
         )
         services.append(
             ServiceState(

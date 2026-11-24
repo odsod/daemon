@@ -60,6 +60,7 @@ WRITES = {
     "publishing": ["published/<target>/"],
     "bench": ["bench/<case-id>/"],
     "install": ["install/current, previous-commit"],
+    "inference": ["servers/, models/"],
 }
 
 # One sentence per subsystem: what it does (from the Purpose of its ADR).
@@ -76,6 +77,7 @@ SUMMARY = {
     "publishing": "COPIES FINISHED DOCUMENTS TO THE TARGET FOLDERS.",
     "bench": "SCORES MODELS AND PROMPTS ON TEST CASES CUT FROM REAL AUDIO.",
     "install": "INSTALLS, UPGRADES AND ROLLS BACK A HOST; TELLS WHICH COMMIT RUNS.",
+    "inference": "BUILDS WHISPER-SERVER AND LLAMA-SERVER FROM PINNED SOURCE, WITH PINNED MODELS, ON THE INFERENCE HOST.",
 }
 
 # Folders each subsystem reads, at folder level. Not listed: config/ (all
@@ -131,6 +133,7 @@ FRAMES = {
         "ADR-0012",
         [("C", "SEGMENTATION"), ("C", "TRANSCRIPTION"), ("C", "CLEANUP")],
     ),
+    "inference": (1940, 500, "up", "ADR-0023", [("CMD", "SERVERS")]),
     "control": (
         230,
         250,
@@ -276,12 +279,15 @@ p.ext(
     size=15,
 )
 p.flow(
-    [(1900, 370), (2490, 370)],
+    [(1860, UF[1]), (1860, 525), (2490, 525)],
     "AUDIO SLICES, TEXT (HTTP)",
+    at=1,
     width=THIN,
     both=True,
     anchor="middle",
 )
+p.flow([(2440, 384), (2490, 384)], width=THIN)
+p.text(2465, 376, "UNITS", 10, "bold")
 p.flow(
     [(1330, LF[1]), (1330, 1106), (2590, 1106), (2590, 1020)],
     "TEXT (HTTP)",

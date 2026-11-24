@@ -25,22 +25,24 @@ Proposed
 
 ### systemd units supervise every service
 
-| Unit                                  | Scope  | Runs                                               | Wanted by                      | Watchdog                            |
-| ------------------------------------- | ------ | -------------------------------------------------- | ------------------------------ | ----------------------------------- |
-| `odsod-daemon-keys.service`           | system | `odsod-daemon-keys` (C)                            | `multi-user.target`            | No                                  |
-| `odsod-daemon-capture.service`        | user   | `odsodctl run capture`                             | `graphical-session.target`     | `WatchdogSec=30`, on audio progress |
-| `odsod-daemon-pipeline.service`       | user   | `odsodctl run pipeline`                            | `default.target`               | Yes, on main loop                   |
-| `odsod-daemon-session.service`        | user   | `odsodctl run session` (`dictation`, `shortcuts`)  | `graphical-session.target`     | No                                  |
-| `odsod-daemon-tray.service`           | user   | `odsodctl run tray`                                | `graphical-session.target`     | No                                  |
-| `odsod-daemon-resume.timer`           | user   | `odsodctl resume --by timer` at 00:00 local time   | `timers.target`                |                                     |
-| `odsod-daemon-retention.timer`        | user   | `odsodctl retention`, hourly and at login          | `timers.target`                |                                     |
-| `odsod-daemon-login.service`          | user   | `odsodctl resume --by login`, one-shot             | `graphical-session.target`     |                                     |
-| `odsod-daemon-notify@.service`        | user   | `odsodctl notify-failed %i`, one-shot              | `OnFailure=` of each user unit |                                     |
-| `odsod-daemon-notify-system@.service` | system | `odsodctl notify-failed %i` as the owner, one-shot | `OnFailure=` of the keys unit  |                                     |
-| `odsod-daemon.target`                 | user   | Groups pipeline and the timers                     | `default.target`               |                                     |
+| Unit                                                         | Scope  | Runs                                                                                      | Wanted by                      | Watchdog                            |
+| ------------------------------------------------------------ | ------ | ----------------------------------------------------------------------------------------- | ------------------------------ | ----------------------------------- |
+| `odsod-daemon-keys.service`                                  | system | `odsod-daemon-keys` (C)                                                                   | `multi-user.target`            | No                                  |
+| `odsod-daemon-capture.service`                               | user   | `odsodctl run capture`                                                                    | `graphical-session.target`     | `WatchdogSec=30`, on audio progress |
+| `odsod-daemon-pipeline.service`                              | user   | `odsodctl run pipeline`                                                                   | `default.target`               | Yes, on main loop                   |
+| `odsod-daemon-session.service`                               | user   | `odsodctl run session` (`dictation`, `shortcuts`)                                         | `graphical-session.target`     | No                                  |
+| `odsod-daemon-tray.service`                                  | user   | `odsodctl run tray`                                                                       | `graphical-session.target`     | No                                  |
+| `odsod-daemon-resume.timer`                                  | user   | `odsodctl resume --by timer` at 00:00 local time                                          | `timers.target`                |                                     |
+| `odsod-daemon-retention.timer`                               | user   | `odsodctl retention`, hourly and at login                                                 | `timers.target`                |                                     |
+| `odsod-daemon-login.service`                                 | user   | `odsodctl resume --by login`, one-shot                                                    | `graphical-session.target`     |                                     |
+| `odsod-daemon-notify@.service`                               | user   | `odsodctl notify-failed %i`, one-shot                                                     | `OnFailure=` of each user unit |                                     |
+| `odsod-daemon-notify-system@.service`                        | system | `odsodctl notify-failed %i` as the owner, one-shot                                        | `OnFailure=` of the keys unit  |                                     |
+| `odsod-daemon-whisper.service`, `odsod-daemon-llama.service` | user   | whisper-server, llama-server; inference host only ([ADR-0023](0023-inference-servers.md)) | `odsod-daemon.target`          | No                                  |
+| `odsod-daemon.target`                                        | user   | Groups pipeline and the timers                                                            | `default.target`               |                                     |
 
-- All services use `Restart=always`, a short `RestartSec`, and a start limit
-  to stop crash loops.
+- All Python services use `Restart=always`, a short `RestartSec`, and a
+  start limit to stop crash loops. The two inference servers use
+  `Restart=on-failure` and `RestartSec=5`.
 - The keys service runs at high priority (`Nice=-20`), because key timing must
   not depend on load.
 - Capture and session start after PipeWire and WirePlumber: capture

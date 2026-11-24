@@ -48,3 +48,32 @@ def test_future_session_and_tray_templates(tmp_path: Path, monkeypatch):
     assert "WantedBy=graphical-session.target" in session
     assert "PartOf=graphical-session.target" in session
     assert "WatchdogSec=" not in session
+
+
+def test_server_units_carry_the_command_line(tmp_path: Path):
+    from odsod_daemon.components.servers.contract import SERVERS, Inference
+
+    settings = Inference.model_validate(
+        {"enabled": True, "llama": {"port": 9000, "extra_args": ["--slots"]}}
+    )
+    state = tmp_path / "my state"
+    servers = {s.unit: render.server_command(s, settings, state) for s in SERVERS}
+    files = {
+        p.name: text
+        for p, text in render.render(
+            Path("/bin/true"), {"HOME": str(tmp_path)}, servers=servers
+        ).items()
+    }
+    llama = files["odsod-daemon-llama.service"]
+    binary = state / "servers/llama.cpp-1.0.0-b12359-b1b770d/build/bin/llama-server"
+    assert f'ExecStart="{binary}" "--model" "{state}/models/' in llama
+    assert '"--port" "9000"' in llama
+    assert llama.rstrip().endswith("WantedBy=odsod-daemon.target")
+    assert '"--spec-ngram-simple-size-m" "32" "--slots"' in llama
+    whisper = files["odsod-daemon-whisper.service"]
+    assert '"--port" "8178"' in whisper
+    for text in (llama, whisper):
+        assert "Type=simple" in text
+        assert "Restart=on-failure" in text
+        assert "RestartSec=5" in text
+        assert "OnFailure=odsod-daemon-notify@%n.service" in text

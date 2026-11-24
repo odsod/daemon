@@ -162,7 +162,9 @@ Steps, each printed as `[n/7] <step>`:
    it with `state/install/current`, the last install that applied fully.
    Keep the candidate in memory. Write nothing yet.
 2. **Render.** Render each template in `units/` with the absolute path of
-   the installed `odsodctl` (`sys.argv[0]`, resolved) and `%t` paths.
+   the installed `odsodctl` (`sys.argv[0]`, resolved) and `%t` paths. The
+   two server units render only on the inference host, once setup is done
+   (see "Inference servers" below).
 3. **Write.** Compare each rendered file with the file on disk. Write only
    the changed ones (atomic). Remove `odsod-daemon-*` units on disk that no
    template renders any more.
@@ -219,19 +221,20 @@ Steps, each printed as `[n/7] <step>`:
 Rendered into `~/.config/systemd/user/`. The values below are the
 design; ADR-0004 fixes the unit set.
 
-| Unit                            | Key settings                                                                                                                                                                                                                                   |
-| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `odsod-daemon-capture.service`  | `Type=notify`, `WatchdogSec=30`, `ExecCondition=/bin/sh -c '! test -e %t/odsod-daemon/paused'`, `After=pipewire.service wireplumber.service graphical-session.target`, `PartOf=graphical-session.target`, `WantedBy=graphical-session.target`  |
-| `odsod-daemon-pipeline.service` | `Type=notify`, `WatchdogSec=120`, `WantedBy=odsod-daemon.target`                                                                                                                                                                               |
-| `odsod-daemon-session.service`  | `Type=notify`, `BusName=io.github.odsod.daemon.session`, `ExecStopPost=<odsodctl> unmute-stale`, `After=pipewire.service wireplumber.service graphical-session.target`, `PartOf=graphical-session.target`, `WantedBy=graphical-session.target` |
-| `odsod-daemon-tray.service`     | `Type=simple`, `After=graphical-session.target`, `PartOf=graphical-session.target`, `WantedBy=graphical-session.target`                                                                                                                        |
-| `odsod-daemon.target`           | `Wants=` pipeline and the timers; `WantedBy=default.target`                                                                                                                                                                                    |
-| `odsod-daemon-login.service`    | `Type=oneshot`, `ExecStart=<odsodctl> resume --by login`, `After=graphical-session.target`, `WantedBy=graphical-session.target`. A login ends a pause (ADR-0004)                                                                               |
-| `odsod-daemon-resume.timer`     | `OnCalendar=*-*-* 00:00:00`; its service runs `<odsodctl> resume --by timer`                                                                                                                                                                   |
-| `odsod-daemon-retention.timer`  | `OnCalendar=hourly`, `OnStartupSec=1min`, `Persistent=true`; its service runs `<odsodctl> retention`                                                                                                                                           |
-| `odsod-daemon-notify@.service`  | `Type=oneshot`, `ExecStart=<odsodctl> notify-failed %i`                                                                                                                                                                                        |
+| Unit                                                         | Key settings                                                                                                                                                                                                                                   |
+| ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `odsod-daemon-capture.service`                               | `Type=notify`, `WatchdogSec=30`, `ExecCondition=/bin/sh -c '! test -e %t/odsod-daemon/paused'`, `After=pipewire.service wireplumber.service graphical-session.target`, `PartOf=graphical-session.target`, `WantedBy=graphical-session.target`  |
+| `odsod-daemon-pipeline.service`                              | `Type=notify`, `WatchdogSec=120`, `WantedBy=odsod-daemon.target`                                                                                                                                                                               |
+| `odsod-daemon-session.service`                               | `Type=notify`, `BusName=io.github.odsod.daemon.session`, `ExecStopPost=<odsodctl> unmute-stale`, `After=pipewire.service wireplumber.service graphical-session.target`, `PartOf=graphical-session.target`, `WantedBy=graphical-session.target` |
+| `odsod-daemon-tray.service`                                  | `Type=simple`, `After=graphical-session.target`, `PartOf=graphical-session.target`, `WantedBy=graphical-session.target`                                                                                                                        |
+| `odsod-daemon.target`                                        | `Wants=` pipeline and the timers; `WantedBy=default.target`                                                                                                                                                                                    |
+| `odsod-daemon-login.service`                                 | `Type=oneshot`, `ExecStart=<odsodctl> resume --by login`, `After=graphical-session.target`, `WantedBy=graphical-session.target`. A login ends a pause (ADR-0004)                                                                               |
+| `odsod-daemon-resume.timer`                                  | `OnCalendar=*-*-* 00:00:00`; its service runs `<odsodctl> resume --by timer`                                                                                                                                                                   |
+| `odsod-daemon-retention.timer`                               | `OnCalendar=hourly`, `OnStartupSec=1min`, `Persistent=true`; its service runs `<odsodctl> retention`                                                                                                                                           |
+| `odsod-daemon-notify@.service`                               | `Type=oneshot`, `ExecStart=<odsodctl> notify-failed %i`                                                                                                                                                                                        |
+| `odsod-daemon-whisper.service`, `odsod-daemon-llama.service` | Inference host only. `Type=simple`, `ExecStart=<binary> --model <model> --port <port> <pinned flags> <extra_args>`, `Restart=on-failure`, `RestartSec=5`, `WantedBy=odsod-daemon.target` (ADR-0023)                                            |
 
-- All services: `ExecStart=<odsodctl> run <service>`, `Restart=always`,
+- All Python services: `ExecStart=<odsodctl> run <service>`, `Restart=always`,
   `RestartSec=1`, `StartLimitIntervalSec=60`, `StartLimitBurst=5`,
   `OnFailure=odsod-daemon-notify@%n.service`.
 - `WatchdogSec=30` lets capture restart in at most 60 s after audio stops
@@ -241,6 +244,25 @@ design; ADR-0004 fixes the unit set.
 - The KWin script is not installed here. The shortcuts component installs
   it when the session starts, because KWin belongs to shortcuts
   (ADR-0009, subsystem rule 3; [ADR-0008](0008-shortcuts-and-kwin-script.md)).
+
+#### Inference servers
+
+[ADR-0023](0023-inference-servers.md) holds the design. Install's part:
+
+- Before step 1, with `inference.enabled` true: if the `machine` repo's
+  `llama-server.service` or `whisper-server.service` is active, install
+  refuses, changes nothing, and prints the cutover and rollback commands.
+- Step 2 renders `odsod-daemon-whisper.service` and
+  `odsod-daemon-llama.service` only when `inference.enabled` is true and
+  both binaries and both models exist. Else it renders neither; with
+  `enabled` true it prints that `odsodctl inference setup` comes first.
+- Step 3 removes a server unit that no longer renders after
+  `systemctl --user disable --now`, so no server runs without its unit.
+- Step 1 adds one digest per server to `current`: the SHA-256 of its
+  binary. Step 6 restarts a server only when its digest or its unit file
+  changed. The unit file holds the port and the extra flags, so a config
+  change restarts that server. A daemon code change restarts no server, so
+  a deploy never reloads a model ([ADR-0020](0020-hot-deploy.md)).
 
 #### `odsodctl install --system` (root)
 
@@ -364,10 +386,11 @@ run = 'sudo "$(command -v odsodctl)" install --system'
      fit in the GPU memory next to llama-server (owner decision,
      2026-11-23).
    - Both inference servers listen on the tailnet address only, not
-     `0.0.0.0` (ADR-0002). llama-server runs with `--parallel 2`, so
+     `0.0.0.0` (ADR-0002). llama-server runs with `--parallel 4`, so
      dictation cleanup never waits behind a batch summary (ADR-0002,
-     principle 9). The `machine` repo owns these server settings
-     (owner decision, 2026-11-23).
+     principle 9). The daemon owns these server settings
+     ([ADR-0023](0023-inference-servers.md), owner decision 2026-11-24;
+     it keeps `--host 0.0.0.0` for now).
 2. Stop the old recorder. Keep its files read-only. The vault keeps the old
    transcripts and segments as they are. Nothing converts them.
 3. Switch the keyboard in one script: stop and disable `odsod-keys.service`,
@@ -380,24 +403,28 @@ run = 'sudo "$(command -v odsodctl)" install --system'
 
 ### Failure modes
 
-| Fault                                     | What happens                                                                                  |
-| ----------------------------------------- | --------------------------------------------------------------------------------------------- |
-| No network                                | `daemon:setup` stops at the ref lookup or `uv tool install`; nothing changed                  |
-| `uv tool install` fails                   | The old environment stays; the task names the step                                            |
-| A unit file write fails (disk full)       | `install` stops at step 3; running services keep running; `current` stays old                 |
-| A restart fails partway in step 6         | `install` stops; `current` stays old, so the rerun repeats all restarts                       |
-| `daemon-reload` or `enable` fails         | `install` stops and names the step; no restart happened                                       |
-| A service fails to start after an upgrade | systemd retries; at the start limit, control shows Error with the rollback command (ADR-0018) |
-| `gcc` fails                               | `install --system` stops before it replaces the binary; keys keeps running                    |
-| `install --system` without `sudo`         | Refuses: no `SUDO_UID`                                                                        |
-| Dev workspace has no git                  | `current.commit` is `unknown`; `version` says so                                              |
+| Fault                                      | What happens                                                                                     |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| No network                                 | `daemon:setup` stops at the ref lookup or `uv tool install`; nothing changed                     |
+| `uv tool install` fails                    | The old environment stays; the task names the step                                               |
+| A unit file write fails (disk full)        | `install` stops at step 3; running services keep running; `current` stays old                    |
+| A restart fails partway in step 6          | `install` stops; `current` stays old, so the rerun repeats all restarts                          |
+| `daemon-reload` or `enable` fails          | `install` stops and names the step; no restart happened                                          |
+| A service fails to start after an upgrade  | systemd retries; at the start limit, control shows Error with the rollback command (ADR-0018)    |
+| `gcc` fails                                | `install --system` stops before it replaces the binary; keys keeps running                       |
+| `install --system` without `sudo`          | Refuses: no `SUDO_UID`                                                                           |
+| A `machine` server unit runs, inference on | `install` refuses before step 1 and prints the cutover commands; nothing changed                 |
+| Inference on, setup not done               | No server unit renders; `install` says to run `odsodctl inference setup`; status shows them down |
+| Dev workspace has no git                   | `current.commit` is `unknown`; `version` says so                                                 |
 
 - install and version are commands. They write no health file.
 
 ### Config
 
-- No config section. Install has no tunable; everything comes from the
-  package, the templates and the mise tasks.
+- No config section of its own. Install has no tunable; everything comes
+  from the package, the templates and the mise tasks.
+- Install reads the `inference` section (ADR-0023) to render the server
+  units. A host with no config file renders none.
 
 ### Tests
 
@@ -422,6 +449,9 @@ Component tests run on a temp home and a temp root, with a fake
 | `version` for a dev install prints `dev`, workspace, commit and `+dirty`                                              | `install-and-upgrade` AC-13 |
 | Every unit has `OnFailure=odsod-daemon-notify@%n.service`                                                             | `health-and-control` AC-14  |
 | `install --system` with an unchanged binary does not restart keys                                                     | `install-and-upgrade` AC-7  |
+| Server units render only with inference on and setup done; disabling inference stops and removes them                 | ADR-0023                    |
+| A deploy with no server change restarts no server; a new binary or unit restarts that server only                     | `install-and-upgrade` AC-17 |
+| A running `machine` server unit with inference on makes install refuse and print the cutover                          | ADR-0023                    |
 
 System test in `tests/`: install into a temp home, then `status` reads the
 install record and shows the dev mark (`health-and-control` AC-15).

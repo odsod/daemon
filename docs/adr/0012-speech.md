@@ -19,8 +19,8 @@ Proposed
   dictation is the owner's whole key hold, in English, and must reach the
   clipboard in 2 s (`dictation` AC-3). Dictation goes first on each host
   (ADR-0002, principle 9).
-- whisper-server takes one request at a time. llama-server has two slots
-  (ADR-0002). Both are shared by every host and reached over localhost or
+- whisper-server takes one request at a time. llama-server has four slots
+  (ADR-0002, [ADR-0023](0023-inference-servers.md)). Both are shared by every host and reached over localhost or
   the tailnet only.
 - [ADR-0010](0010-contracts-and-runtime.md) fixes the seam fields of
   `utterances/ambient/`, `asr/<backend>/` and `text/`.
@@ -110,11 +110,13 @@ Records and fields beyond the seam:
 
 - whisper-server (whisper.cpp) at `common.inference.whisper_url`, through
   `lib.inference`. Speech segments audio itself, so the server needs no
-  server-side VAD. The `machine` repo runs it without `--vad`.
+  server-side VAD. The daemon runs it without `--vad`
+  ([ADR-0023](0023-inference-servers.md)).
 - For dictation, the `parakeet` server at `common.inference.dictation_url`
   when it is set ([ADR-0022](0022-dictation-asr.md)).
 - llama-server at `common.inference.llama_url`, OpenAI chat completions,
-  with 2 parallel slots (set in the `machine` repo).
+  with 4 parallel slots and n-gram speculation (the daemon runs it,
+  [ADR-0023](0023-inference-servers.md)).
 - Silero VAD v5 as an ONNX file, shipped as package data in
   `components/segmentation/models/` (MIT license, about 2 MB). No model
   download.
@@ -307,7 +309,7 @@ The worker tells host faults from input faults:
 - **Pending:** `asr/<backend>/` input IDs minus `text/` input IDs.
 - **Two lanes**, each with one request in flight: dictation and ambient.
   Dictation never waits behind an ambient request of this host. Across
-  hosts, llama-server's second slot serves it (ADR-0002, principle 9).
+  hosts, a free llama-server slot serves it (ADR-0002, principle 9).
 - **Copy-through:** an `asr` record with outcome `empty`, `expired` or
   `failed` gives a `text` record with the same outcome and empty text.
 - **Filters before the LLM** (no request; outcome `empty`):

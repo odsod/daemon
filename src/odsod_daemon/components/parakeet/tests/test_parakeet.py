@@ -1,12 +1,9 @@
 """ADR-0022: the parakeet endpoint, model pin and service."""
 
 import asyncio
-import hashlib
 import io
 import json
-import threading
 import wave
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import httpx
 import numpy as np
@@ -119,59 +116,6 @@ async def test_recognizer_not_ready_and_short_audio():
     assert await recognizer(np.zeros(16000, np.float32)) == "text"
 
 
-class Files:
-    def __init__(self, files: dict[str, bytes]):
-        self.files = files
-        self.gets: list[str] = []
-        outer = self
-
-        class Handler(BaseHTTPRequestHandler):
-            def log_message(self, format: str, *args: object) -> None:
-                pass
-
-            def do_GET(self):
-                name = self.path.rsplit("/", 1)[-1]
-                outer.gets.append(name)
-                data = outer.files.get(name)
-                self.send_response(200 if data is not None else 404)
-                self.send_header("content-length", str(len(data or b"")))
-                self.end_headers()
-                self.wfile.write(data or b"")
-
-        self.server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
-        threading.Thread(target=self.server.serve_forever, daemon=True).start()
-        self.url = f"http://127.0.0.1:{self.server.server_address[1]}/rev"
-
-    def close(self):
-        self.server.shutdown()
-        self.server.server_close()
-
-
-def pin(files: dict[str, bytes]) -> dict[str, tuple[str, int]]:
-    return {n: (hashlib.sha256(d).hexdigest(), len(d)) for n, d in files.items()}
-
-
-async def test_fetch_checks_hashes_and_skips_present_files(tmp_path):
-    data = {"a.onnx": b"weights" * 1000, "vocab.txt": b"a\nb\n"}
-    files = Files(data)
-    try:
-        await model.fetch(tmp_path, base_url=files.url, files=pin(data))
-        assert (tmp_path / "a.onnx").read_bytes() == data["a.onnx"]
-        await model.fetch(tmp_path, base_url=files.url, files=pin(data))
-        assert sorted(files.gets) == ["a.onnx", "vocab.txt"]
-        wrong = pin(data) | {"b.onnx": ("0" * 64, 3)}
-        files.files["b.onnx"] = b"bad"
-        with pytest.raises(model.ModelError, match="SHA-256"):
-            await model.fetch(tmp_path, base_url=files.url, files=wrong)
-        assert not list(tmp_path.glob("b.onnx*"))
-        with pytest.raises(model.ModelError):
-            await model.fetch(
-                tmp_path, base_url=files.url, files={"gone": ("0" * 64, 1)}
-            )
-    finally:
-        files.close()
-
-
 def test_pin_covers_the_model_files():
     assert set(model.FILES) == {
         "config.json",
@@ -180,6 +124,7 @@ def test_pin_covers_the_model_files():
         "encoder-model.int8.onnx",
     }
     assert model.REVISION in model.BASE_URL
+    assert all(pin.url.startswith(model.BASE_URL) for pin in model.PINS)
 
 
 def test_listen_must_be_private():

@@ -137,7 +137,7 @@ and [ADR-0012](0012-speech.md) for dictation.
   speech-to-text. Cleanup spells the terms.
 - The daemon now owns one inference server. whisper-server and
   llama-server stay in the `machine` repo. Moving them into the daemon is a
-  separate decision.
+  separate decision ([ADR-0023](0023-inference-servers.md) takes it).
 
 ## Alternatives
 
