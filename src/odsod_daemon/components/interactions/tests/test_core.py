@@ -295,3 +295,59 @@ def test_document_lines_carry_the_utterance_id_and_what_asr_heard():
     )
     assert out[2] == "[15:00:05] 📝 **Note:** check it"
     assert "<!--" not in transcript(lines, zone)
+
+
+def _meta(b, lines, events=()):
+    from odsod_daemon.components.interactions.render import metadata
+
+    summary = Summary(skip=False, title="t", overview="o", points=[])
+    return metadata(b, lines, list(events), summary, "host", UTC, C)
+
+
+def test_meeting_block_keeps_platform_code_and_title_only():
+    """ADR-0016: `meeting` holds platform, code and title, not raw event fields."""
+    start = event(
+        "meeting-start",
+        -60,
+        platform="meet",
+        code="x",
+        title="Sync",
+        url="https://example.invalid/x",
+    )
+    b = boundary([utterance()], [start])
+    meta = _meta(b, [])
+    assert meta.meeting is not None
+    assert meta.meeting.model_dump() == {
+        "platform": "meet",
+        "code": "x",
+        "title": "Sync",
+    }
+
+
+def test_participants_leave_out_the_placeholders():
+    """PRD interactions: participants are people; `Others` and the unset owner
+    name are labels, not names."""
+    lines = [
+        dict(name=C.owner_name, channel="mic"),
+        dict(name="Others", channel="sys"),
+        dict(name="Alice Example", channel="sys"),
+    ]
+    assert _meta(boundary(), lines).participants == ["Alice Example"]
+
+
+def test_first_interaction_of_a_meeting_starts_at_the_meeting_start():
+    """ADR-0016: in a meeting, the first interaction starts when the meeting
+    starts; a later one in the same meeting starts at its first speech."""
+    start = event("meeting-start", 0, platform="meet", code="x", title="Sync")
+    first, second = detect(
+        [utterance(120), utterance(400)],
+        [start, event("pin", 300)],
+        coverage(2000),
+        [],
+        NOW,
+        C,
+    )[:2]
+    assert _meta(first, []).start == NOW.isoformat(timespec="milliseconds")
+    assert first.id == "20261123T100200.000Z"
+    later = NOW + timedelta(seconds=400)
+    assert _meta(second, []).start == later.isoformat(timespec="milliseconds")

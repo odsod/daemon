@@ -97,9 +97,8 @@ meeting:
   code: abc-defg-hij
   title: Weekly sync
 participants:
-  - Owner Name
   - Alice Example
-  - Others
+  - Owner Name
 title: API Migration Plan
 ---
 
@@ -124,9 +123,15 @@ One to three sentences of overview.
   the ASR text when cleanup changed the line (the `heard` field of the
   `text` record, ADR-0012). `--` in that text becomes `- -`, so the comment
   stays valid. The summary prompt gets the lines without comments.
-- `meeting` is null outside a meeting. `participants` holds the owner,
-  every name from the meeting's `participants` and `speaking` records in
-  the range, and "Others" when a line has it.
+- `meeting` is null outside a meeting, else only `platform`, `code` and
+  `title` (no raw event fields). `participants` holds every speaker name
+  of the lines and every name from the meeting's `participants` and
+  `speaking` records in the range. The labels `Others` and the unset owner
+  name (`Owner`) are not people, so they are left out.
+- `start` is the first utterance's start, except for the first interaction
+  of a meeting: it starts at the `meeting-start` event, so silence before
+  the first word belongs to the meeting. `id` stays the first utterance's
+  start (ADR-0003).
 - Times in the front matter are local with the offset, plus the IANA zone,
   so two hosts compare them with no guess (`interactions` AC-14).
 - Name: local day and `HHMM` of `start`, the host, and a slug of the title

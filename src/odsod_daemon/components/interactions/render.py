@@ -48,19 +48,22 @@ def metadata(
     zone: tzinfo,
     config: InteractionsConfig,
 ) -> InteractionDocument:
-    names = {config.owner_name}
-    names.update(line["name"] for line in lines if line["channel"] != "note")
+    names = {line["name"] for line in lines if line["channel"] != "note"}
     for event in events:
         if (
             key(event) == key(boundary.meeting)
             and boundary.start <= at(event) <= boundary.end
         ):
             names.update(event.get("names", []))
+    # Labels, not people: unknown remote speech and the unset owner name.
+    names -= {"Others", InteractionsConfig.model_fields["owner_name"].default}
     meeting = MeetingInfo.model_validate(boundary.meeting) if boundary.meeting else None
     return InteractionDocument(
         id=boundary.id,
         host=host,
-        start=boundary.start.astimezone(zone).isoformat(timespec="milliseconds"),
+        start=(boundary.meeting_start or boundary.start)
+        .astimezone(zone)
+        .isoformat(timespec="milliseconds"),
         end=boundary.end.astimezone(zone).isoformat(timespec="milliseconds"),
         timezone=str(zone),
         meeting=meeting,
