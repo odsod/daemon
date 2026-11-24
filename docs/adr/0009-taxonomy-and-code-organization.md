@@ -64,7 +64,7 @@ This ADR defines the code layout. ADR-0005 refers to it.
 | runtime      | `lib/`, `services/`, `cli.py` (not components)     | [ADR-0010](0010-contracts-and-runtime.md)     |
 | keys         | keys                                               | [ADR-0007](0007-keys-service.md)              |
 | capture      | capture, retention                                 | [ADR-0011](0011-capture.md)                   |
-| speech       | segmentation, transcription, cleanup               | [ADR-0012](0012-speech.md)                    |
+| speech       | segmentation, transcription, cleanup, parakeet     | [ADR-0012](0012-speech.md)                    |
 | dictation    | dictation, unmute-stale                            | [ADR-0013](0013-dictation.md)                 |
 | signals      | signals                                            | [ADR-0014](0014-signals.md)                   |
 | transcript   | transcript, note, pin                              | [ADR-0015](0015-transcript.md)                |

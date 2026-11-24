@@ -24,11 +24,16 @@ class ConfigError(ValueError):
 class InferenceSection(BaseModel):
     whisper_url: str
     llama_url: str
+    # Dictation speech-to-text; unset means whisper_url (ADR-0022).
+    dictation_url: str | None = None
 
-    @field_validator("whisper_url", "llama_url")
+    @field_validator("whisper_url", "llama_url", "dictation_url")
     @classmethod
-    def _check_url(cls, value: str) -> str:
-        return inference.check_url(value)
+    def _check_url(cls, value: str | None) -> str | None:
+        return None if value is None else inference.check_url(value)
+
+    def dictation(self) -> str:
+        return self.dictation_url or self.whisper_url
 
 
 class CommonSection(BaseModel):

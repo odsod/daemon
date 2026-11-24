@@ -19,6 +19,7 @@ SEVERITY: dict[str, Severity] = {
     "mic-muted": "mark",
     "mic-silent": "mark",
     "inference-unreachable": "warning",
+    "parakeet-unavailable": "warning",
     "target-missing": "warning",
     "no-speaking-indicator": "warning",
     "interactions-waiting": "warning",

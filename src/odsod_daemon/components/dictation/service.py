@@ -274,7 +274,7 @@ class Session:
                     if self.stale_until and now >= self.stale_until:
                         self.fault("stale-mutes-cleared", False)
                         self.stale_until = 0
-                    url = config.load_common(self.roots).inference.whisper_url
+                    url = config.load_common(self.roots).inference.dictation()
                     if now >= probe_at:
                         reachable = await inference.reachable(url, timeout_s=1)
                         probe_at = now + self.settings.probe_interval_s
