@@ -1,7 +1,7 @@
 # PRD: Health and control
 
 - Status: Accepted
-- Updated: 2026-11-23
+- Updated: 2026-11-24
 - Design: [ADR-0004](../adr/0004-orchestration-with-systemd.md),
   [ADR-0005](../adr/0005-components-and-implementation.md)
 
@@ -25,8 +25,9 @@
   Running. Dictating is the owner's own action and lasts seconds, so it
   shows over a Warning.
 - Warning causes: the backlog grows, the inference host is out of reach, a
-  target is missing or full, a meeting mute failed, the mic gives only
-  silence, or a meeting tab shows no speaking indicator for 5 min. Error
+  target is missing or full, a meeting mute failed, or a meeting tab shows
+  no speaking indicator for 5 min. A mic that gives only zeros shows Mic
+  muted, as a hardware mute (`ambient-recording`). Error
   is for faults that stop recording, dictation or a service.
 - A host runs a dev install → the tray shows a separate dev mark and
   `odsodctl status` shows `dev`. It is not a Warning, so the dev host does
@@ -122,8 +123,7 @@ to confirm. Detection times for silent mics and stalls are in the
   `ambient-recording` PRD.
 - Other Warning causes: a failed meeting mute (`dictation`), the inference
   host out of reach (`live-transcript`), a missing target (`publishing`),
-  documents waiting over 24 h (`interactions`), a mic that gives only
-  silence (`ambient-recording`).
+  documents waiting over 24 h (`interactions`).
 - The dev mark → the `install-and-upgrade` PRD.
 - Dictation failures and their notifications → the `dictation` PRD.
 - The keys service and Left Alt without a session → the `keyboard` PRD.

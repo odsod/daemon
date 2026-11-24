@@ -116,7 +116,7 @@ def evaluate(snapshot: Snapshot, config: ControlConfig) -> StatusReport:
         capture is None or capture.active_state != "active"
     ):
         state = "paused"
-    elif any(r.code == "mic-muted" for r in reasons):
+    elif any(r.code in ("mic-muted", "mic-silent") for r in reasons):
         state = "mic-muted"
     installed = snapshot.install
     return StatusReport(

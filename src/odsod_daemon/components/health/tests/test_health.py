@@ -35,7 +35,7 @@ def healthy():
     )
 
 
-def reason(severity: Severity = "warning", code="mic-silent"):
+def reason(severity: Severity = "warning", code="inference-unreachable"):
     return Reason(
         code=code,
         severity=severity,
@@ -50,6 +50,8 @@ def reason(severity: Severity = "warning", code="mic-silent"):
     [
         ([], "idle", False, "running", 0),
         ([reason("mark", "mic-muted")], "idle", False, "mic-muted", 0),
+        # Only zeros is a hardware mute: the same mark, not a Warning.
+        ([reason("mark", "mic-silent")], "idle", False, "mic-muted", 0),
         ([], "idle", True, "paused", 0),
         ([reason("mark", "mic-muted")], "idle", True, "paused", 0),
         ([reason()], "idle", True, "warning", 1),
@@ -251,3 +253,9 @@ def test_backlog_window_rolls_at_midnight(tmp_path: Path):
     assert tracker.report(NOW, {}, 600).count == 1
     tracker.update(NOW + timedelta(days=1))
     assert tracker.report(NOW + timedelta(days=1), {}, 600).count == 0
+
+
+def test_ambient_recording_ac12_only_zeros_is_a_mute_mark():
+    from odsod_daemon.components.health.snapshot import SEVERITY
+
+    assert SEVERITY["mic-silent"] == "mark"
