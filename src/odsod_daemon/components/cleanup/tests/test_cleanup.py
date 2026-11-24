@@ -358,3 +358,42 @@ async def test_heard_is_empty_when_cleanup_keeps_the_text(temp_root, monkeypatch
     monkeypatch.setattr(inference.LlamaClient, "complete", complete)
     result = await cleanup(asr(), Speech(), Host("llama"), once=True)
     assert result.heard is None
+
+
+@pytest.mark.parametrize(
+    "text,expected",
+    [
+        ("And also uh I can see", "And also I can see"),
+        ("Um, so can you tell me", "So can you tell me"),
+        ("contains us and arms, uh so let's", "contains us and arms, so let's"),
+        ("done uh.", "done."),
+        ("Uhh, the umbrella is erm here", "The umbrella is here"),
+        ("Hmm, ah, user number", "Hmm, ah, user number"),
+        ("uh", ""),
+    ],
+)
+def test_fillers(text, expected):
+    assert filters.fillers(text) == expected
+
+
+async def test_dictation_drops_fillers_before_and_without_the_llm(
+    temp_root, monkeypatch
+):
+    """PRD dictation AC-28."""
+    setup_audio(temp_root)
+    sent = []
+
+    async def slow(self, messages, **kwargs):
+        sent.append(messages[-1]["content"])
+        await clock.sleep(2)
+        return "late"
+
+    monkeypatch.setattr(inference.LlamaClient, "complete", slow)
+    heard = "So uh the um Veho integration is done."
+    result = await cleanup(asr("dic", heard), Speech(), Host("llama"), once=True)
+    assert "uh" not in sent[0] and result.raw_reason == "timeout"
+    assert result.text == "So the Veho integration is done."
+    ambient = await cleanup(asr("sys", "uh"), Speech(), Host("llama"), once=True)
+    assert ambient.outcome != "empty"
+    only = await cleanup(asr("dic", "Uh, um."), Speech(), Host("llama"), once=True)
+    assert only.outcome == "empty"
