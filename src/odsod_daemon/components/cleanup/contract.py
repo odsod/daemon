@@ -27,6 +27,7 @@ class TextRecord(BaseModel):
     language: str | None = None
     raw: bool = False
     raw_reason: RawReason = None
+    heard: str | None = None
     setup: str | None = None
     ms: int | None = None
     prompt: str | None = None

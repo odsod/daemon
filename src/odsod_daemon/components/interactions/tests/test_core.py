@@ -261,3 +261,37 @@ def test_front_matter_is_plain_yaml():
     assert "title: 'API: migration plan'" in head
     assert "- Åsa Exempel" in head
     assert parse_front_matter(text) == meta
+
+
+def test_document_lines_carry_the_utterance_id_and_what_asr_heard():
+    """PRD interactions AC-15: each speech line names its utterance; a line
+    that cleanup changed also keeps the ASR text, both hidden in Markdown."""
+    from odsod_daemon.components.interactions.render import transcript
+
+    base = {"ts": "2026-11-22T14:00:05.000Z", "at": "2026-11-22T14:00:05.000Z"}
+    lines = [
+        dict(base, input="sys-a", channel="sys", name="Alice", text="Use Clerk."),
+        dict(
+            base,
+            input="sys-b",
+            channel="sys",
+            name="Bob",
+            text="Yes.",
+            heard="Use Klerk -- now",
+        ),
+        dict(
+            base,
+            channel="note",
+            name="Note",
+            text="check it",
+            ts="2026-11-22T14:00:05.000Z",
+        ),
+    ]
+    zone = ZoneInfo("Europe/Stockholm")
+    out = transcript(lines, zone, True).splitlines()
+    assert out[0] == "[15:00:05] **Alice:** Use Clerk. <!-- id:sys-a -->"
+    assert (
+        out[1] == "[15:00:05] **Bob:** Yes. <!-- id:sys-b heard: Use Klerk - - now -->"
+    )
+    assert out[2] == "[15:00:05] 📝 **Note:** check it"
+    assert "<!--" not in transcript(lines, zone)

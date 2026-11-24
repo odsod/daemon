@@ -22,8 +22,21 @@ def transcript(lines: list[Record], zone: tzinfo, markdown: bool = False) -> str
         name = line["name"]
         label = f"**{name}:**" if markdown else f"{name}:"
         prefix = "📝 " if markdown and line["channel"] == "note" else ""
-        result.append(f"[{stamp}] {prefix}{label} {line['text']}")
+        result.append(
+            f"[{stamp}] {prefix}{label} {line['text']}{comment(line, markdown)}"
+        )
     return "\n".join(result)
+
+
+def comment(line: Record, markdown: bool) -> str:
+    """The utterance ID, to find its audio, and what ASR heard if cleanup changed it.
+
+    Hidden in rendered Markdown. `--` would end the comment, so it becomes `- -`."""
+    if not markdown or line["channel"] == "note" or not line.get("input"):
+        return ""
+    heard = line.get("heard")
+    extra = f" heard: {heard.replace('--', '- -')}" if heard else ""
+    return f" <!-- id:{line['input']}{extra} -->"
 
 
 def metadata(

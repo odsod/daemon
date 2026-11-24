@@ -1,7 +1,7 @@
 # PRD: Interactions
 
 - Status: Accepted
-- Updated: 2026-11-23
+- Updated: 2026-11-24
 - Design: [ADR-0002](../adr/0002-high-level-architecture.md),
   [ADR-0003](../adr/0003-filesystem-interface.md),
   [ADR-0005](../adr/0005-components-and-implementation.md)
@@ -109,6 +109,11 @@ Other numbers are targets.
     test._
 14. **AC-14** One meeting recorded on two hosts gives two documents with the
     same meeting code and overlapping time ranges. _Check: manual._
+15. **AC-15** Each speech line names its utterance, so the owner can play it
+    again (`ambient-recording` AC-21). A line that cleanup changed also
+    holds what speech recognition heard, so an agent can find misheard
+    terms. Both are hidden when the document is rendered. _Check: system
+    test._
 
 ## Boundaries
 
