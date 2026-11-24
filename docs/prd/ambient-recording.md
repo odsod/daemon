@@ -1,7 +1,7 @@
 # PRD: Ambient recording
 
 - Status: Accepted
-- Updated: 2026-11-23
+- Updated: 2026-11-24
 - Design: [ADR-0002](../adr/0002-high-level-architecture.md),
   [ADR-0003](../adr/0003-filesystem-interface.md),
   [ADR-0004](../adr/0004-orchestration-with-systemd.md),
@@ -48,8 +48,9 @@
 - Recording crashes or stalls → it restarts by itself. The owner sees nothing
   unless it keeps failing; then the tray shows Error.
 - The mic delivers only digital silence, and the owner did not mute it in
-  KDE → the tray shows Warning: "mic gives only silence (hardware switch?)".
-  A hardware mute switch gives the same signal, so it is not an Error.
+  KDE → the tray shows the same "mic muted" mark: "mic gives only zeros
+  (hardware mute?)". A hardware mute switch gives this signal; a working or
+  broken mic still gives noise. It is not a Warning.
 - The mic in use disappears → recording moves to another available mic.
 - The inference host or the pipeline is down → recording goes on. Text
   catches up from the stored audio later.
@@ -88,9 +89,10 @@ host for 14 days, which the owner accepts.
     _Check: manual._
 11. **AC-11** Recording uses at most 2% of one CPU core on average and at
     most 5.6 GB of disk per day. _Check: manual._
-12. **AC-12** Digital silence on a mic that the owner did not mute, for 60 s,
-    shows Warning ("mic gives only silence") in the tray at most 70 s after
-    it starts, and no Error. _Check: system test._
+12. **AC-12** Digital silence on a mic that the owner did not mute, for 5 s,
+    shows the Mic muted mark ("mic gives only zeros") in the tray at most
+    15 s after it starts, and no Warning or Error (owner decision,
+    2026-11-24). _Check: system test._
 13. **AC-13** If audio stops advancing, recording restarts in at most 60 s.
     If it does not recover, the tray shows Error in at most 2 min. _Check:
     system test._

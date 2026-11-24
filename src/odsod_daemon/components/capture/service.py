@@ -29,7 +29,7 @@ REWRITE_S = 60.0
 
 MESSAGES = {
     checks.CAPTURE_STALLED: "no new audio",
-    checks.MIC_SILENT: "the mic gives only zeros",
+    checks.MIC_SILENT: "the mic gives only zeros (hardware mute?)",
     checks.MIC_MUTED: "the default source is muted",
 }
 FIXES: dict[str, str | None] = {

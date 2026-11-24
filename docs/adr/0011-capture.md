@@ -214,9 +214,9 @@ stdout and gives each block to `anchor.py`, with its arrival time from
 - **`mic-muted` (Mark):** set while the default source is
   muted. Cleared when it is unmuted. Within 5 s (`ambient-recording`
   AC-17).
-- **`mic-silent` (Warning):** set when every sample of the `mic` channel
-  has been exactly zero for `mic_silent_s` (60 s) while the source is not
-  muted. `since` is the first zero block. Cleared by the first block with a
+- **`mic-silent` (Mark, as a hardware mute; owner decision 2026-11-24):**
+  set when every sample of the `mic` channel has been exactly zero for
+  `mic_silent_s` (5 s) while the source is not muted. `since` is the first zero block. Cleared by the first block with a
   non-zero sample. The check runs on each block, so the fault shows at
   about 60 s, inside the 70 s of AC-12. A hardware switch gives the same
   zeros with no mute flag, so this is never an Error (ADR-0004).
@@ -247,7 +247,7 @@ stdout and gives each block to `anchor.py`, with its arrival time from
 | `pw-record` exits or stalls              | Restarts it after 10 s; `gap` with reason `stall`                            | none (self-heals) |
 | Stall not fixed by the restart           | Stops the watchdog ping; systemd restarts the service at 30 s                | none              |
 | No new audio for 60 s on a channel       | Fault, Error. Restarts go on until the start limit                           | `capture-stalled` |
-| Mic gives only zeros for 60 s, not muted | Fault, Warning. Recording goes on                                            | `mic-silent`      |
+| Mic gives only zeros for 5 s, not muted  | Fault, Mark (hardware mute). Recording goes on                                     | `mic-silent`      |
 | Owner mutes the default source           | Mark. Recording goes on (zeros)                                              | `mic-muted`       |
 | Clock step or card drift                 | Re-anchors: hole or dropped blocks. `gap` with reason `clock` if 1 s or more | none              |
 | Resume from suspend                      | Restarts `pw-record`; `gap` with reason `suspend`                            | none              |
@@ -267,7 +267,7 @@ Section `capture`:
   "capture": {
     "stall_restart_s": 10,
     "stall_error_s": 60,
-    "mic_silent_s": 60,
+    "mic_silent_s": 5,
     "reanchor_ms": 150,
     "capture_latency_ms": 0
   }
@@ -297,7 +297,7 @@ and mute states.
 | Writer: offset = time; block split at the hour; hole reads as zeros                  | ADR-0003 format           |
 | Fake `pw-record` goes quiet: restart at 10 s; `gap` reason `stall`                   | AC-13                     |
 | Quiet for good: watchdog pings stop; `capture-stalled` 60 s after audio end or start | AC-13                     |
-| Zeros for 60 s, not muted: `mic-silent` by 61 s; cleared by one sample               | AC-12                     |
+| Zeros for 5 s, not muted: `mic-silent` by 6 s; cleared by one sample                 | AC-12                     |
 | Zeros while muted: `mic-muted`, no `mic-silent`                                      | AC-12, AC-17              |
 | SIGTERM: `stop` records and exit within 1 s; no block after it                       | AC-5                      |
 | Restart: `start` has `prev_end` from the file size                                   | `live-transcript` AC-14   |

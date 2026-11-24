@@ -17,7 +17,7 @@ SEVERITY: dict[str, Severity] = {
     "capture-stalled": "error",
     "keys-socket-missing": "error",
     "mic-muted": "mark",
-    "mic-silent": "warning",
+    "mic-silent": "mark",
     "inference-unreachable": "warning",
     "target-missing": "warning",
     "no-speaking-indicator": "warning",
