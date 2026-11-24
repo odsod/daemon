@@ -1,0 +1,4 @@
+# A lost keyboard during a pending Space tap gives nothing.
+0 in key KEY_SPACE down
+100 in key KEY_A down
+200 in lost

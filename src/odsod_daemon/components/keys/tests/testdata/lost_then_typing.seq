@@ -1,0 +1,7 @@
+# After a lost keyboard the state is clean and a plain key types as usual.
+0 in key KEY_SPACE down
+100 in lost
+200 in key KEY_A down
+200 out key KEY_A down
+250 in key KEY_A up
+250 out key KEY_A up

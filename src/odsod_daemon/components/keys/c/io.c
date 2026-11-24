@@ -230,7 +230,13 @@ static void open_device(const char *path, int grab)
 	}
 
 	int clock_id = CLOCK_MONOTONIC;
-	(void)ioctl(fd, EVIOCSCLOCKID, &clock_id);
+	if (ioctl(fd, EVIOCSCLOCKID, &clock_id) < 0) {
+		fprintf(stderr,
+			"[odsod-daemon-keys] %s: cannot set the clock: %s\n",
+			path, strerror(errno));
+		close(fd);
+		return;
+	}
 	if (keyboard && grab && ioctl(fd, EVIOCGRAB, 1) < 0) {
 		close(fd);
 		return;
@@ -281,7 +287,17 @@ static int device_index_of(int fd)
 	return -1;
 }
 
-static void drop_device(int index)
+static int keyboard_count(void)
+{
+	int count = 0;
+	for (int i = 0; i < device_count; i++) {
+		if (devices[i].keyboard)
+			count++;
+	}
+	return count;
+}
+
+static void close_device(int index)
 {
 	if (index < 0 || index >= device_count)
 		return;
@@ -404,6 +420,22 @@ static void feed_input(struct ks_state *state, const struct ks_input *in,
 	struct ks_outputs out;
 	ks_handle(state, in, &out);
 	apply_outputs(state, &out, wall_offset);
+}
+
+/*
+ * The state tracks no owning device, so a lost keyboard resets every held
+ * key instead of only that device's keys.
+ */
+static void drop_device(struct ks_state *state, int index, long wall_offset)
+{
+	if (index < 0 || index >= device_count)
+		return;
+	if (devices[index].keyboard) {
+		struct ks_outputs out;
+		ks_device_lost(state, mono_ms(), &out);
+		apply_outputs(state, &out, wall_offset);
+	}
+	close_device(index);
 }
 
 static void feed_event(struct ks_state *state, const struct input_event *ev,
@@ -586,7 +618,7 @@ static int record_main(const char *path)
 			ssize_t length =
 				read(pfds[i].fd, events, sizeof(events));
 			if (length <= 0) {
-				drop_device(index);
+				close_device(index);
 				continue;
 			}
 			int n = (int)(length /
@@ -660,7 +692,7 @@ int main(int argc, char **argv)
 	usleep(200000);
 
 	scan_devices(1);
-	if (device_count == 0) {
+	if (keyboard_count() == 0) {
 		fprintf(stderr, "[odsod-daemon-keys] no keyboards found\n");
 		ioctl(uinput_fd, UI_DEV_DESTROY);
 		close(uinput_fd);
@@ -752,10 +784,18 @@ int main(int argc, char **argv)
 			}
 			if (listen_fd >= 0 && pfds[i].fd == listen_fd) {
 				accept_client(&state, wall_offset);
+				if (state.exit) {
+					running = 0;
+					break;
+				}
 				continue;
 			}
 			if (client.fd >= 0 && pfds[i].fd == client.fd) {
 				read_client(&state, wall_offset);
+				if (state.exit) {
+					running = 0;
+					break;
+				}
 				continue;
 			}
 			int index = device_index_of(pfds[i].fd);
@@ -763,7 +803,11 @@ int main(int argc, char **argv)
 				continue;
 			struct device *dev = &devices[index];
 			if (revents & POLLERR) {
-				drop_device(index);
+				drop_device(&state, index, wall_offset);
+				if (state.exit) {
+					running = 0;
+					break;
+				}
 				continue;
 			}
 
@@ -774,7 +818,11 @@ int main(int argc, char **argv)
 				if (length < 0 &&
 				    (errno == EAGAIN || errno == EINTR))
 					continue;
-				drop_device(index);
+				drop_device(&state, index, wall_offset);
+				if (state.exit) {
+					running = 0;
+					break;
+				}
 				continue;
 			}
 			int n = (int)(length /

@@ -111,5 +111,6 @@ void ks_handle(struct ks_state *state, const struct ks_input *in,
 	       struct ks_outputs *out);
 int ks_deadline(const struct ks_state *state, long *t_ms);
 void ks_release_all(struct ks_state *state, long t_ms, struct ks_outputs *out);
+void ks_device_lost(struct ks_state *state, long t_ms, struct ks_outputs *out);
 
 #endif
