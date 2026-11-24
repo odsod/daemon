@@ -53,6 +53,7 @@ asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 markers = [
     "timing: measures real latency; runs without virtual time",
+    "live: needs the real whisper and llama servers",
     "chrome: needs a headless Chromium",
 ]
 
