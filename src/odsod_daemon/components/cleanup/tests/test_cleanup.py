@@ -268,11 +268,11 @@ async def test_battery_pending_cleanup(temp_root, monkeypatch, channel, local):
 
 def test_messages_pin_the_whisper_language():
     english = prompt.messages("Clean.", "That's it for me.", "en")[0]["content"]
-    assert english.endswith(
-        "The transcript is in English. Reply in English. Never translate."
-    )
+    assert "The transcript is mostly in English" in english
+    assert "Never translate anything." in english
     swedish = prompt.messages("Clean.", "Och röntgen.", "sv")[0]["content"]
-    assert "Reply in Swedish." in swedish
+    assert "mostly in Swedish" in swedish
+    assert "Keep every word in the language it was spoken." in swedish
     assert prompt.messages("Clean.", "Hm.", "und")[0]["content"] == "Clean."
 
 

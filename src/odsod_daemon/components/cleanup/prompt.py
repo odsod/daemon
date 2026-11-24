@@ -28,12 +28,17 @@ def render(dictation: bool, speech: Speech, glossary: list[str]) -> tuple[str, s
 def messages(
     system: str, text: str, code: str = "und", hints: str = ""
 ) -> list[dict[str, str]]:
-    """Name the whisper language: without it the model translates English
-    to Swedish (live meeting, 2026-11-24)."""
+    """Name the whisper language, but as "mostly": whisper labels some English
+    lines Swedish, and speakers mix both inside one sentence. Without this the
+    model translates (live meetings, 2026-11-24)."""
     spoken = language.name(code)
     if spoken:
         system += (
-            f"\nThe transcript is in {spoken}. Reply in {spoken}. Never translate."
+            f"\nThe transcript is mostly in {spoken}, but speakers mix Swedish"
+            " and English, even inside one sentence. Keep every word in the"
+            " language it was spoken. Never translate anything. Keep the"
+            " speaker's own words and slang; change a word only to fix a clear"
+            " recognition error."
         )
     if hints:
         system += (
