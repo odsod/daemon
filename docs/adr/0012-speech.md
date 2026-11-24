@@ -142,7 +142,7 @@ components/transcription/
 └── tests/
 components/cleanup/
 ├── __init__.py, contract.py (TextRecord)
-├── filters.py      pure: phantom phrases, glossary echo
+├── filters.py      pure: phantom phrases, glossary echo, fillers
 ├── guard.py        pure: length ratio, numbers, word overlap, English words
 ├── language.py     pure: whisper language field → ISO 639-1 code
 ├── prompt.py       render templates with the glossary
@@ -309,6 +309,10 @@ The worker tells host faults from input faults:
     för att du tittade", "Thanks for watching");
   - glossary echo: three or more glossary terms in glossary order, and
     glossary tokens are at least 70% of all tokens (OpenWhispr, Handy).
+- **Fillers, dictation only:** "uh", "um" and "erm" are dropped before the
+  request (`filters.fillers`), so the raw text on a timeout has none
+  either. Text with nothing else left is `empty`. `heard` keeps the ASR
+  text. Parakeet writes fillers that whisper's prompt hid (ADR-0022).
 - **Request:** system prompt from `prompts/cleanup.md` (ambient) or
   `prompts/cleanup-dictation.md`, rendered with the glossary and
   `prompt_languages`. The user message wraps the text in

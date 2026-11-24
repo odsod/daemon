@@ -25,8 +25,8 @@
   active app, in GUI apps and terminals alike.
 - The text starts with the first word the owner spoke after pressing Left
   Alt, not after the threshold.
-- The text is clean English: punctuation, and names and terms spelled as in
-  the owner's glossary. A dictated question pastes as a question, never as an
+- The text is clean English: punctuation, no "uh" or "um", and names and
+  terms spelled as in the owner's glossary. A dictated question pastes as a question, never as an
   answer.
 - Owner holds Left Alt and says nothing → nothing is pasted.
 - Owner presses another key during dictation → dictation is cancelled,
@@ -134,6 +134,8 @@ targets for the owner to confirm.
     manual on the owner's laptop._
 27. **AC-27** AC-3 holds while another host's ambient transcription keeps
     the inference host busy. _Check: system test._
+28. **AC-28** Pasted text holds no "uh", "um" or "erm", also when cleanup
+    gives no text in time. _Check: system test._
 
 ## Boundaries
 

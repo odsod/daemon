@@ -24,7 +24,8 @@ async def cleanup(
     entries = glossary.current()
     terms = glossary.terms(entries)
     system, digest = prompt.render(dic, speech, terms)
-    source = record.get("text") or ""
+    heard = record.get("text") or ""
+    source = filters.fillers(heard) if dic else heard
     result = TextRecord(
         ts=clock.iso(),
         input=record["input"],
@@ -50,7 +51,11 @@ async def cleanup(
     )
     if result.outcome != "ok":
         return result
-    if filters.phantom(source, speech.phantoms) or filters.glossary_echo(source, terms):
+    if (
+        not source
+        or filters.phantom(source, speech.phantoms)
+        or filters.glossary_echo(source, terms)
+    ):
         result.outcome = "empty"
         return result
 
@@ -101,8 +106,8 @@ async def cleanup(
                 result.raw, result.raw_reason, result.text = True, why, source
             else:
                 result.text = reply
-                if reply != source:
-                    result.heard = source
+                if reply != heard:
+                    result.heard = heard
     except TimeoutError, HostUnavailable:
         if not dic:
             raise
