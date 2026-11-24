@@ -346,4 +346,4 @@ async def test_corrupt_muted_record_does_not_stop_startup(temp_root):
     await session.startup()
     health = documents.read_json(session.roots.run / "health/session.json")
     assert "mute-failed" in {fault["code"] for fault in health["faults"]}
-    assert documents.read_json(session.mute.path) == {"streams": []}
+    assert documents.read_json(session.mute.path) == {"streams": [], "source": None}
