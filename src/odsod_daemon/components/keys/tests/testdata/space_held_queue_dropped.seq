@@ -1,0 +1,9 @@
+# Space held past 350 ms while pending drops queued key presses on release.
+0 in key KEY_SPACE down
+50 in key KEY_A down
+100 in key KEY_B down
+400 in key KEY_SPACE up
+450 in key KEY_A up
+450 out key KEY_A up
+460 in key KEY_B up
+460 out key KEY_B up

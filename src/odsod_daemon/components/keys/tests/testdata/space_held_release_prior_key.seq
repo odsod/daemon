@@ -1,0 +1,14 @@
+# Releasing a pre-Space key while Space is in Meta held emits a Meta chord up.
+0 in key KEY_A down
+0 out key KEY_A down
+50 in key KEY_SPACE down
+250 in key KEY_B down
+250 out key KEY_LEFTMETA down
+250 out key KEY_B down
+300 in key KEY_A up
+300 out key KEY_A up
+300 out key KEY_LEFTMETA up
+350 in key KEY_B up
+350 out key KEY_B up
+350 out key KEY_LEFTMETA up
+400 in key KEY_SPACE up

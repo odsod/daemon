@@ -1,0 +1,15 @@
+# Left Ctrl chord suppresses Esc; held Left Ctrl repeats and late release gives no Esc.
+0 in key KEY_LEFTCTRL down
+0 out key KEY_LEFTCTRL down
+100 in key KEY_A down
+100 out key KEY_A down
+150 in key KEY_A up
+150 out key KEY_A up
+200 in key KEY_LEFTCTRL up
+200 out key KEY_LEFTCTRL up
+300 in key KEY_LEFTCTRL down
+300 out key KEY_LEFTCTRL down
+600 in key KEY_LEFTCTRL repeat
+600 out key KEY_LEFTCTRL repeat
+700 in key KEY_LEFTCTRL up
+700 out key KEY_LEFTCTRL up

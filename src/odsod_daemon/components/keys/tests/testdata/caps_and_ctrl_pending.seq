@@ -1,0 +1,13 @@
+# Caps Lock and Left Ctrl do not interrupt each other; both tap Esc if released under 350 ms.
+0 in key KEY_CAPSLOCK down
+0 out key KEY_LEFTCTRL down
+50 in key KEY_LEFTCTRL down
+50 out key KEY_LEFTCTRL down
+100 in key KEY_CAPSLOCK up
+100 out key KEY_LEFTCTRL up
+100 out key KEY_ESC down
+100 out key KEY_ESC up
+150 in key KEY_LEFTCTRL up
+150 out key KEY_LEFTCTRL up
+150 out key KEY_ESC down
+150 out key KEY_ESC up
