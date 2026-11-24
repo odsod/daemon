@@ -96,7 +96,7 @@ async def cleanup(
             else:
                 result.outcome = "empty"
         else:
-            why = guard.reason(source, reply)
+            why = guard.reason(source, reply, result.language)
             if why:
                 result.raw, result.raw_reason, result.text = True, why, source
             else:

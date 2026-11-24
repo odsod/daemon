@@ -8,7 +8,14 @@ from pydantic import BaseModel, ConfigDict
 
 Outcome = Literal["ok", "empty", "expired", "failed"]
 RawReason = (
-    Literal["timeout", "llm-empty", "guard-length", "guard-number", "guard-overlap"]
+    Literal[
+        "timeout",
+        "llm-empty",
+        "guard-length",
+        "guard-number",
+        "guard-overlap",
+        "guard-english",
+    ]
     | None
 )
 

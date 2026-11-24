@@ -70,12 +70,12 @@ Proposed
 
 Records and fields beyond the seam:
 
-| Stream                | Kind        | Extra fields                                                                                                                                                                                          |
-| --------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `utterances/ambient/` | `utterance` | `vad`: mean speech probability (2 decimals). `cut`: `pause`, `forced`, `mask` (dictation window) or `end-of-audio`                                                                                    |
-| `coverage/`           | `covered`   | Seam: `channel`, `end`. No utterance of that channel will start before `end`                                                                                                                          |
-| `asr/<backend>/`      | `asr`       | `channel`, `start`, `end` (copied from the utterance), `ms` (request time), `attempts`, `gate` (dictation: peak speech probability)                                                                   |
-| `text/`               | `text`      | `raw_reason` (when `raw`): `timeout`, `llm-empty`, `guard-length`, `guard-number`, `guard-overlap`. `ms`. `prompt` (hash of the rendered prompt). `heard`: the ASR text, only when cleanup changed it |
+| Stream                | Kind        | Extra fields                                                                                                                                                                                                           |
+| --------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `utterances/ambient/` | `utterance` | `vad`: mean speech probability (2 decimals). `cut`: `pause`, `forced`, `mask` (dictation window) or `end-of-audio`                                                                                                     |
+| `coverage/`           | `covered`   | Seam: `channel`, `end`. No utterance of that channel will start before `end`                                                                                                                                           |
+| `asr/<backend>/`      | `asr`       | `channel`, `start`, `end` (copied from the utterance), `ms` (request time), `attempts`, `gate` (dictation: peak speech probability)                                                                                    |
+| `text/`               | `text`      | `raw_reason` (when `raw`): `timeout`, `llm-empty`, `guard-length`, `guard-number`, `guard-overlap`, `guard-english`. `ms`. `prompt` (hash of the rendered prompt). `heard`: the ASR text, only when cleanup changed it |
 
 - `covered` is written at each utterance (with `end` = the utterance end)
   and at least every 60 s while the channel advances. It has its own
@@ -141,7 +141,7 @@ components/transcription/
 components/cleanup/
 ├── __init__.py, contract.py (TextRecord)
 ├── filters.py      pure: phantom phrases, glossary echo
-├── guard.py        pure: length ratio, numbers, word overlap
+├── guard.py        pure: length ratio, numbers, word overlap, English words
 ├── language.py     pure: whisper language field → ISO 639-1 code
 ├── prompt.py       render templates with the glossary
 ├── prompts/        cleanup.md, cleanup-dictation.md (jinja2)
@@ -320,10 +320,15 @@ The worker tells host faults from input faults:
 - **Guard** (YazSes). The reply is replaced by the raw text, with
   `raw: true` and a `raw_reason`, when:
   - its length is outside 0.5 to 2.0 times the input length;
-  - it drops a number of the input.
-- A guard for dropped capitalized words is deferred (owner decision,
-  2026-11-23). It can undo valid fixes in mixed-language text. Bench data
-  on accepted cases decides if it comes back.
+  - it drops a number of the input;
+  - in a Swedish line, it drops an English word of 5 or more ASCII letters
+    (in the host list `/usr/share/dict/words`) and keeps no word that
+    contains it (`guard-english`). The model translates English terms in
+    Swedish speech ("invoicing" to "fakturering"), and the owner wants them
+    kept. Bench on 718 held-out Swedish lines: 17 kept as raw text, 15 of
+    them translations. No word list on the host: this check is off.
+- A guard for dropped capitalized words in general stays deferred (owner
+  decision, 2026-11-23): it undoes valid fixes in mixed-language text.
 - **Empty reply:** ambient gives outcome `empty` (the prompt asks for
   empty output on pure hallucination). Dictation passed the presence gate,
   so an empty reply there gives the raw text with `raw_reason: llm-empty`.
