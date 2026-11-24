@@ -11,6 +11,7 @@ from odsod_daemon.components.health.backlog import BacklogTracker
 from odsod_daemon.components.health.config import ControlConfig
 from odsod_daemon.components.health.contract import Backlog, Reason, Severity
 from odsod_daemon.components.install.contract import InstallRecord, PreviousCommit
+from odsod_daemon.components.servers.contract import Inference
 from odsod_daemon.lib import audio, clock, config, documents, paths, systemd
 
 SEVERITY: dict[str, Severity] = {
@@ -32,6 +33,8 @@ SEVERITY: dict[str, Severity] = {
 class Snapshot:
     now: datetime
     graphical: bool = True
+    # This host runs the inference servers (config section inference).
+    inference: bool = False
     units: dict[str, systemd.UnitState | None] = field(default_factory=dict)
     faults: list[Reason] = field(default_factory=list)
     newest_audio: dict[str, str | None] = field(default_factory=dict)
@@ -60,14 +63,19 @@ async def gather(
 ) -> Snapshot:
     now = now or clock.utc_now()
     settings = settings or config.section("control", ControlConfig, roots=roots)
-    result = Snapshot(now=now)
+    # Like install: a host with no config file runs no server.
+    inference = (
+        roots.config_file.exists()
+        and config.section("inference", Inference, roots=roots).enabled
+    )
+    result = Snapshot(now=now, inference=inference)
     graphical = await source.get("graphical-session.target")
     result.graphical = graphical is not None and graphical.active_state == "active"
     paused = optional(roots.run / "paused")
     if paused is not None:
         result.paused_since = paused["since"]
     for service in units.NAMES:
-        shipped = service in units.SERVICES
+        shipped = units.shipped(service, inference=inference)
         state = (
             await source.get(
                 units.unit(service), scope="system" if service == "keys" else "user"

@@ -66,6 +66,7 @@ them.
 | `config/glossary.yaml`                                                | owner                                                   | speech, interactions, bench                                              |
 | `speech` config section, prompts `cleanup.md`, `cleanup-dictation.md` | owner (speech owns the schema)                          | speech, bench (sandbox overrides)                                        |
 | Keys package-data constants                                           | keys (`contract.py`)                                    | install (`install --system` builds and installs keys)                    |
+| `inference` config section; server unit facts (`servers/contract.py`) | owner (inference owns the schema); inference            | install (renders the server units), control (expects them)               |
 | Keys socket                                                           | keys                                                    | dictation ([ADR-0007](0007-keys-service.md))                             |
 | KWin D-Bus calls                                                      | shortcuts                                               | shortcuts ([ADR-0008](0008-shortcuts-and-kwin-script.md))                |
 
@@ -205,6 +206,11 @@ Mic muted as `mic-muted`.
   `inference` (`whisper_url`, `llama_url`, optional `dictation_url`
   (ADR-0022), all localhost or tailnet, ADR-0002). Each URL is the full endpoint, such as
   `http://host:8178/v1/audio/transcriptions`, not a base URL.
+- `inference` (the subsystem, not `common.inference`): `enabled` (false),
+  `whisper` and `llama`, each with `port` (8178, 8179) and `extra_args`
+  (empty). Only the inference host sets `enabled: true`
+  ([ADR-0023](0023-inference-servers.md)). Clients keep using the
+  `common.inference` URLs.
 - `lib.pending` reads `common.retention_days` once, so every consumer uses
   the same pending window.
 - Each subsystem owns its section. Its component loads it with
@@ -234,6 +240,7 @@ Mic muted as `mic-muted`.
 | `inference`  | Async clients for whisper-server (and parakeet) and llama-server; URL check; `reachable(url, timeout)`; `is_loopback(url)`; fakes |
 | `systemd`    | Unit states over D-Bus, user and system bus (`ActiveState`, `SubState`, `Result`, `StateChangeTimestamp`); `sd_notify`            |
 | `power`      | `on_mains()` from `/sys/class/power_supply`. Device batteries (scope `Device`, such as a pen or a mouse) do not count             |
+| `download`   | Pinned files: stream, check the SHA-256, rename into place; skip a file of the pinned size. parakeet and inference use it         |
 | `textmatch`  | `overlap(a, b)`: token overlap of two texts, 0.0 to 1.0. Each caller keeps its own threshold                                      |
 | `cli`        | `--json` output: one result model renders as text or JSON                                                                         |
 
@@ -301,6 +308,7 @@ Mic muted as `mic-muted`.
 | `shortcuts`                                        | shortcuts  | Yes      |                                                    |
 | `bench cases\|list\|run\|accept\|delete\|report`   | bench      | Yes      | Extra `bench`                                      |
 | `install [--system]`                               | install    | No       |                                                    |
+| `inference setup [--check]`                        | inference  | No       | Inference host only; idempotent; no root           |
 | `version`                                          | install    | Yes      |                                                    |
 
 - Each component that has commands exports a typer app from `cli.py` in its

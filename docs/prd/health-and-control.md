@@ -38,7 +38,9 @@
   Resume.
 - Owner or an agent runs `odsodctl status` → the same state and reasons as
   the tray, plus each service, the time of the newest audio, and the
-  transcription backlog. It works with no graphical session, such as over
+  transcription backlog. On the inference host, the services include
+  whisper-server and llama-server
+  ([ADR-0023](../adr/0023-inference-servers.md)). It works with no graphical session, such as over
   SSH.
 - Every tray action has an `odsodctl` command: `pause`, `resume`. Other
   PRDs add commands, such as `dictation last`, `transcript`, `note`, `pin`,
@@ -115,6 +117,10 @@ to confirm. Detection times for silent mics and stalls are in the
     it. _Check: system test._
 16. **AC-16** With the session service down, the tray shows Error at most
     10 s later. _Check: system test._
+17. **AC-17** On a host with `inference.enabled`, `odsodctl status` lists
+    `odsod-daemon-whisper.service` and `odsod-daemon-llama.service` as
+    expected, and a failed one is Error with its restart command. Other
+    hosts do not expect them. _Check: component test._
 
 ## Boundaries
 

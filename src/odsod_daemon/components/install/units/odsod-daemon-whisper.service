@@ -1,0 +1,12 @@
+[Unit]
+Description=odsod daemon whisper-server
+OnFailure=odsod-daemon-notify@%n.service
+
+[Service]
+Type=simple
+ExecStart={{exec_start}}
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=odsod-daemon.target

@@ -65,6 +65,7 @@ This ADR defines the code layout. ADR-0005 refers to it.
 | keys         | keys                                               | [ADR-0007](0007-keys-service.md)              |
 | capture      | capture, retention                                 | [ADR-0011](0011-capture.md)                   |
 | speech       | segmentation, transcription, cleanup, parakeet     | [ADR-0012](0012-speech.md)                    |
+| inference    | servers                                            | [ADR-0023](0023-inference-servers.md)         |
 | dictation    | dictation, unmute-stale                            | [ADR-0013](0013-dictation.md)                 |
 | signals      | signals                                            | [ADR-0014](0014-signals.md)                   |
 | transcript   | transcript, note, pin                              | [ADR-0015](0015-transcript.md)                |
@@ -86,7 +87,8 @@ Subsystem rules:
    components may import each other's internals. An architecture test
    checks this in `mise run build` ([ADR-0010](0010-contracts-and-runtime.md)).
 3. **Each outside system has one subsystem.** PipeWire is in capture, the
-   browser in signals, KWin in shortcuts, the kernel input devices in keys.
+   browser in signals, KWin in shortcuts, the kernel input devices in keys,
+   the whisper.cpp and llama.cpp builds in inference.
    Clients that several subsystems need, such as the inference host, are in
    `lib/` with no business logic.
 4. **Admission to `lib/` is by subsystem.** Code that two components of one
@@ -183,6 +185,16 @@ Each version has one owner:
 - Python dev tools (pytest, ruff, pyright, import-linter) are uv dev
   dependencies, not mise tools, so one lock holds every Python package.
 - CI installs mise, then runs `mise run build`, the same as a host.
+- Two native builds exist besides these layers. Each has one owner:
+  - The keys C binary: `gcc` from the OS, built by `install --system` and
+    compiled in `mise run build`.
+  - whisper-server and llama-server: source tarballs, build flags and
+    models pinned in `components/servers/pins.py`, built by `odsodctl
+    inference setup` with `cmake`, `hipcc` and ROCm from the OS
+    ([ADR-0023](0023-inference-servers.md)). CI never builds them; tests
+    use fake build tools.
+  - The `machine` repo installs the OS packages. It pins no version of
+    either.
 
 ### Python project conventions
 

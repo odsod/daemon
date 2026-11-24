@@ -259,3 +259,41 @@ def test_ambient_recording_ac12_only_zeros_is_a_mute_mark():
     from odsod_daemon.components.health.snapshot import SEVERITY
 
     assert SEVERITY["mic-silent"] == "mark"
+
+
+@pytest.mark.parametrize("server", units.SERVERS)
+def test_server_units_expected_only_on_the_inference_host(server):
+    """PRD health-and-control: the server units show in status."""
+    snapshot = healthy()
+    snapshot.units[server] = None
+    report = evaluate(snapshot, ControlConfig())
+    assert report.state == "running"
+    listed = {s.unit: s for s in report.services}
+    assert not listed[units.unit(server)].expected
+    snapshot.inference = True
+    for name in units.SERVERS:
+        snapshot.units[name] = state(name)
+    assert evaluate(snapshot, ControlConfig()).state == "running"
+    snapshot.units[server] = state(server, "failed")
+    report = evaluate(snapshot, ControlConfig())
+    assert report.state == "error"
+    assert report.reasons[0].code == "unit-failed"
+    assert report.reasons[0].fix == f"systemctl --user restart odsod-daemon-{server}"
+
+
+@pytest.mark.parametrize("enabled", [True, False])
+async def test_snapshot_reads_the_inference_role(tmp_path: Path, enabled):
+    roots = paths.Roots(tmp_path / "state", tmp_path / "run", tmp_path / "config")
+    documents.write_json(roots.config_file, {"inference": {"enabled": enabled}})
+    source = systemd.FakeUnitStates()
+    source.set(state("llama", "failed"))
+    snapshot = await gather(
+        roots,
+        source,
+        now=NOW,
+        tracker=BacklogTracker(roots.state),
+        settings=ControlConfig(),
+    )
+    assert snapshot.inference is enabled
+    llama = snapshot.units["llama"]
+    assert (llama is not None and llama.active_state == "failed") is enabled

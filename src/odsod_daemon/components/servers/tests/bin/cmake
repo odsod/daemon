@@ -1,0 +1,21 @@
+#!/bin/sh
+# A fake cmake: logs each call; a --build call makes the target binary.
+set -eu
+printf '%s: cmake %s\n' "$(basename "$(pwd)")" "$*" >> "$ODSOD_DAEMON_ROOT/cmake.log"
+if [ "$1" = "--build" ]; then
+  dir="$2"
+  target=""
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --target) target="$2"; shift 2 ;;
+      *) shift ;;
+    esac
+  done
+  if [ "${FAKE_CMAKE_FAIL:-}" = "$target" ]; then
+    echo "fake cmake: boom" >&2
+    exit 1
+  fi
+  mkdir -p "$dir/bin"
+  printf 'fake %s\n' "$target" > "$dir/bin/$target"
+  chmod 755 "$dir/bin/$target"
+fi

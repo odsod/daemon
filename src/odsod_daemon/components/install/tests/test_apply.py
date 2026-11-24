@@ -202,3 +202,124 @@ def test_digests_skip_files_the_wheel_leaves_out(tmp_path):
     edit(tmp_path / "lib/inference/testdata/reply.json", "{}")
     edit(tmp_path / "lib/__pycache__/audio.pyc", "bytes")
     assert digests(tmp_path) == before
+
+
+SERVER_UNITS = ("odsod-daemon-whisper.service", "odsod-daemon-llama.service")
+
+
+def set_up_servers(root: Path, enabled: bool = True) -> None:
+    from odsod_daemon.components.servers.contract import SERVERS
+
+    documents.write_json(
+        root / "config/config.json", {"inference": {"enabled": enabled}}
+    )
+    for server in SERVERS:
+        edit(root / "state" / server.binary, f"{server.name} v1")
+        edit(root / "state" / server.model, "weights")
+
+
+def unit_file(name: str) -> Path:
+    return Path(os.environ["XDG_CONFIG_HOME"]) / "systemd/user" / name
+
+
+def test_server_units_only_on_an_enabled_set_up_host(installed):
+    apply(record())
+    assert not any(unit_file(name).exists() for name in SERVER_UNITS)
+    set_up_servers(installed, enabled=False)
+    apply(record())
+    assert not any(unit_file(name).exists() for name in SERVER_UNITS)
+    set_up_servers(installed)
+    apply(record())
+    log = calls(installed)
+    for name in SERVER_UNITS:
+        assert unit_file(name).exists()
+        assert f"enable {name}" in log
+        assert f"restart {name}" in log
+    # Disabling inference removes the units and stops the servers.
+    set_up_servers(installed, enabled=False)
+    (installed / "systemctl.log").unlink()
+    apply(record())
+    assert not any(unit_file(name).exists() for name in SERVER_UNITS)
+    for name in SERVER_UNITS:
+        assert f"disable --now {name}" in calls(installed)
+
+
+def test_enabled_without_setup_renders_no_server(installed):
+    set_up_servers(installed)
+    (installed / "state/models/ggml-large-v3.bin").unlink()
+    lines: list[str] = []
+    package = installed.parent / "package"
+    install_user(
+        command=Path("/usr/bin/true"),
+        candidate=record(),
+        package=package,
+        progress=lines.append,
+    )
+    assert not any(unit_file(name).exists() for name in SERVER_UNITS)
+    assert any("odsodctl inference setup" in line for line in lines)
+
+
+def test_deploy_without_server_change_restarts_no_server(installed):
+    """PRD install-and-upgrade: a deploy restarts no server unless it changed."""
+    set_up_servers(installed)
+    apply(record(source="dev"))
+    (installed / "systemctl.log").unlink()
+    edit(package(installed) / "components/cleanup/guard.py", "v2")
+    apply(record(source="dev"))
+    log = calls(installed)
+    assert "restart odsod-daemon-pipeline.service" in log
+    assert not any(f"restart {name}" in log for name in SERVER_UNITS)
+
+
+def test_server_restarts_on_its_binary_or_unit_change(installed):
+    from odsod_daemon.components.servers.contract import SERVERS
+
+    set_up_servers(installed)
+    apply(record())
+    (installed / "systemctl.log").unlink()
+    whisper = next(s for s in SERVERS if s.name == "whisper")
+    edit(installed / "state" / whisper.binary, "whisper v2")
+    apply(record())
+    log = calls(installed)
+    assert "restart odsod-daemon-whisper.service" in log
+    assert "restart odsod-daemon-llama.service" not in log
+    assert "restart odsod-daemon-pipeline.service" not in log
+    (installed / "systemctl.log").unlink()
+    documents.write_json(
+        installed / "config/config.json",
+        {"inference": {"enabled": True, "llama": {"extra_args": ["--verbose"]}}},
+    )
+    apply(record())
+    log = calls(installed)
+    assert "restart odsod-daemon-llama.service" in log
+    assert "restart odsod-daemon-whisper.service" not in log
+
+
+@pytest.mark.parametrize("legacy", ["llama-server.service", "whisper-server.service"])
+def test_refuses_while_the_machine_servers_run(installed, legacy):
+    set_up_servers(installed)
+    documents.write_json(installed / "systemctl.json", {legacy: "active"})
+    with pytest.raises(ApplyError) as error:
+        apply(record())
+    message = str(error.value)
+    assert legacy in message
+    assert "systemctl --user disable --now llama-server whisper-server" in message
+    assert "systemctl --user enable --now llama-server whisper-server" in message
+    assert not (installed / "state/install/current").exists()
+    assert not unit_file("odsod-daemon-pipeline.service").exists()
+
+
+def test_machine_servers_do_not_block_a_client_host(installed):
+    documents.write_json(
+        installed / "systemctl.json", {"llama-server.service": "active"}
+    )
+    apply(record())
+    assert (installed / "state/install/current").exists()
+
+
+def test_invalid_inference_section_fails_clearly(installed):
+    documents.write_json(
+        installed / "config/config.json", {"inference": {"enabled": "maybe"}}
+    )
+    with pytest.raises(ApplyError, match="inference"):
+        apply(record())

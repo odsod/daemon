@@ -25,6 +25,7 @@ from odsod_daemon.components.pause.cli import app as pause_app
 from odsod_daemon.components.pin.cli import app as pin_app
 from odsod_daemon.components.resume.cli import app as resume_app
 from odsod_daemon.components.retention.cli import app as retention_app
+from odsod_daemon.components.servers.cli import app as inference_app
 from odsod_daemon.components.shortcuts.cli import app as shortcuts_app
 from odsod_daemon.components.status.cli import app as status_app
 from odsod_daemon.components.transcript.cli import app as transcript_app
@@ -69,6 +70,7 @@ app.add_typer(retention_app, name="retention")
 app.add_typer(shortcuts_app, name="shortcuts")
 app.add_typer(bench_app, name="bench")
 app.add_typer(install_app, name="install")
+app.add_typer(inference_app, name="inference")
 
 app.add_typer(version_app, name="version")
 

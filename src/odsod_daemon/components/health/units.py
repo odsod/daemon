@@ -1,16 +1,25 @@
 """Expected unit names and commands for their scope."""
 
 from odsod_daemon.components.install.contract import SERVICES
+from odsod_daemon.components.servers.contract import SERVERS as SERVER_UNITS
 
-NAMES = ("capture", "pipeline", "session", "tray", "keys")
+SERVERS = tuple(server.name for server in SERVER_UNITS)
+NAMES = ("capture", "pipeline", "session", "tray", "keys", *SERVERS)
 
 
 def unit(service: str) -> str:
     return f"odsod-daemon-{service}.service"
 
 
-def expected(service: str, *, graphical: bool, paused: bool) -> bool:
-    if service not in SERVICES:
+def shipped(service: str, *, inference: bool) -> bool:
+    """Installed on this host: a server only where inference is enabled."""
+    return inference if service in SERVERS else service in SERVICES
+
+
+def expected(
+    service: str, *, graphical: bool, paused: bool, inference: bool = False
+) -> bool:
+    if not shipped(service, inference=inference):
         return False
     if service == "capture":
         return graphical and not paused

@@ -16,9 +16,22 @@ from odsod_daemon.components.install.contract import (
     InstallRecord,
     PreviousCommit,
 )
-from odsod_daemon.components.install.render import DBUS, render, unit_directory
+from odsod_daemon.components.install.render import (
+    DBUS,
+    render,
+    server_command,
+    unit_directory,
+)
 from odsod_daemon.components.install.source import candidate as read_candidate
-from odsod_daemon.lib import clock, documents, paths, systemd
+from odsod_daemon.components.servers.contract import (
+    CUTOVER,
+    LEGACY_UNITS,
+    ROLLBACK,
+    SERVERS,
+    Inference,
+    Server,
+)
+from odsod_daemon.lib import clock, config, documents, download, paths, systemd
 
 
 @dataclass(frozen=True)
@@ -122,6 +135,41 @@ class ApplyError(RuntimeError):
     """An install failed at a named step without replacing current."""
 
 
+def inference_settings(roots: paths.Roots) -> Inference:
+    """The inference section; a host with no config file runs no server."""
+    if not roots.config_file.exists():
+        return Inference()
+    try:
+        return config.section("inference", Inference, roots=roots)
+    except ValueError as error:
+        raise ApplyError(f"config section inference: {error}") from error
+
+
+def ready_servers(settings: Inference, state: Path) -> tuple[Server, ...]:
+    """Both servers when inference is on and setup made all their files."""
+    if settings.enabled and all(
+        (state / server.binary).is_file() and (state / server.model).is_file()
+        for server in SERVERS
+    ):
+        return SERVERS
+    return ()
+
+
+def refuse_double_owner() -> None:
+    active = [
+        unit for unit in LEGACY_UNITS if systemd.control("is-active", unit, check=False)
+    ]
+    if active:
+        raise ApplyError(
+            f"inference.enabled is true, but {', '.join(active)} still runs "
+            "from the machine repo. Two owners would fight for the same ports.\n"
+            "Cut over:\n"
+            + "".join(f"  {line}\n" for line in CUTOVER)
+            + "Roll back:\n"
+            + "".join(f"  {line}\n" for line in ROLLBACK)
+        )
+
+
 def install_user(
     *,
     command: Path,
@@ -131,6 +179,10 @@ def install_user(
 ) -> None:
     roots = paths.roots()
     current_path = roots.state / "install/current"
+    settings = inference_settings(roots)
+    if settings.enabled:
+        refuse_double_owner()
+    servers = ready_servers(settings, roots.state)
     step, name = 1, "Source"
     source: InstallRecord | None = candidate
     try:
@@ -142,12 +194,26 @@ def install_user(
             else None
         )
         source.digests = digests(package or Path(odsod_daemon.__file__).parent)
+        # A server restarts on a new binary, never on a daemon code change.
+        for server in servers:
+            source.digests[server.name] = download.sha256(roots.state / server.binary)
         old = current.digests if current is not None else {}
         identity_changed = changed(source, current)
         code_changed = source.digests != old
         step, name = 2, "Render"
         progress("[2/7] Render")
-        files = render(command)
+        files = render(
+            command,
+            servers={
+                server.unit: server_command(server, settings, roots.state)
+                for server in servers
+            },
+        )
+        if settings.enabled and not servers:
+            progress(
+                "inference: servers not set up; run `odsodctl inference setup`, "
+                "then `odsodctl install`"
+            )
         home = Path(os.environ["HOME"])
         data = Path(os.environ.get("XDG_DATA_HOME", str(home / ".local/share")))
         changes = compare(
@@ -158,6 +224,8 @@ def install_user(
         for path, text in changes.writes.items():
             documents.write(path, text)
         for path in changes.removals:
+            if path.name in {server.unit for server in SERVERS}:
+                systemd.control("disable", "--now", path.name, check=False)
             path.unlink()
         step, name = 4, "Reload"
         progress("[4/7] Reload")
@@ -187,6 +255,12 @@ def install_user(
                     "restart" if service == "pipeline" or graphical else "try-restart"
                 )
                 systemd.control(action, unit)
+        for server in servers:
+            if old.get(server.name) != source.digests[server.name] or any(
+                p.name == server.unit for p in changes.writes
+            ):
+                restarted.append(server.name)
+                systemd.control("restart", server.unit)
         if "capture" in restarted:
             progress("capture restarted: recording has a gap of about 2 s")
         elif restarted:

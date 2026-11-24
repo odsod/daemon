@@ -43,6 +43,7 @@ SUBSYSTEMS = {
     "shortcuts": "shortcuts",
     "install": "install",
     "version": "install",
+    "servers": "inference",
 }
 
 
