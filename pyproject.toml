@@ -59,14 +59,13 @@ markers = [
 [tool.ruff]
 line-length = 88
 target-version = "py314"
-extend-exclude = ["docs", "legacy"]
+extend-exclude = ["docs"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
 
 [tool.pyright]
 include = ["src", "tests"]
-exclude = ["legacy"]
 typeCheckingMode = "standard"
 pythonVersion = "3.14"
 venvPath = "."

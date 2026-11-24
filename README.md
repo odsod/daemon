@@ -24,12 +24,17 @@ owner uses one CLI, `odsodctl`.
 
 ## Status
 
-- The design is complete. The Python rewrite has not started.
-- The code in this repo is still the Go recorder. It is the reference for the
-  rewrite and stays in use until the rewrite replaces it.
+- The Python daemon replaces the Go recorder. It runs capture, pipeline and
+  tray as systemd user services.
+- The Go recorder is gone from the tree. Its last version is in the history
+  before this change.
+- Dictation and keys wait for the keyboard cutover, see
+  [`docs/plans/`](docs/plans/README.md).
 
 ## Development
 
 ```sh
-mise run build   # the CI gate
+mise run build    # the CI gate
+mise run deploy   # install the working copy as the live dev system
+odsodctl status   # running state and health
 ```

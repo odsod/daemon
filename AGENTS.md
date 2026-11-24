@@ -1,8 +1,7 @@
 # daemon — Agent Instructions
 
 The repo is the Python package `odsod_daemon`: one daemon, one CLI
-(`odsodctl`), one package. The Go recorder is in `legacy/` as a reference;
-do not add code there.
+(`odsodctl`), one package.
 
 Read first:
 
