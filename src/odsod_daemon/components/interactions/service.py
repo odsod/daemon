@@ -27,6 +27,10 @@ SOURCES = (
     "events/capture",
     "interactions",
 )
+# Detection reads the whole retention window (about 1 s on a busy day), and
+# coverage records mark the view dirty several times a second. Interactions are
+# batch work, so a boundary found up to 30 s late costs nothing.
+DETECT_EVERY_S = 30.0
 BOUNDARY_KINDS = {
     "utterance",
     "covered",
@@ -132,11 +136,16 @@ class Worker:
         self.mains = False
         self.host_at = 0.0
         self.zone = local_zone()
+        self.detected_at = float("-inf")
 
     def pending(self) -> list[Boundary]:
         data = self.view.data
         now = clock.utc_now()
-        if self.view.dirty or any(e["kind"] == "stop" for e in data["events/capture"]):
+        stale = self.view.dirty or any(
+            e["kind"] == "stop" for e in data["events/capture"]
+        )
+        if stale and clock.monotonic() - self.detected_at >= DETECT_EVERY_S:
+            self.detected_at = clock.monotonic()
             done = data["interactions"]
             # Start at the newest done interaction's start, not its end: it is
             # found again (same ID, skipped as done), and an utterance that

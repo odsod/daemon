@@ -194,6 +194,11 @@ components/interactions/
 └── tests/
 ```
 
+- Boundary detection reads the whole retention window, about 1 s on a busy
+  day, and coverage records mark the view dirty several times a second. It
+  runs at most every 30 s (`DETECT_EVERY_S`), so it never starves the other
+  pipeline components of the event loop.
+
 #### Boundaries
 
 Pure function of ambient utterances, events and coverage. Utterances in
