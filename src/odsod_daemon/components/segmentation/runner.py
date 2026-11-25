@@ -13,6 +13,9 @@ from odsod_daemon.lib import audio, clock, config, documents, healthfile, paths,
 # leaves room for frame alignment. A shorter run is digital silence: it gets
 # probability 0, and the cutter decides (ADR-0012 Frames).
 HOLE_S = 0.9
+# One pass per channel every 100 ms. Each pass reads status and lists files, so
+# a shorter poll costs CPU on battery; frames catch up in a batch.
+POLL_S = 0.1
 
 
 def records(directory, retention_days=None):
@@ -208,7 +211,7 @@ async def _channel(channel: str, speech: Speech, *, once: bool) -> None:
         await asyncio.to_thread(worker.advance, once=once, mono=clock.monotonic())
         if once:
             return
-        await clock.sleep(0.02)
+        await clock.sleep(POLL_S)
 
 
 async def _heartbeat() -> None:
