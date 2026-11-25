@@ -88,3 +88,27 @@ async def test_follow_backstop_scan_finds_a_line(tmp_path: Path) -> None:
     path.write_text('{"n": 1}\n', encoding="utf-8")
     await asyncio.wait_for(task, timeout=3)
     assert records == [{"n": 1}]
+
+
+@pytest.mark.looptime(False)
+async def test_idle_followers_start_no_threads(tmp_path: Path) -> None:
+    """A follower waits on inotify in the event loop. Polling threads woke
+    every 10 ms each and cost the laptop 12% of a core (2026-11-25)."""
+    import threading
+
+    async def consume(path: Path) -> None:
+        async for _ in streams.follow(path):
+            pass
+
+    before = threading.active_count()
+    tasks = [
+        asyncio.create_task(consume(tmp_path / f"d{n}" / "day.jsonl"))
+        for n in range(10)
+    ]
+    await asyncio.sleep(0.3)
+    try:
+        assert threading.active_count() - before < 2
+    finally:
+        for task in tasks:
+            task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)

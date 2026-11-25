@@ -51,7 +51,7 @@ This ADR is the index of components. Each subsystem ADR holds its design.
 | Concurrency                         | `asyncio` with `TaskGroup`                    |
 | HTTP (whisper-server, llama-server) | `httpx` (async)                               |
 | Chrome DevTools Protocol            | `websockets`                                  |
-| File watching                       | `watchfiles`                                  |
+| File watching                       | inotify on the event loop (`lib/inotify.py`)  |
 | Audio arrays                        | `numpy`                                       |
 | VAD                                 | Silero VAD model (ONNX) on `onnxruntime`, CPU |
 | Tray icon                           | `PySide6` (`QSystemTrayIcon`, plain Qt loop)  |

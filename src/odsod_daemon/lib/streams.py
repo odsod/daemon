@@ -8,7 +8,6 @@ timer, so a missed event never loses a record.
 from __future__ import annotations
 
 import asyncio
-import contextlib
 import json
 import os
 from collections.abc import AsyncIterator, Iterable, Mapping
@@ -16,9 +15,8 @@ from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
 
-import watchfiles
+from odsod_daemon.lib import inotify
 
-DEFAULT_DEBOUNCE_MS = 20
 DEFAULT_SCAN_S = 2.0
 
 
@@ -111,36 +109,24 @@ async def follow(
     path: Path,
     *,
     start_at_end: bool = True,
-    debounce_ms: int = DEFAULT_DEBOUNCE_MS,
-    step_ms: int = 10,
     scan_s: float = DEFAULT_SCAN_S,
 ) -> AsyncIterator[dict[str, Any]]:
     """Yield complete records as they are appended to a stream file."""
     path.parent.mkdir(parents=True, exist_ok=True)
     tail = _Tail(path, start_at_end=start_at_end)
-    changes: asyncio.Queue[None] = asyncio.Queue(maxsize=1)
-
-    async def watch() -> None:
-        async for _ in watchfiles.awatch(
-            path.parent, debounce=debounce_ms, step=step_ms
-        ):
-            if changes.full():
-                changes.get_nowait()
-            changes.put_nowait(None)
-
-    watcher = asyncio.create_task(watch())
+    watch = inotify.DirectoryWatch(path.parent)
     try:
         while True:
+            # Clear before the drain: a write during the drain wakes the wait.
+            watch.changed.clear()
             for record in tail.drain():
                 yield record
             try:
-                await asyncio.wait_for(changes.get(), timeout=scan_s)
+                await asyncio.wait_for(watch.changed.wait(), timeout=scan_s)
             except TimeoutError:
                 continue
     finally:
-        watcher.cancel()
-        with contextlib.suppress(asyncio.CancelledError):
-            await watcher
+        watch.close()
 
 
 def append_all(path: Path, records: Iterable[Mapping[str, Any]]) -> None:

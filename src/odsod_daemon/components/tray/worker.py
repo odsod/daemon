@@ -9,8 +9,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-import watchfiles
-
 from odsod_daemon.components.health.backlog import BacklogTracker
 from odsod_daemon.components.health.config import ControlConfig
 from odsod_daemon.components.health.contract import (
@@ -23,7 +21,7 @@ from odsod_daemon.components.health.evaluate import evaluate
 from odsod_daemon.components.health.snapshot import Snapshot, gather
 from odsod_daemon.components.notify_failed.contract import Notification
 from odsod_daemon.components.notify_failed.notify import send
-from odsod_daemon.lib import clock, config, documents, paths, systemd
+from odsod_daemon.lib import clock, config, documents, inotify, paths, systemd
 
 MODES = ("idle", "dictating")
 KEYS = ("connected", "paused", "no-inference", "no-socket")
@@ -39,7 +37,6 @@ class TrayWorker:
         report: Callable[[StatusReport], None],
         notify: Callable[[Notification], bool] = send,
         tracker: BacklogTracker | None = None,
-        debounce_ms: int = 20,
     ) -> None:
         self.roots = roots
         self.source = source
@@ -50,7 +47,6 @@ class TrayWorker:
             common = config.load_common(roots)
             tracker = BacklogTracker(roots.state, common.retention_days)
         self.tracker = tracker
-        self.debounce_ms = debounce_ms
         self.following = threading.Event()
         self._errors: set[tuple[str, str]] = set()
         self._snapshot: Snapshot | None = None
@@ -176,12 +172,18 @@ class TrayWorker:
     async def _follow(self) -> None:
         directory = self.roots.run
         directory.mkdir(parents=True, exist_ok=True)
+        watch = inotify.DirectoryWatch(directory)
         self.following.set()
-        async for _ in watchfiles.awatch(directory, debounce=self.debounce_ms, step=5):
-            if self._stop.is_set():
-                return
-            if self._apply_status(directory / "status.json"):
-                self._publish()
+        try:
+            while True:
+                await watch.changed.wait()
+                watch.changed.clear()
+                if self._stop.is_set():
+                    return
+                if self._apply_status(directory / "status.json"):
+                    self._publish()
+        finally:
+            watch.close()
 
     def _apply_status(self, path: Path) -> bool:
         if self._snapshot is None:
