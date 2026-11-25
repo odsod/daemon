@@ -347,3 +347,33 @@ def test_open_gap_across_midnight_gives_one_line_per_day(transcript_root):
     assert [line.text for line in next_day] == [
         "not recording 00:00:00\u201307:00:00 (logout)"
     ]
+
+
+def test_dropped_echo_is_decided_once(transcript_root, monkeypatch):
+    """A drop is final. Deciding it again on every flush cost the live pipeline
+    about half a core by afternoon (2026-11-25)."""
+    from odsod_daemon.components.transcript import echo
+
+    mic = RECORDS[1]
+    now = clock.parse_iso(mic["ts"])
+    append(transcript_root, "text", mic)
+    append(
+        transcript_root,
+        "coverage",
+        {
+            "kind": "covered",
+            "channel": "sys",
+            "ts": clock.iso(now),
+            "end": clock.iso(now + timedelta(seconds=5)),
+        },
+    )
+    append(transcript_root, "text", RECORDS[0])
+    writer = Writer(TranscriptConfig())
+    writer.flush(now + timedelta(seconds=1))
+    assert [r.tag for r in read(writer)] == ["sys"]
+    calls = []
+    decide = echo.decide
+    monkeypatch.setattr(echo, "decide", lambda *a: calls.append(1) or decide(*a))
+    writer.flush(now + timedelta(seconds=2))
+    assert calls == []
+    assert [r.tag for r in read(writer)] == ["sys"]

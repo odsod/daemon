@@ -42,6 +42,8 @@ class Writer:
             for record in streams.read_day(file)
         }
         self.keys: dict[date, set[str]] = {}
+        # Echo drops are final: decide each once, not on every flush.
+        self.dropped: dict[date, set[str]] = {}
         self.logged: set[str] = set()
         self.recover()
 
@@ -120,13 +122,16 @@ class Writer:
                 continue
             day = line.time.date()
             relevant.add(day)
-            if line.key in self.keys.get(day, set()):
+            if line.key in self.keys.get(day, set()) or line.key in self.dropped.get(
+                day, set()
+            ):
                 continue
             if line.tag == "mic":
                 decision = echo.decide(
                     record, utterances, texts, coverage, now, self.settings
                 )
                 if decision == "drop":
+                    self.dropped.setdefault(day, set()).add(line.key)
                     continue
                 capped = now >= days.bounds(day, self.zone)[1] + timedelta(
                     hours=self.settings.finish_cap_h
