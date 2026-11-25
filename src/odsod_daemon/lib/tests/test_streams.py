@@ -112,3 +112,39 @@ async def test_idle_followers_start_no_threads(tmp_path: Path) -> None:
         for task in tasks:
             task.cancel()
         await asyncio.gather(*tasks, return_exceptions=True)
+
+
+def test_read_day_parses_only_new_lines(tmp_path: Path, monkeypatch) -> None:
+    """Services re-read whole day files about 30 times a second. Parsing them
+    again cost the laptop 18% of a core on battery (2026-11-25)."""
+    import json
+
+    path = tmp_path / "day.jsonl"
+    for n in range(3):
+        streams.append(path, {"n": n})
+    assert streams.read_day(path) == [{"n": 0}, {"n": 1}, {"n": 2}]
+    parsed = []
+    loads = json.loads
+    monkeypatch.setattr(
+        streams.json, "loads", lambda raw: parsed.append(1) or loads(raw)
+    )
+    with path.open("ab") as handle:
+        handle.write(b'{"n":3}\n{"n":')
+    assert streams.read_day(path) == [{"n": 0}, {"n": 1}, {"n": 2}, {"n": 3}]
+    assert len(parsed) == 1
+    with path.open("ab") as handle:
+        handle.write(b"4}\n")
+    assert streams.read_day(path)[-1] == {"n": 4}
+    streams.read_day(path)[0]["n"] = 99
+    assert streams.read_day(path)[0] == {"n": 0}
+
+
+def test_read_day_rereads_a_replaced_file(tmp_path: Path) -> None:
+    path = tmp_path / "day.jsonl"
+    streams.append(path, {"n": 0})
+    streams.append(path, {"n": 1})
+    assert len(streams.read_day(path)) == 2
+    path.unlink()
+    assert streams.read_day(path) == []
+    streams.append(path, {"n": 2})
+    assert streams.read_day(path) == [{"n": 2}]
