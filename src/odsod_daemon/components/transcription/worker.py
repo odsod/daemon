@@ -141,8 +141,16 @@ async def run(speech: Speech, *, once: bool = False) -> None:
     inputs = [roots.state / f"utterances/{kind}" for kind in ("dictation", "ambient")]
     output = roots.state / "asr" / speech.backend
     common = config.load_common()
+    if common.role == "satellite":
+        # ADR-0024: the base transcribes ambient audio; dictation stays here.
+        inputs = inputs[:1]
     if common.inference.dictation_url is None:
         await serve(speech, inputs, output, Host("whisper"), "whisper_url", once=once)
+        return
+    if common.role == "satellite":
+        await serve(
+            speech, inputs, output, Host("parakeet"), "dictation_url", once=once
+        )
         return
     async with asyncio.TaskGroup() as group:
         group.create_task(

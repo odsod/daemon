@@ -1,4 +1,8 @@
-"""The pipeline service: speech, signals, transcript, interactions, publishing."""
+"""The pipeline service: speech, signals, transcript, interactions, publishing.
+
+On the base, the host components also run per satellite host root. A
+satellite runs only its dictation, signals and sync (ADR-0024).
+"""
 
 from __future__ import annotations
 
@@ -9,6 +13,7 @@ from odsod_daemon.components import (
     publish,
     segmentation,
     signals,
+    sync,
     transcript,
     transcription,
 )
@@ -27,4 +32,8 @@ COMPONENTS = [
     publish,
 ]
 
-SERVICE = ServiceSpec(NAME, COMPONENTS)
+PER_HOST = [segmentation, transcription, cleanup, transcript, interactions, publish]
+
+SATELLITE = [transcription, cleanup, signals, sync]
+
+SERVICE = ServiceSpec(NAME, COMPONENTS, per_host=PER_HOST, satellite=SATELLITE)

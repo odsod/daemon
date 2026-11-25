@@ -2,16 +2,27 @@
 
 ``ODSOD_DAEMON_ROOT`` overrides all three roots. Tests and the bench sandbox
 set it to a temp directory.
+
+On the base, each satellite has a host root under ``state/hosts/<host>/``
+(ADR-0024). Inside ``with host(name)`` (and tasks created there),
+``roots()`` returns that host root.
 """
 
 from __future__ import annotations
 
 import os
-from collections.abc import Mapping
+import re
+from collections.abc import Iterator, Mapping
+from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass
 from pathlib import Path
 
 OVERRIDE = "ODSOD_DAEMON_ROOT"
+HOSTS = "hosts"
+HOST_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,62}")
+
+_host: ContextVar[str | None] = ContextVar("odsod_daemon_host", default=None)
 
 
 @dataclass(frozen=True)
@@ -32,7 +43,17 @@ class Roots:
 
 
 def roots(env: Mapping[str, str] | None = None) -> Roots:
-    """Return the three roots for this process."""
+    """Return the roots for this process, or for the current host root."""
+    local = local_roots(env)
+    name = _host.get()
+    if name is None:
+        return local
+    state = local.state / HOSTS / name
+    return Roots(state=state, run=state / "run", config=local.config)
+
+
+def local_roots(env: Mapping[str, str] | None = None) -> Roots:
+    """Return this host's own roots, whatever the current host root is."""
     env = os.environ if env is None else env
     override = env.get(OVERRIDE)
     if override:
@@ -48,6 +69,41 @@ def roots(env: Mapping[str, str] | None = None) -> Roots:
         state=state_home / "odsod-daemon",
         run=run_root / "odsod-daemon",
         config=config_home / "odsod-daemon",
+    )
+
+
+def current_host() -> str | None:
+    """The satellite whose host root is current, or None for this host."""
+    return _host.get()
+
+
+def check_host(name: str) -> str:
+    if not HOST_NAME.fullmatch(name):
+        raise ValueError(f"bad host name: {name!r}")
+    return name
+
+
+@contextmanager
+def host(name: str) -> Iterator[None]:
+    """Make ``roots()`` return the host root of ``name``."""
+    token = _host.set(check_host(name))
+    try:
+        yield
+    finally:
+        _host.reset(token)
+
+
+def satellites(
+    env: Mapping[str, str] | None = None, *, state: Path | None = None
+) -> list[str]:
+    """Host names that have a host root on this host (or under ``state``)."""
+    directory = (state or local_roots(env).state) / HOSTS
+    if not directory.is_dir():
+        return []
+    return sorted(
+        p.name
+        for p in directory.iterdir()
+        if p.is_dir() and HOST_NAME.fullmatch(p.name)
     )
 
 

@@ -32,7 +32,7 @@ class Writer:
         self.settings = settings
         self.roots = paths.roots()
         common = config.load_common()
-        self.host = common.host
+        self.host = config.host_name()
         self.retention = common.retention_days
         self.zone = local_zone()
         self.directory = self.roots.state / "documents/transcripts"

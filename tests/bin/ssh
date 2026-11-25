@@ -1,0 +1,13 @@
+#!/bin/sh
+# Fake ssh: run the remote command locally in $FAKE_SSH_HOME. Exit 255 when
+# $FAKE_SSH_DOWN is set, as ssh does when the host is unreachable.
+[ -n "$FAKE_SSH_DOWN" ] && { echo "ssh: connect to host: No route to host" >&2; exit 255; }
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -o|-l|-p) shift 2 ;;
+    -*) shift ;;
+    *) shift; break ;;
+  esac
+done
+[ "$1" = "--" ] && shift
+cd "$FAKE_SSH_HOME" && eval "$*"

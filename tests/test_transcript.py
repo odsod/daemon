@@ -27,10 +27,10 @@ def records(root, stream):
     ]
 
 
-def fixture_audio(root, channel, name, start):
+def fixture_audio(root, channel, name, start, state=None):
     with wave.open(str(AUDIO / f"{name}.wav")) as wav:
         pcm = wav.readframes(wav.getnframes())
-    file = audio.hour_file(root / "state", channel, start)
+    file = audio.hour_file(state or root / "state", channel, start)
     file.parent.mkdir(parents=True, exist_ok=True)
     # A silent tail closes live segmentation without an idle wait.
     file.write_bytes(pcm + bytes(32000))
@@ -153,5 +153,52 @@ async def test_transcript_speech_kill_recovery(temp_root, boundary):
             with contextlib.suppress(ProcessLookupError):
                 os.killpg(process.pid, signal.SIGKILL)
             process.communicate(timeout=5)
+        whisper.close()
+        llama.close()
+
+
+@pytest.mark.looptime(False)
+async def test_base_makes_a_transcript_per_host_root(temp_root):
+    """ADR-0024: the base processes a satellite's synced files in its host root."""
+    whisper = inference.ReplayServer([replay("whisper-en-verbose") for _ in range(30)])
+    llama = inference.ReplayServer(
+        [replay("llama-cleanup-dictation") for _ in range(30)]
+    )
+    try:
+        (temp_root / "config/config.json").write_text(
+            json.dumps(
+                {
+                    "common": {
+                        "host": "desktop",
+                        "inference": {
+                            "whisper_url": whisper.url + inference.WHISPER_PATH,
+                            "llama_url": llama.url + inference.LLAMA_PATH,
+                        },
+                    },
+                    "signals": {"cdp_ports": []},
+                }
+            )
+        )
+        start = audio.hour_start(clock.utc_now())
+        satellite = temp_root / "state/hosts/laptop"
+        fixture_audio(temp_root, "sys", "en-study-in-scarlet", start)
+        fixture_audio(temp_root, "sys", "en-study-in-scarlet", start, satellite)
+        await asyncio.to_thread(drain)
+        documents = {
+            root: sorted(
+                (root / "state/documents/transcripts").glob("*.md")
+                if root is temp_root
+                else (root / "documents/transcripts").glob("*.md")
+            )
+            for root in (temp_root, satellite)
+        }
+        assert [p.name.endswith("-desktop.md") for p in documents[temp_root]] == [True]
+        assert [p.name.endswith("-laptop.md") for p in documents[satellite]] == [True]
+        base_lines = parse_file(documents[temp_root][0].read_text())
+        satellite_lines = parse_file(documents[satellite][0].read_text())
+        assert base_lines and [line.text for line in base_lines] == [
+            line.text for line in satellite_lines
+        ]
+    finally:
         whisper.close()
         llama.close()

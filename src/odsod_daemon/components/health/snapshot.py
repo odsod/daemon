@@ -26,6 +26,7 @@ SEVERITY: dict[str, Severity] = {
     "interactions-waiting": "warning",
     "mute-failed": "warning",
     "stale-mutes-cleared": "warning",
+    "sync-behind": "warning",
 }
 
 
@@ -88,16 +89,22 @@ async def gather(
         result.units[service] = state
         if state is None or state.active_state != "active":
             continue
-        path = roots.run / "health" / f"{service}.json"
+        # ADR-0024: the pipeline also runs per satellite host root.
+        sources = [("", roots.run / "health" / f"{service}.json")]
+        if service == "pipeline":
+            hosts = roots.state / paths.HOSTS
+            sources += [
+                (f"{host}: ", hosts / host / "run/health/pipeline.json")
+                for host in paths.satellites(state=roots.state)
+            ]
         try:
-            health = optional(path)
-            if health is not None:
-                for fault in health["faults"]:
+            for prefix, path in sources:
+                health = optional(path)
+                for fault in health["faults"] if health is not None else []:
                     result.faults.append(
                         Reason(
-                            **{
-                                k: fault[k] for k in ("code", "since", "message", "fix")
-                            },
+                            **{k: fault[k] for k in ("code", "since", "fix")},
+                            message=prefix + fault["message"],
                             service=service,
                             severity=SEVERITY[fault["code"]],
                         )
@@ -148,8 +155,16 @@ async def gather(
         common = config.load_common(roots)
         tracker = BacklogTracker(roots.state, common.retention_days)
         tracker.rebuild(now)
+    # ADR-0024: a satellite segments nothing; the base does its ambient work.
+    try:
+        satellite = config.load_common(roots).role == "satellite"
+    except config.ConfigError, ValueError:
+        satellite = False
     result.backlog = tracker.report(
-        now, result.newest_audio, settings.backlog_warning_s, starts
+        now,
+        {} if satellite else result.newest_audio,
+        settings.backlog_warning_s,
+        starts,
     )
     result.oldest_end = tracker.oldest_end
     current = optional(roots.state / "install/current")

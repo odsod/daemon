@@ -144,6 +144,8 @@ async def lane(speech: Speech, dictation: bool, *, once: bool) -> None:
 
 
 async def run(speech: Speech, *, once: bool = False) -> None:
+    # ADR-0024: a satellite cleans only its dictation; the base does ambient.
+    satellite = config.load_common().role == "satellite"
     async with asyncio.TaskGroup() as group:
-        for dictation in (True, False):
+        for dictation in (True,) if satellite else (True, False):
             group.create_task(lane(speech, dictation, once=once))

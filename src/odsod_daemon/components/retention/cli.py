@@ -23,7 +23,9 @@ def retention_command() -> None:
 
     now = clock.utc_now()
     failed = 0
-    for path in retention.audio_files(roots.state):
+    # ADR-0024: each satellite host root keeps the same period.
+    states = [roots.state] + [roots.state / paths.HOSTS / h for h in paths.satellites()]
+    for path in (p for state in states for p in retention.audio_files(state)):
         if not retention.is_expired(path, now, common.retention_days):
             continue
         try:

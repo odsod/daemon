@@ -1,5 +1,7 @@
 """Read one local day's transcript as Markdown or JSON."""
 
+import subprocess
+import sys
 from datetime import date
 
 import typer
@@ -25,7 +27,27 @@ class TranscriptResult(BaseModel):
 def transcript(
     day: str | None = typer.Option(None, "--day"),
     as_json: bool = typer.Option(False, "--json"),
+    host: str | None = typer.Option(None, "--host", help="A satellite's host root"),
 ) -> None:
+    common = config.load_common()
+    if host is None and common.role == "satellite":
+        # ADR-0024: the base makes this host's transcript.
+        assert common.base is not None
+        command = ["odsodctl", "transcript", "--host", common.host]
+        command += ["--day", day] if day else []
+        command += ["--json"] if as_json else []
+        result = subprocess.run(
+            ["ssh", "-o", "BatchMode=yes", common.base, "--", *command], check=False
+        )
+        sys.exit(result.returncode)
+    if host is not None and host != common.host:
+        with paths.host(host):
+            _show(day, as_json)
+        return
+    _show(day, as_json)
+
+
+def _show(day: str | None, as_json: bool) -> None:
     if day is None:
         selected = clock.utc_now().astimezone(local_zone()).date()
     else:
@@ -34,7 +56,7 @@ def transcript(
         except ValueError as error:
             raise typer.BadParameter("use YYYY-MM-DD", param_hint="--day") from error
     roots = paths.roots()
-    host = config.load_common().host
+    host = config.host_name()
     name = f"{selected.isoformat()}-{host}.md"
     path = roots.state / "documents/transcripts" / name
     text = path.read_text() if path.exists() else ""
