@@ -127,7 +127,13 @@ class ChannelRunner:
         advanced = False
         while self.cursor < limit:
             # Derive frame ends from integer samples, not accumulated float steps.
+            # Snap the cursor too: an idle stop leaves it at a wall time between
+            # two samples, and the cut then rounds its start down while the end
+            # rounds up, one sample past the frame.
             sample = round((self.cursor - oldest) * audio.SAMPLE_RATE)
+            self.cursor = oldest + sample / audio.SAMPLE_RATE
+            if self.cursor >= limit:
+                break
             end = min(limit, oldest + (sample + FRAME) / audio.SAMPLE_RATE)
             if (
                 not (once or idle)

@@ -380,3 +380,16 @@ def test_hole_after_live_zeros_is_still_cut(temp_root, monkeypatch):
     )
     assert len(rows) == 2
     assert rows[0]["cut"] == "end-of-audio"
+
+
+def test_cursor_between_samples_cuts_whole_frames(temp_root):
+    """An idle stop leaves the cursor at an arbitrary wall time. The next frame
+    must still be at most 512 samples (live crash, 2026-11-25)."""
+    start, _ = setup_audio(temp_root)
+    for step in range(-20, 21):
+        runner = ChannelRunner("sys", Speech())
+        offset = (1600 + 0.5 + step / 1000) / audio.SAMPLE_RATE
+        runner.cursor = start.timestamp() + offset
+        runner.cutter = Cutter(runner.settings, runner.cursor)
+        runner.advance(once=True)
+        assert runner.cursor > start.timestamp() + 1
