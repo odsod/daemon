@@ -89,11 +89,12 @@ inbox).
 - Component `sync`, satellite only. Every 15 s it runs `rsync` over SSH
   (`BatchMode=yes`, tailnet host names only) to
   `<base>:.local/state/odsod-daemon/hosts/<host>/`. Order in each pass:
-  1. `events/` and `utterances/dictation/`: append only
-     (`--append-verify`).
+  1. `events/` and `utterances/dictation/`: append only (`--append`).
   2. `run/status.json` to `run/status.json` in the host root.
-  3. `audio/`: `--append-verify --sparse --compress`. Capture only grows
-     hour files, so a pass sends new bytes only.
+  3. `audio/`: `--append --compress`. Capture only grows hour files, so a
+     pass sends new bytes only. No `--sparse`: with `--append`, rsync 3.5.2
+     fails on a btrfs receiver ("No data available"). Compression already
+     shrinks zero runs.
 - The order keeps the dictation mask of segmentation correct: a dictation
   range or hold always arrives before its audio
   ([ADR-0012](0012-speech.md)).

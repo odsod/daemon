@@ -42,7 +42,6 @@ def commands(
             [
                 *rsync,
                 "--relative",
-                "--sparse",
                 "--compress",
                 f"{roots.state}/./audio",
                 target,
