@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import threading
 from collections.abc import Callable
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -53,6 +54,7 @@ class TrayWorker:
         self.following = threading.Event()
         self._errors: set[tuple[str, str]] = set()
         self._snapshot: Snapshot | None = None
+        self._resume = clock.Resume()
         self._stop = asyncio.Event()
         self._loop: asyncio.AbstractEventLoop | None = None
 
@@ -66,6 +68,9 @@ class TrayWorker:
             tracker=self.tracker,
             settings=self.settings,
         )
+        resumed = self._resume.poll()
+        if resumed is not None:
+            self._snapshot.resumed = clock.iso(datetime.fromtimestamp(resumed, UTC))
         self._publish()
 
     def notify_new(self, report: StatusReport) -> None:

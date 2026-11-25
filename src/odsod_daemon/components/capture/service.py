@@ -161,15 +161,21 @@ async def run(
 
     active = watcher or source.watch
 
+    resume = clock.Resume()
+
     async def health_loop() -> None:
         while not stopping.is_set():
             now = clock.wall()
+            # Time asleep is not a stall: the stall clock restarts at a wake.
+            resumed = resume.poll()
             faults: list[Active] = []
             starting = floor is None and now - service_start < checks.START_GRACE_S
             for name, loop in loops.items():
                 if starting:
                     break  # No block yet is normal; a stall from before waits.
                 start = checks.stall_start(loop.audio_end, service_start, floor=floor)
+                if resumed is not None:
+                    start = max(start, resumed)
                 if checks.is_stalled(start, now, config.stall_error_s):
                     faults.append(Active(checks.CAPTURE_STALLED, start, key=name))
             faults.extend(mic.faults(now))

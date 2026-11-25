@@ -38,6 +38,8 @@ class Snapshot:
     units: dict[str, systemd.UnitState | None] = field(default_factory=dict)
     faults: list[Reason] = field(default_factory=list)
     newest_audio: dict[str, str | None] = field(default_factory=dict)
+    # The last wake from suspend that the reading process saw.
+    resumed: str | None = None
     backlog: Backlog = field(default_factory=lambda: Backlog(count=0, seconds=0))
     oldest_end: str | None = None
     status: dict[str, Any] = field(default_factory=dict)

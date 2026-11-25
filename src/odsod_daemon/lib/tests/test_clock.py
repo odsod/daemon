@@ -48,3 +48,21 @@ async def test_monotonic_uses_virtual_loop_time() -> None:
     start = clock.monotonic()
     await clock.sleep(3600)
     assert clock.monotonic() - start == pytest.approx(3600)
+
+
+def test_resume_sees_a_wake_once_the_boot_clock_jumps(monkeypatch):
+    """Suspend stops the monotonic clock but not the boot clock."""
+    clocks = {"boot": 100.0, "mono": 100.0, "wall": 5000.0}
+    monkeypatch.setattr(clock, "boottime", lambda: clocks["boot"])
+    monkeypatch.setattr(clock, "monotonic", lambda: clocks["mono"])
+    monkeypatch.setattr(clock, "wall", lambda: clocks["wall"])
+    resume = clock.Resume()
+    for key in clocks:
+        clocks[key] += 1
+    assert resume.poll() is None
+    clocks["boot"] += 600
+    clocks["wall"] += 600
+    assert resume.poll() == 5601.0
+    clocks["boot"] += 1
+    clocks["mono"] += 1
+    assert resume.poll() == 5601.0
