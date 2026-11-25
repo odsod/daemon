@@ -66,27 +66,27 @@ def test_section_uses_model_defaults(tmp_path: Path) -> None:
     from pydantic import BaseModel
 
     class Reading(BaseModel):
-        chunk_chars: int = 12_000
+        silence_cutoff_s: int = 300
 
     roots = write_config(tmp_path, VALID)
-    assert config.section("interactions", Reading, roots=roots).chunk_chars == 12_000
+    assert config.section("interactions", Reading, roots=roots).silence_cutoff_s == 300
 
 
 def test_section_reads_values(tmp_path: Path) -> None:
     from pydantic import BaseModel
 
     class Reading(BaseModel):
-        chunk_chars: int = 1
+        silence_cutoff_s: int = 1
 
-    roots = write_config(tmp_path, VALID | {"interactions": {"chunk_chars": 9000}})
-    assert config.section("interactions", Reading, roots=roots).chunk_chars == 9000
+    roots = write_config(tmp_path, VALID | {"interactions": {"silence_cutoff_s": 60}})
+    assert config.section("interactions", Reading, roots=roots).silence_cutoff_s == 60
 
 
 def test_check_reports_all_errors(tmp_path: Path) -> None:
     from pydantic import BaseModel
 
     class Reading(BaseModel):
-        chunk_chars: int
+        silence_cutoff_s: int
 
     roots = write_config(
         tmp_path,
@@ -104,7 +104,7 @@ def test_check_reports_all_errors(tmp_path: Path) -> None:
     errors = config.check({"interactions": Reading}, roots=roots)
     assert any("retention_days" in error for error in errors)
     assert any("whisper_url" in error for error in errors)
-    assert any("chunk_chars" in error for error in errors)
+    assert any("silence_cutoff_s" in error for error in errors)
 
 
 def test_check_valid_config_has_no_errors(tmp_path: Path) -> None:

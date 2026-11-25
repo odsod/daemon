@@ -1,7 +1,7 @@
 # PRD: Benchmarking
 
 - Status: Accepted
-- Updated: 2026-11-23
+- Updated: 2026-11-25
 - Design: [ADR-0002](../adr/0002-high-level-architecture.md),
   [ADR-0003](../adr/0003-filesystem-interface.md),
   [ADR-0005](../adr/0005-components-and-implementation.md)
@@ -41,8 +41,7 @@
 - Owner or an agent runs `odsodctl bench report` → a table per measure and
   setup, with the PRD criterion each measure checks. `--json` for agents.
 - Measures come in stages. First: word error rate and dictation latency.
-  Then, after a timed pilot of their review: speaker names and summary
-  measures.
+  Then, after a timed pilot of their review: speaker names.
 - A case keeps its audio with no end date, so new setups can run on it
   later (owner decision, 2026-11-23). Each case is one self-contained unit:
   its audio, its text, its reference, who wrote and accepted the reference,
@@ -53,16 +52,14 @@
 
 ### Measures
 
-| Measure                                     | For                    | Checks                       |
-| ------------------------------------------- | ---------------------- | ---------------------------- |
-| Word error rate, Swedish and English        | Ambient speech-to-text | `live-transcript` AC-3, AC-4 |
-| Glossary terms spelled right                | Ambient and dictation  | `live-transcript` AC-5       |
-| Echo lines removed                          | Live transcript        | `live-transcript` AC-6       |
-| Word error rate, English                    | Dictation              | `dictation` AC-6             |
-| Time from release to text, CPU load, cost   | Dictation backends     | `dictation` AC-3             |
-| Speech time with the right speaker name     | Interaction documents  | `interactions` AC-4          |
-| Summary points that trace to the transcript | Summaries              | `interactions` AC-9          |
-| Decisions and next steps found              | Summaries              | `interactions` AC-10         |
+| Measure                                   | For                    | Checks                       |
+| ----------------------------------------- | ---------------------- | ---------------------------- |
+| Word error rate, Swedish and English      | Ambient speech-to-text | `live-transcript` AC-3, AC-4 |
+| Glossary terms spelled right              | Ambient and dictation  | `live-transcript` AC-5       |
+| Echo lines removed                        | Live transcript        | `live-transcript` AC-6       |
+| Word error rate, English                  | Dictation              | `dictation` AC-6             |
+| Time from release to text, CPU load, cost | Dictation backends     | `dictation` AC-3             |
+| Speech time with the right speaker name   | Interaction documents  | `interactions` AC-4          |
 
 ### When something fails
 
@@ -82,7 +79,7 @@ The 3 h of owner review time per quarter and the case counts are targets.
    from audio start to accepted reference. _Check: manual._
 3. **AC-3** All measures in the table can be reported from at most 3 h of
    owner review per quarter. A timed pilot confirms this before the speaker
-   and summary measures are added. _Check: manual._
+   measure is added. _Check: manual._
 4. **AC-4** Scoring the same saved output twice gives the same scores. A new
    inference run may differ. _Check: system test._
 5. **AC-5** Each report row names the setup, the case count, the score and

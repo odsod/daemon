@@ -1,12 +1,11 @@
 """Interaction documents through file contracts and the CLI."""
 
-import copy
 import json
 from datetime import timedelta
 from pathlib import Path
 from typing import Any, cast
+from zoneinfo import ZoneInfo
 
-import pytest
 from typer.testing import CliRunner
 
 from odsod_daemon.cli import app
@@ -29,12 +28,10 @@ from odsod_daemon.components.signals.contract import (
     Speaking,
 )
 from odsod_daemon.components.transcript.contract import FinishedTranscript
-from odsod_daemon.lib import clock, inference, power, streams
-
-DATA = Path(inference.__file__).parent / "testdata"
+from odsod_daemon.lib import clock, power, streams
 
 
-def seed(root: Path, server: inference.ReplayServer):
+def seed(root: Path):
     now = clock.utc_now()
     start = now - timedelta(minutes=15)
 
@@ -55,7 +52,8 @@ def seed(root: Path, server: inference.ReplayServer):
                 "common": {
                     "host": "test-host",
                     "inference": {
-                        "llama_url": server.url + inference.LLAMA_PATH,
+                        # Nothing listens here: interactions call no LLM.
+                        "llama_url": "http://127.0.0.1:9/v1/chat/completions",
                         "whisper_url": "http://localhost:8178",
                     },
                 },
@@ -113,7 +111,7 @@ def seed(root: Path, server: inference.ReplayServer):
             ),
         )
     write("events/user", Note(ts=stamp(25), text="check the CDC lag numbers"))
-    # Dictation is complete for the gate, but must never enter a summary.
+    # Dictation is complete for the gate, but must never enter a document.
     dic = dict(
         ts=stamp(15),
         kind="utterance",
@@ -162,75 +160,46 @@ def read(root, source):
 
 
 def test_interactions_document(temp_root, monkeypatch):
+    """PRD interactions AC-3, AC-11, AC-13, AC-16; no LLM and no mains power
+    needed (owner decision, 2026-11-25)."""
     monkeypatch.setenv("HOME", str(temp_root / "home"))
     monkeypatch.setenv("TZ", "Europe/Stockholm")
-    monkeypatch.setattr(power, "on_mains", lambda: True)
-    pair = json.loads((DATA / "llama-summary.json").read_text())
-    server = inference.ReplayServer([pair])
-    try:
-        seed(temp_root, server)
-        result = CliRunner().invoke(app, ["run", "interactions", "--once"])
-        assert result.exit_code == 0, result.output
-        docs = list((temp_root / "state/documents/interactions").glob("*.md"))
-        assert len(docs) == 1
-        content = docs[0].read_text()
-        meta = parse_front_matter(content)
-        assert meta.host == "test-host"
-        assert meta.meeting and meta.meeting.code == "abc-defg-hij"
-        assert meta.timezone == "Europe/Stockholm"
-        assert meta.start.endswith("+01:00")
-        assert meta.participants == ["Alice", "Bob", "Oscar", "Oscar Tile"]
-        assert len(meta.title.split()) <= 8
-        assert "**Alice:** Partitionerna orsakar luckor." in content
-        assert "**Bob:** Jag skriver planen i morgon." in content
-        assert "**Oscar:** Vi behöver flytta databasen" in content
-        assert "📝 **Note:** check the CDC lag numbers" in content
-        assert "PRIVATE DICTATION" not in content
-        body = json.loads(server.requests[0]["body"])
-        assert "PRIVATE DICTATION" not in body["messages"][1]["content"]
-        assert "Partitionerna orsakar luckor." in body["messages"][1]["content"]
-        record = InteractionRecord.model_validate(read(temp_root, "interactions")[0])
-        finished = FinishedInteraction.model_validate(
-            read(temp_root, "finished/interactions")[0]
-        )
-        assert record.outcome == "ok" and record.lines == 5
-        assert finished.document == docs[0].name == record.document
-        assert finished.id == meta.id == record.id
-        # A second drain must not request another summary or change the document.
-        result = CliRunner().invoke(app, ["run", "interactions", "--once"])
-        assert result.exit_code == 0, result.output
-        assert len(server.requests) == 1
-        assert len(read(temp_root, "interactions")) == 1
-        assert len(read(temp_root, "finished/interactions")) == 1
-        assert docs[0].read_text() == content
-        assert (
-            temp_root / "state/documents/transcripts/fixture.md"
-        ).read_text() == "Fixture daily transcript.\n"
-    finally:
-        server.close()
-
-
-@pytest.mark.parametrize("error", ["bad-json", "schema", "http"])
-def test_interactions_failed_replies(temp_root, monkeypatch, error):
-    monkeypatch.setenv("HOME", str(temp_root / "home"))
-    monkeypatch.setattr(power, "on_mains", lambda: True)
-    pair = copy.deepcopy(json.loads((DATA / "llama-summary.json").read_text()))
-    if error == "http":
-        pair["response"]["status"] = 400
-    else:
-        pair["response"]["json"]["choices"][0]["message"]["content"] = (
-            "bad" if error == "bad-json" else "{}"
-        )
-    server = inference.ReplayServer([pair])
-    try:
-        seed(temp_root, server)
-        path = temp_root / "config/config.json"
-        conf = json.loads(path.read_text())
-        conf["interactions"]["max_attempts"] = 1
-        path.write_text(json.dumps(conf))
-        result = CliRunner().invoke(app, ["run", "interactions", "--once"])
-        assert result.exit_code == 0, result.output
-        assert read(temp_root, "interactions")[0]["outcome"] == "failed"
-        assert not read(temp_root, "finished/interactions")
-    finally:
-        server.close()
+    monkeypatch.setattr(power, "on_mains", lambda: False)
+    stamp = seed(temp_root)
+    result = CliRunner().invoke(app, ["run", "interactions", "--once"])
+    assert result.exit_code == 0, result.output
+    docs = list((temp_root / "state/documents/interactions").glob("*.md"))
+    assert len(docs) == 1
+    first = clock.parse_iso(stamp()).astimezone(ZoneInfo("Europe/Stockholm"))
+    assert docs[0].name == f"{first:%Y-%m-%d-%H%M}-test-host-weekly-sync.md"
+    content = docs[0].read_text()
+    meta = parse_front_matter(content)
+    assert meta.host == "test-host"
+    assert meta.meeting and meta.meeting.code == "abc-defg-hij"
+    assert meta.timezone == "Europe/Stockholm"
+    assert meta.start.endswith("+01:00")
+    assert meta.participants == ["Alice", "Bob", "Oscar", "Oscar Tile"]
+    assert meta.title == "Weekly sync"
+    assert "\n# Weekly sync\n\n## Transcript\n" in content
+    assert "## Summary" not in content
+    assert "**Alice:** Partitionerna orsakar luckor." in content
+    assert "**Bob:** Jag skriver planen i morgon." in content
+    assert "**Oscar:** Vi behöver flytta databasen" in content
+    assert "📝 **Note:** check the CDC lag numbers" in content
+    assert "PRIVATE DICTATION" not in content
+    record = InteractionRecord.model_validate(read(temp_root, "interactions")[0])
+    finished = FinishedInteraction.model_validate(
+        read(temp_root, "finished/interactions")[0]
+    )
+    assert record.outcome == "ok" and record.lines == 5
+    assert finished.document == docs[0].name == record.document
+    assert finished.id == meta.id == record.id
+    # A second drain must not change the document or add records.
+    result = CliRunner().invoke(app, ["run", "interactions", "--once"])
+    assert result.exit_code == 0, result.output
+    assert len(read(temp_root, "interactions")) == 1
+    assert len(read(temp_root, "finished/interactions")) == 1
+    assert docs[0].read_text() == content
+    assert (
+        temp_root / "state/documents/transcripts/fixture.md"
+    ).read_text() == "Fixture daily transcript.\n"

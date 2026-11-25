@@ -8,14 +8,11 @@ from datetime import timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-import httpx
-
 from odsod_daemon.components.interactions import batch
 from odsod_daemon.components.interactions.boundaries import Boundary, Record, at, detect
 from odsod_daemon.components.interactions.config import InteractionsConfig
 from odsod_daemon.components.interactions.contract import Interaction, MeetingRef
-from odsod_daemon.components.interactions.summarize import Summarizer
-from odsod_daemon.lib import clock, config, healthfile, inference, paths, power, streams
+from odsod_daemon.lib import clock, config, healthfile, paths, streams
 
 SOURCES = (
     "utterances/ambient",
@@ -130,11 +127,6 @@ class Worker:
         self.view = View(roots, self.common.retention_days)
         self.view.load()
         self.boundaries: list[Boundary] = []
-        self.attempts: dict[str, int] = {}
-        self.retry_at: dict[str, float] = {}
-        self.power_at = 0.0
-        self.mains = False
-        self.host_at = 0.0
         self.zone = local_zone()
         self.detected_at = float("-inf")
 
@@ -202,35 +194,20 @@ class Worker:
             health.clear("interactions-waiting")
         health.rewrite()
 
-    async def step(self) -> bool:
+    def step(self) -> bool:
         todo = self.pending()
         self.waiting(todo)
         if not todo:
             return False
-        now = clock.monotonic()
-        if now >= self.power_at:
-            self.mains = power.on_mains()
-            self.power_at = now + self.config.power_check_s
         data = self.view.data
         first = clock.utc_now() - timedelta(days=self.common.retention_days)
         ambient = [u for u in data["utterances/ambient"] if at(u) >= first]
         dictation = [u for u in data["utterances/dictation"] if at(u) >= first]
-        if not batch.gate(
-            ambient,
-            dictation,
-            data["text"],
-            self.mains,
-            True,
-        ):
+        if not batch.gate(ambient, dictation, data["text"]):
             return False
         boundary = todo[0]
-        if now < max(self.host_at, self.retry_at.get(boundary.id, 0)):
-            return False
-        if not await inference.reachable(self.common.inference.llama_url, 2):
-            self.host_at = now + 60
-            return False
         try:
-            await batch.process(
+            batch.process(
                 boundary,
                 data["text"],
                 data["events/signals"] + data["events/user"],
@@ -238,30 +215,18 @@ class Worker:
                 self.roots,
                 self.common.host,
                 self.zone,
-                Summarizer(self.config, self.roots, self.common.inference.llama_url),
             )
-        except httpx.TransportError, TimeoutError:
-            self.host_at = clock.monotonic() + 60
-            return False
-        except httpx.HTTPStatusError as error:
-            if error.response.status_code in inference.HOST_STATUSES:
-                self.host_at = clock.monotonic() + 60
-                return False
-            return self.attempt_failed(boundary, error)
-        except (ValueError, IndexError) as error:
-            return self.attempt_failed(boundary, error)
+        except ValueError as error:
+            # A bad document front matter or meeting record: the same inputs
+            # fail again, so the interaction is done with no retry.
+            self.failed(boundary, error)
         # Include our writes now, without waiting for a follower wakeup.
         for record in batch.records(self.roots.state / "interactions"):
             self.view.insert("interactions", record)
         self.waiting(self.pending())
         return True
 
-    def attempt_failed(self, boundary: Boundary, error: Exception) -> bool:
-        count = self.attempts.get(boundary.id, 0) + 1
-        self.attempts[boundary.id] = count
-        if count < self.config.max_attempts:
-            self.retry_at[boundary.id] = clock.monotonic() + (60 if count == 1 else 300)
-            return False
+    def failed(self, boundary: Boundary, error: Exception) -> None:
         batch.append(
             self.roots.state / "interactions",
             Interaction(
@@ -277,10 +242,6 @@ class Worker:
                 error=" ".join(str(error).splitlines()),
             ).model_dump(mode="json"),
         )
-        for record in batch.records(self.roots.state / "interactions"):
-            self.view.insert("interactions", record)
-        self.waiting(self.pending())
-        return True
 
 
 async def run(settings: InteractionsConfig, *, once: bool = False) -> None:
@@ -289,19 +250,11 @@ async def run(settings: InteractionsConfig, *, once: bool = False) -> None:
         while True:
             if not once:
                 worker.view.refresh()
-            if await worker.step():
+            if worker.step():
+                # Yield, so a backlog does not starve the other components.
+                await asyncio.sleep(0)
                 continue
             if once:
-                todo = worker.pending()
-                retry = worker.retry_at.get(todo[0].id) if todo else None
-                if (
-                    retry
-                    and retry > clock.monotonic()
-                    and worker.mains
-                    and worker.host_at <= clock.monotonic()
-                ):
-                    await clock.sleep(max(0, retry - clock.monotonic()))
-                    continue
                 return
             worker.view.changed.clear()
             try:

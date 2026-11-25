@@ -505,9 +505,9 @@ System tests (root `tests/`): capture fake → segmentation → transcription
 → cleanup with fake servers. One utterance gives one `text` record after a
 pipeline kill at any step (`live-transcript` AC-10). System tests run in
 real time with small config values and check order and outcomes, never
-latency. A dictation with a batch summary holding one fake llama slot
-gets its text before the batch request ends (`dictation` AC-21, order
-only).
+latency. A dictation with another host's ambient cleanup holding one fake
+llama slot gets its text before that request ends (`dictation` AC-21,
+order only).
 
 Bench measures and owner checks (not here, [ADR-0019](0019-bench.md)):
 WER (`live-transcript` AC-3, `dictation` AC-6), language (AC-4), glossary

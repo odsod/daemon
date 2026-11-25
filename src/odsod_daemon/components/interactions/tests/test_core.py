@@ -1,6 +1,5 @@
 """Pure interaction rules and batch ordering."""
 
-import json
 from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
@@ -10,9 +9,9 @@ from odsod_daemon.components.interactions.batch import gate, process, records
 from odsod_daemon.components.interactions.boundaries import detect
 from odsod_daemon.components.interactions.config import InteractionsConfig
 from odsod_daemon.components.interactions.contract import parse_front_matter
-from odsod_daemon.components.interactions.lines import collect
+from odsod_daemon.components.interactions.lines import collect, skip
+from odsod_daemon.components.interactions.render import filename, heading
 from odsod_daemon.components.interactions.speakers import speaker
-from odsod_daemon.components.interactions.summarize import Summary, chunks, validate
 from odsod_daemon.lib import clock, paths
 
 NOW = datetime(2026, 11, 23, 10, tzinfo=UTC)
@@ -124,86 +123,129 @@ def test_a_short_owner_reply_is_kept_next_to_matching_sys_text():
     assert [line["channel"] for line in lines] == ["mic", "sys"]
 
 
-def test_validation_and_chunks():
-    reply = dict(
-        skip=False,
-        title="one two three four five six seven eight nine",
-        overview="One. Two. Three. Four. Five.",
-        points=[
-            dict(label="Wrong", text="bad", owner=None),
-            dict(label="Next", text="", owner=None),
-        ],
-    )
-    result = validate("<think>secret</think>" + json.dumps(reply))
-    assert len(result.title.split()) == 8
-    assert result.overview == "One. Two. Three."
-    assert result.points == []
-    assert chunks("abc\ndef\nxyz", 8) == ["abc\ndef\n", "xyz"]
-    with pytest.raises(ValueError):
-        chunks("long line", 3)
-    with pytest.raises(ValueError):
-        validate("bad JSON")
-
-
 def test_gate():
     u = utterance()
     t = dict(input=u["id"])
-    assert not gate([u], [], [], True, True)
-    assert not gate([], [u], [], True, True)
-    assert not gate([u], [], [t], False, True)
-    assert not gate([u], [], [t], True, False)
-    assert gate([u], [], [t], True, True)
+    assert not gate([u], [], [])
+    assert not gate([], [u], [])
+    assert gate([u], [], [t])
+
+
+SPEECH = dict(channel="mic", name="Owner", text="Hej")
+NOTE = dict(channel="note", name="Note", text="Check numbers")
 
 
 @pytest.mark.parametrize(
-    "count,skip,expected",
-    [(0, False, "skipped"), (2, True, "skipped"), (10, True, "ok")],
+    "lines,limit,expected",
+    [
+        ([], 3, True),
+        ([SPEECH] * 3, 3, True),
+        ([SPEECH] * 4, 3, False),
+        ([NOTE], 3, False),
+        ([SPEECH, NOTE], 3, False),
+        ([SPEECH], 0, False),
+        ([], 0, True),
+    ],
 )
-async def test_skip_and_document(temp_root, count, skip, expected):
+def test_interactions_ac17_skip_rule(lines, limit, expected):
+    """PRD interactions AC-17: at most `skip_max_lines` speech lines and no
+    note gives no document; any note or more speech gives one."""
+    assert skip(lines, limit) is expected
+
+
+STOCKHOLM = ZoneInfo("Europe/Stockholm")
+START = datetime(2026, 11, 22, 14, 5, 30, tzinfo=UTC)
+
+
+@pytest.mark.parametrize(
+    "title,expected",
+    [
+        ("Weekly sync", "2026-11-22-1505-laptop-weekly-sync.md"),
+        ("Åsa: API / migration!", "2026-11-22-1505-laptop-asa-api-migration.md"),
+        (
+            "A very long meeting title that goes on and on and on",
+            "2026-11-22-1505-laptop-a-very-long-meeting-title-that-goes-on-a.md",
+        ),
+        ("🎉🎉", "2026-11-22-1505-laptop.md"),
+        ("   ", "2026-11-22-1505-laptop.md"),
+        (None, "2026-11-22-1505-laptop.md"),
+    ],
+)
+def test_interactions_ac16_file_name(title, expected):
+    """PRD interactions AC-16: the file name holds the local start, the host
+    and a slug of the meeting title; no usable title gives no slug."""
+    assert filename(START, "laptop", title, STOCKHOLM) == expected
+
+
+@pytest.mark.parametrize(
+    "title,expected",
+    [("Weekly sync", "Weekly sync"), (None, "Interaction 15:05")],
+)
+def test_interactions_ac16_heading(title, expected):
+    """PRD interactions AC-16: the heading is the meeting title, else the
+    local start time."""
+    assert heading(title, START, STOCKHOLM) == expected
+
+
+@pytest.mark.parametrize(
+    "count,notes,expected",
+    [(0, 0, "skipped"), (2, 0, "skipped"), (2, 1, "ok"), (10, 0, "ok")],
+)
+def test_skip_and_document(temp_root, count, notes, expected):
     us = [utterance(i * 11) for i in range(count)] or [utterance()]
     b = boundary(us)
     texts = [dict(u, input=u["id"], outcome="ok", text="Hej") for u in us[:count]]
-    calls = []
-
-    async def summarize(text):
-        calls.append(text)
-        return Summary(
-            skip=skip, title="Title", overview="Overview.", points=[]
-        ), "test"
-
     roots = paths.roots()
-    notes = [event("note", 5, text="Check numbers")]
-    await process(
-        b, texts, notes, C, roots, "test", ZoneInfo("Europe/Stockholm"), summarize
-    )
+    events = [event("note", 5, text="Check numbers")] * notes
+    process(b, texts, events, C, roots, "test", STOCKHOLM)
     result = records(roots.state / "interactions")[0]
     assert result["outcome"] == expected
-    assert bool(calls) == bool(count)
+    assert result["lines"] == count
     docs = list((roots.state / "documents/interactions").glob("*.md"))
     if expected == "ok":
+        assert [d.name for d in docs] == ["2026-11-23-1100-test.md"]
         content = docs[0].read_text()
         meta = parse_front_matter(content)
         assert meta.timezone == "Europe/Stockholm"
         assert meta.start.endswith("+01:00")
-        assert "📝 **Note:** Check numbers" in content
+        assert meta.title is None
+        assert "\ntitle: null\n" in content
+        assert "\n# Interaction 11:00\n\n## Transcript\n" in content
+        assert "## Summary" not in content
+        assert ("📝 **Note:** Check numbers" in content) is bool(notes)
         assert len(records(roots.state / "finished/interactions")) == 1
     else:
         assert not docs
 
 
+def test_interactions_ac16_meeting_title_names_the_document(temp_root):
+    """PRD interactions AC-16: a meeting title gives the title, the heading
+    and the file name slug; a name taken by another interaction gets `-2`."""
+    meeting = event("meeting-start", -60, platform="meet", code="x", title="Sync")
+    one = utterance()
+    b = boundary([one], [meeting])
+    texts = [dict(u, input=u["id"], outcome="ok", text="Hej") for u in [one] * 4]
+    roots = paths.roots()
+    directory = roots.state / "documents/interactions"
+    directory.mkdir(parents=True)
+    (directory / "2026-11-23-1100-test-sync.md").write_text(
+        "---\nid: other\ntype: interaction\nhost: test\nstart: x\nend: x\n"
+        "timezone: UTC\n---\n"
+    )
+    process(b, texts, [meeting], C, roots, "test", STOCKHOLM)
+    path = directory / "2026-11-23-1100-test-sync-2.md"
+    content = path.read_text()
+    assert parse_front_matter(content).title == "Sync"
+    assert "\n# Sync\n\n## Transcript\n" in content
+    assert records(roots.state / "interactions")[0]["document"] == path.name
+
+
 @pytest.mark.parametrize("crash_directory", ["finished/interactions", "interactions"])
-async def test_crash(temp_root, monkeypatch, crash_directory):
+def test_crash(temp_root, monkeypatch, crash_directory):
     from odsod_daemon.components.interactions import batch
 
     b = boundary()
-    text = [dict(utterance(), input="mic-0", outcome="ok", text="Hej")]
-    calls = []
-
-    async def summarize(text):
-        calls.append(text)
-        return Summary(
-            skip=False, title="Title", overview="Overview.", points=[]
-        ), "test"
+    text = [dict(utterance(), input="mic-0", outcome="ok", text="Hej")] * 4
 
     real_append = batch.append
 
@@ -214,10 +256,9 @@ async def test_crash(temp_root, monkeypatch, crash_directory):
 
     monkeypatch.setattr(batch, "append", crash)
     with pytest.raises(RuntimeError):
-        await process(b, text, [], C, paths.roots(), "test", UTC, summarize)
+        process(b, text, [], C, paths.roots(), "test", UTC)
     monkeypatch.setattr(batch, "append", real_append)
-    await process(b, text, [], C, paths.roots(), "test", UTC, summarize)
-    assert len(calls) == 1
+    process(b, text, [], C, paths.roots(), "test", UTC)
     assert len(list((temp_root / "state/documents/interactions").glob("*.md"))) == 1
     assert len(records(temp_root / "state/finished/interactions")) == 1
 
@@ -238,7 +279,6 @@ def test_front_matter_is_plain_yaml():
         parse_front_matter,
     )
     from odsod_daemon.components.interactions.render import render
-    from odsod_daemon.components.interactions.summarize import Summary
 
     meta = InteractionDocument.model_validate(
         dict(
@@ -253,9 +293,7 @@ def test_front_matter_is_plain_yaml():
             title="API: migration plan",
         )
     )
-    text = render(
-        meta, Summary(skip=False, title="t", overview="o", points=[]), [], UTC
-    )
+    text = render(meta, "API: migration plan", [], UTC)
     head = text.split("\n---\n", 1)[0]
     assert "{" not in head and '"id"' not in head
     assert "title: 'API: migration plan'" in head
@@ -300,8 +338,7 @@ def test_document_lines_carry_the_utterance_id_and_what_asr_heard():
 def _meta(b, lines, events=()):
     from odsod_daemon.components.interactions.render import metadata
 
-    summary = Summary(skip=False, title="t", overview="o", points=[])
-    return metadata(b, lines, list(events), summary, "host", UTC, C)
+    return metadata(b, lines, list(events), "host", UTC)
 
 
 def test_meeting_block_keeps_platform_code_and_title_only():

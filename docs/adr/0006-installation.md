@@ -387,8 +387,8 @@ run = 'sudo "$(command -v odsodctl)" install --system'
      2026-11-23).
    - Both inference servers listen on the tailnet address only, not
      `0.0.0.0` (ADR-0002). llama-server runs with `--parallel 4`, so
-     dictation cleanup never waits behind a batch summary (ADR-0002,
-     principle 9). The daemon owns these server settings
+     dictation cleanup never waits behind the ambient cleanup of other
+     hosts (ADR-0002, principle 9). The daemon owns these server settings
      ([ADR-0023](0023-inference-servers.md), owner decision 2026-11-24;
      it keeps `--host 0.0.0.0` for now).
 2. Stop the old recorder. Keep its files read-only. The vault keeps the old

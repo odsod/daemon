@@ -172,8 +172,8 @@
 <rect x="900" y="862" width="460" height="218" fill="#f7f5ee" stroke="#1b1b1b" stroke-width="1.5" stroke-dasharray="9 5"/>
 <text x="910" y="883" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#1b1b1b">INTERACTIONS</text>
 <text x="1052" y="883" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">ADR-0016</text>
-<text x="914" y="902" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">FINDS EACH MEETING OR TALK AND WRITES ONE DOCUMENT WITH A</text>
-<text x="914" y="915" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">SUMMARY.</text>
+<text x="914" y="902" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">FINDS EACH MEETING OR TALK AND WRITES ONE DOCUMENT WITH NAMED</text>
+<text x="914" y="915" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#1b1b1b">SPEAKERS.</text>
 <circle cx="923" cy="942" r="9" fill="#1b1b1b"/>
 <text x="923" y="945.6" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#f7f5ee">C</text>
 <text x="938" y="947" font-family="Futura, 'Century Gothic', 'Avenir Next Condensed', 'Arial Narrow', Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="start" fill="#1b1b1b">INTERACTIONS</text>

@@ -1,4 +1,4 @@
-"""Power, retry, pending and boundary invalidation checks."""
+"""Gate, failure, pending and boundary invalidation checks."""
 
 import json
 from datetime import timedelta
@@ -8,14 +8,11 @@ import pytest
 from odsod_daemon.components.interactions import service
 from odsod_daemon.components.interactions.batch import records
 from odsod_daemon.components.interactions.config import InteractionsConfig
-from odsod_daemon.components.interactions.summarize import Summary
-from odsod_daemon.lib import clock, paths, power
-
-REAL_ON_MAINS = power.on_mains
+from odsod_daemon.lib import clock, paths
 
 
 @pytest.fixture
-def worker(temp_root, monkeypatch):
+def worker(temp_root):
     now = clock.utc_now()
     (temp_root / "config/config.json").write_text(
         json.dumps(
@@ -50,103 +47,50 @@ def worker(temp_root, monkeypatch):
     worker.view.insert(
         "text", dict(u, kind="text", input="one", outcome="ok", text="Hej")
     )
-
-    async def reachable(*args):
-        return True
-
-    monkeypatch.setattr(service.inference, "reachable", reachable)
-
-    async def summarize(self, text):
-        return Summary(
-            skip=False, title="Title", overview="Overview.", points=[]
-        ), "fake"
-
-    monkeypatch.setattr(service.Summarizer, "__call__", summarize)
-    monkeypatch.setattr(service.power, "on_mains", lambda: True)
     return worker
 
 
-async def test_power_and_waiting(worker, temp_root, monkeypatch):
-    supply = temp_root / "power/BAT0"
-    supply.mkdir(parents=True)
-    (supply / "type").write_text("Battery")
-    (supply / "status").write_text("Discharging")
-    monkeypatch.setattr(
-        service.power, "on_mains", lambda: REAL_ON_MAINS(temp_root / "power")
+def test_interactions_ac12_waiting(worker):
+    """PRD interactions AC-12: a document held back over 24 h shows Warning;
+    the fault clears once the document is made."""
+    worker.view.insert(
+        "utterances/dictation", dict(kind="utterance", ts=clock.iso(), id="dic")
     )
-    assert not await worker.step()
+    assert not worker.step()
     assert not records(worker.roots.state / "interactions")
     health = json.loads((worker.roots.run / "health/pipeline.json").read_text())
     assert health["faults"][0]["code"] == "interactions-waiting"
     assert health["faults"][0]["fix"] is None
-    (supply / "status").write_text("Charging")
-    await clock.sleep(60)
-    assert await worker.step()
+    worker.view.insert(
+        "text", dict(kind="text", ts=clock.iso(), input="dic", outcome="empty")
+    )
+    assert worker.step()
+    assert records(worker.roots.state / "interactions")[0]["outcome"] == "skipped"
     assert not json.loads((worker.roots.run / "health/pipeline.json").read_text())[
         "faults"
     ]
 
 
-async def test_pending_gate_and_host_returns(worker, monkeypatch):
-    worker.view.insert(
-        "utterances/dictation", dict(kind="utterance", ts=clock.iso(), id="dic")
-    )
-    assert not await worker.step()
-    worker.view.insert(
-        "text", dict(kind="text", ts=clock.iso(), input="dic", outcome="empty")
-    )
+def test_needs_no_inference_host_or_mains(worker, monkeypatch):
+    """Owner decision 2026-11-25: interactions call no LLM, so neither power
+    nor a reachable inference host holds a document back."""
+    from odsod_daemon.lib import power
 
-    async def down(*args):
-        return False
-
-    monkeypatch.setattr(service.inference, "reachable", down)
-    assert not await worker.step()
-    assert not worker.attempts
-
-    async def up(*args):
-        return True
-
-    monkeypatch.setattr(service.inference, "reachable", up)
-    await clock.sleep(60)
-    assert await worker.step()
+    monkeypatch.setattr(power, "on_mains", lambda: False)
+    assert worker.step()
+    assert records(worker.roots.state / "interactions")[0]["outcome"] == "skipped"
 
 
-async def test_retries_and_failure(worker, monkeypatch):
-    calls = []
+def test_bad_document_fails_once(worker, monkeypatch):
+    def bad(*args):
+        raise ValueError("bad front matter\nhere")
 
-    async def bad(self, text):
-        calls.append(clock.monotonic())
-        raise ValueError("invalid JSON\nreply")
-
-    monkeypatch.setattr(service.Summarizer, "__call__", bad)
-    assert not await worker.step()
-    assert not await worker.step()
-    await clock.sleep(60)
-    assert not await worker.step()
-    await clock.sleep(300)
-    assert await worker.step()
+    monkeypatch.setattr(service.batch, "process", bad)
+    assert worker.step()
     result = records(worker.roots.state / "interactions")[0]
     assert result["outcome"] == "failed"
-    assert result["error"] == "invalid JSON reply"
-    assert len(calls) == 3
-    assert not list((worker.roots.state / "documents/interactions").glob("*.md"))
-
-
-async def test_host_status_does_not_count_an_attempt(worker, monkeypatch):
-    """ADR-0016: a host fault waits and retries; the attempt does not count."""
-    import httpx
-
-    async def loading(self, text):
-        request = httpx.Request("POST", "http://localhost:8179")
-        response = httpx.Response(503, request=request)
-        raise httpx.HTTPStatusError("503", request=request, response=response)
-
-    monkeypatch.setattr(service.Summarizer, "__call__", loading)
-    for _ in range(5):
-        assert not await worker.step()
-        await clock.sleep(60)
-    assert not worker.attempts
-    assert not records(worker.roots.state / "interactions")
+    assert result["error"] == "bad front matter here"
+    assert not worker.pending()
 
 
 def test_overlap_after_a_split_is_kept(worker):
@@ -231,3 +175,20 @@ def test_detection_runs_at_most_every_30_s(worker, monkeypatch):
     worker.view.dirty = True
     worker.pending()
     assert len(calls) == 2
+
+
+def test_old_summary_keys_still_load():
+    """Keys of the old LLM summary in an owner's config.json are ignored."""
+    old = {
+        "model": "default",
+        "chunk_chars": 37000,
+        "request_timeout_s": 600,
+        "max_attempts": 3,
+        "title_max_words": 8,
+        "languages": ["Swedish"],
+        "power_check_s": 60,
+        "skip_max_lines": 2,
+    }
+    loaded = InteractionsConfig.model_validate(old)
+    assert loaded.skip_max_lines == 2
+    assert "chunk_chars" not in loaded.model_dump()

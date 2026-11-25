@@ -46,3 +46,9 @@ def collect(
         if e["kind"] == "note" and boundary.start <= at(e) <= boundary.end
     )
     return sorted(result, key=at)
+
+
+def skip(lines: list[Record], skip_max_lines: int) -> bool:
+    """No document: at most `skip_max_lines` speech lines and no note."""
+    notes = sum(line["channel"] == "note" for line in lines)
+    return notes == 0 and len(lines) <= skip_max_lines

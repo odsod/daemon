@@ -163,10 +163,11 @@ WantedBy=odsod-daemon.target
 
 - `--parallel 4` keeps the slot count the server ran with before. It is
   now explicit.
-- `--kv-unified` keeps one shared cache. llama-server shares the cache only
-  when the slot count is automatic. With an explicit count, each slot gets
-  8,192 tokens, and a 12,000-token summary chunk fails with 400 (bench,
-  2026-11-25).
+- `--kv-unified` keeps one shared cache for the 4 slots. llama-server
+  shares the cache only when the slot count is automatic. With an explicit
+  count, each slot gets 8,192 tokens. Cleanup is the only user now
+  (interactions call no LLM, ADR-0016), and no cleanup request needs more
+  than one slot's share. The shared cache is a safe default.
 - `--host 0.0.0.0` stays as before. Binding to loopback and the tailnet
   only is a later change.
 

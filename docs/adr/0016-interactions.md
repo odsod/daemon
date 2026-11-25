@@ -6,7 +6,7 @@ Proposed
 
 ## Date
 
-2026-11-23
+2026-11-23. Changed 2026-11-25: no LLM summary.
 
 ## Context
 
@@ -14,17 +14,18 @@ Proposed
   meeting or talk as one short document: who took part, who said what, and
   what came out of it (`interactions` PRD).
 - The live pass gives cleaned text per utterance with no speaker names
-  (ADR-0002, principle 10). The batch pass adds names and a summary with
-  full context, hours later if need be. Quality comes before speed.
+  (ADR-0002, principle 10). The batch pass adds names with full context,
+  hours later if need be.
 - Meeting names come from the browser's speaking indicator (ADR-0014).
   Other voices are "Others". Diarization is cut from v1 (ADR-0002).
-- The inference host is shared. A summary holds one of four llama-server
-  slots for tens of seconds. On battery, the batch pass waits (ADR-0005).
-- The Go recorder already summarizes segments: one LLM call up to 35,000
-  characters, map-reduce above, JSON with `title`, `summary` and `skip`, a
-  title of at most 8 words and the labels Decided, Insight, Problem,
-  Context and Next. This ADR keeps those numbers and makes the output
-  structured.
+- The brain vault agent reads every raw interaction document and writes
+  its own title and summary with a frontier model. A daemon summary from
+  the local LLM is duplicate work by a weaker model. Bench (2026-11-25):
+  the local model looped on a 47,000-character meeting and skipped a full
+  standup.
+- Owner decision (2026-11-25): the daemon writes no summary and calls no
+  LLM for interactions. A document has no title and no summary until the
+  brain agent runs. The file name uses the calendar meeting title.
 
 ## Decision
 
@@ -33,11 +34,11 @@ Proposed
 - Detect where each interaction starts and ends, from utterance times and
   events.
 - For each finished interaction, write one document with fixed fields,
-  named speakers, notes inline and an English summary, or skip it as
-  greetings and noise.
-- PRD: `interactions` (AC-1 to AC-13; AC-14 is manual). Also
-  `dictation` AC-24 and `health-and-control` (the Warning for documents
-  that wait over 24 h).
+  named speakers and notes inline, or skip it when it holds almost no
+  speech and no note.
+- PRD: `interactions` (AC-1 to AC-3, AC-8, AC-11 to AC-13, AC-15 to
+  AC-17; AC-4 is bench, AC-14 is manual). Also `dictation` AC-24 and
+  `health-and-control` (the Warning for documents that wait over 24 h).
 
 ### Components
 
@@ -54,27 +55,26 @@ Proposed
 
 ### Writes
 
-| Path                                                               | Kind     |
-| ------------------------------------------------------------------ | -------- |
-| `state/interactions/<day>.jsonl`                                   | Stream   |
-| `state/documents/interactions/<local-day>-<HHMM>-<host>-<slug>.md` | Document |
-| `state/finished/interactions/<day>.jsonl`                          | Stream   |
-| `run/health/pipeline.json`, code `interactions-waiting`            | Document |
+| Path                                                                 | Kind     |
+| -------------------------------------------------------------------- | -------- |
+| `state/interactions/<day>.jsonl`                                     | Stream   |
+| `state/documents/interactions/<local-day>-<HHMM>-<host>[-<slug>].md` | Document |
+| `state/finished/interactions/<day>.jsonl`                            | Stream   |
+| `run/health/pipeline.json`, code `interactions-waiting`              | Document |
 
 #### `interactions/` record
 
-| Field          | Seam  | Meaning                                                  |
-| -------------- | ----- | -------------------------------------------------------- |
-| `kind`         | yes   | `interaction`                                            |
-| `id`           | yes   | UTC start, `20261122T140000.000Z` (ADR-0003)             |
-| `start`, `end` | yes   | First utterance start, last utterance end                |
-| `outcome`      | yes   | `ok`, `skipped` or `failed`                              |
-| `document`     | yes   | File name, when `ok`                                     |
-| `meeting`      | yes   | `{platform, code}` or null                               |
-| `error`        | yes   | One line, when `failed` (ADR-0010 conventions)           |
-| `end_cause`    | extra | `silence`, `meeting`, `pin`                              |
-| `lines`        | extra | Speech lines after echo drop                             |
-| `setup`        | extra | Model name and a hash of the rendered prompts, for bench |
+| Field          | Seam  | Meaning                                        |
+| -------------- | ----- | ---------------------------------------------- |
+| `kind`         | yes   | `interaction`                                  |
+| `id`           | yes   | UTC start, `20261122T140000.000Z` (ADR-0003)   |
+| `start`, `end` | yes   | First utterance start, last utterance end      |
+| `outcome`      | yes   | `ok`, `skipped` or `failed`                    |
+| `document`     | yes   | File name, when `ok`                           |
+| `meeting`      | yes   | `{platform, code}` or null                     |
+| `error`        | yes   | One line, when `failed` (ADR-0010 conventions) |
+| `end_cause`    | extra | `silence`, `meeting`, `pin`                    |
+| `lines`        | extra | Speech lines after echo drop                   |
 
 - One record per interaction, written after its document (ADR-0003). Any
   outcome makes it done. A `skipped` interaction is never tried again.
@@ -99,17 +99,10 @@ meeting:
 participants:
   - Alice Example
   - Owner Name
-title: API Migration Plan
+title: Weekly sync
 ---
 
-# API Migration Plan
-
-## Summary
-
-One to three sentences of overview.
-
-- **Decided:** Move the store to Postgres.
-- **Next:** Alice: write the migration plan.
+# Weekly sync
 
 ## Transcript
 
@@ -122,23 +115,30 @@ One to three sentences of overview.
   utterance ID (`odsodctl audio play <id>`, ADR-0011), and `heard:` with
   the ASR text when cleanup changed the line (the `heard` field of the
   `text` record, ADR-0012). `--` in that text becomes `- -`, so the comment
-  stays valid. The summary prompt gets the lines without comments.
+  stays valid.
 - `meeting` is null outside a meeting, else only `platform`, `code` and
   `title` (no raw event fields). `participants` holds every speaker name
   of the lines and every name from the meeting's `participants` and
   `speaking` records in the range. The labels `Others` and the unset owner
   name (`Owner`) are not people, so they are left out.
+- `title` is the meeting title (`meeting.title`), or null outside a
+  meeting. The H1 is the title, or `Interaction HH:MM` (local time of the
+  first utterance) with no title. There is no summary section. The brain
+  vault agent writes the title and summary it needs.
 - `start` is the first utterance's start, except for the first interaction
   of a meeting: it starts at the `meeting-start` event, so silence before
   the first word belongs to the meeting. `id` stays the first utterance's
   start (ADR-0003).
 - Times in the front matter are local with the offset, plus the IANA zone,
   so two hosts compare them with no guess (`interactions` AC-14).
-- Name: local day and `HHMM` of the first utterance's start (not the
-  front matter `start`, which can be the meeting start), the host, and a slug of the title
-  (ASCII, lowercase, `-` between words, at most 40 characters). If the
-  name exists with another `id`, add `-2`. The host in the name keeps hosts
-  apart in one target (`publishing` AC-4).
+- Name: `YYYY-MM-DD-HHMM-<host>-<slug>.md`, with the local day and `HHMM`
+  of the first utterance's start (not the front matter `start`, which can
+  be the meeting start), the host, and a slug of the meeting title (ASCII,
+  lowercase, `-` between words, at most 40 characters). No meeting title,
+  or a title with no ASCII letter or digit left (only emoji, say):
+  `YYYY-MM-DD-HHMM-<host>.md`. If the name exists with another `id`, add
+  `-2` before `.md`. The host in the name keeps hosts apart in one target
+  (`publishing` AC-4). `interactions` AC-16.
 - Written whole with `lib/documents` (temp name, rename). It never changes
   after that.
 
@@ -167,7 +167,7 @@ One to three sentences of overview.
 | `events/signals/`       | all four kinds; `at` when present (ADR-0014)                                                                    |
 | `events/user/`          | `note` (`text`), `pin`                                                                                          |
 | `events/capture/`       | `start` (`prev_end`, `audio_start`), `gap` (`start`, `end`), `stop`: recording-off ranges count as covered      |
-| `config/`               | section `interactions`, `common`, `glossary.yaml`, `prompts/interactions-*.md`                                  |
+| `config/`               | section `interactions`, `common`                                                                                |
 | Its own outputs         | `interactions/` for done IDs; `finished/interactions/` and `documents/interactions/` front matter after a crash |
 
 - Interactions reads no audio. Boundaries come from times only (ADR-0005,
@@ -177,11 +177,9 @@ One to three sentences of overview.
 
 ### Outside dependencies
 
-- llama-server on the inference host, through `lib/inference` with
-  `common.inference.llama_url`. It must support `response_format` with a
-  JSON schema.
-- `lib/power` for mains power, `lib/textmatch` for the echo match (ADR-0010).
-- `jinja2` for prompt templates.
+- None on the inference host. Interactions call no LLM. llama-server now
+  serves cleanup only ([ADR-0023](0023-inference-servers.md)).
+- `lib/textmatch` for the echo match (ADR-0010).
 
 ### Internal design
 
@@ -193,15 +191,11 @@ components/interactions/
 ├── contract.py        InteractionRecord, DocumentMeta, parse_front_matter()
 ├── config.py          InteractionsConfig
 ├── boundaries.py      utterances + events + coverage → interactions (pure)
-├── lines.py           text + notes → lines; echo drop (pure)
+├── lines.py           text + notes → lines; echo drop; skip rule (pure)
 ├── speakers.py        speaking intervals → name per line (pure)
-├── summarize.py       one call or map-reduce; schema; validation
-├── render.py          front matter and Markdown (pure)
+├── render.py          front matter, Markdown, heading, file name (pure)
 ├── batch.py           gate, steps, record
 ├── service.py         loop: follow inputs, detect, run batch
-├── prompts/
-│   ├── summarize.md   jinja2 template
-│   └── combine.md     jinja2 template
 └── tests/
 ```
 
@@ -247,19 +241,17 @@ of the pending window, 14 days).
 #### Pending and the gate
 
 - Pending: closed interactions with no record, oldest first.
-- The batch pass starts one interaction only when all hold:
-  - on mains power (`lib/power`, checked every `power_check_s`, 60 s);
-    `interactions` AC-7;
-  - no dictation or ambient utterance of this host lacks a `text` record
-    (ADR-0003 "Pending work");
-  - the llama URL answers.
-- One interaction at a time. A started pass runs to its end, also if the
-  host goes on battery meanwhile.
+- The batch pass starts one interaction only when no dictation or ambient
+  utterance of this host lacks a `text` record (ADR-0003 "Pending work").
+- No power and no inference host check: the pass is local file work. On
+  battery it waits only as long as speech waits (ADR-0012, battery rule).
+- One interaction at a time. The service yields to the event loop after
+  each one, so a backlog does not starve the other pipeline components.
 
 #### Batch pass
 
 1. **Crash check.** Look for a document with this `id` in its front matter
-   (names that start with `<local-day>-<HHMM>-<host>-`). If one exists,
+   (names that start with `<local-day>-<HHMM>-<host>`). If one exists,
    write its `finished` record if it lacks one, then the `ok` record, and
    stop. A crash between the document and either record then gives no
    second document and no lost delivery (`interactions` AC-8).
@@ -281,89 +273,12 @@ of the pending window, 14 days).
      wins. No overlap, or no meeting: "Others".
    - This is the Go recorder's rule. Bench measures it (`interactions`
      AC-4). A wrong name never stops a document.
-5. **Skip.** No speech line: `skipped`, with no LLM call. At most
-   `skip_max_lines` (3) lines: the summary may answer `skip`. More lines:
-   a `skip` answer is ignored. `interactions` AC-6.
-6. **Summary.** See below.
-7. **Write** the document, then the `finished` record, then the
+5. **Skip.** At most `skip_max_lines` (3) speech lines and no note line:
+   `skipped`, with no document. Any note, or more speech lines: always a
+   document. The rule is deterministic, so a restart gives the same
+   outcome. `interactions` AC-17.
+6. **Write** the document, then the `finished` record, then the
    `interactions/` record (ADR-0003 order).
-
-#### Summary
-
-- Input text: `[HH:MM:SS] Name: text`, notes as `[HH:MM:SS] Note: text`.
-- `chunk_chars` must fit one llama-server slot. With `--parallel 4`,
-  `--kv-unified` and `--ctx-size 32768`, the four slots share one unified KV cache of 32,768
-  tokens: each slot reports `n_ctx` 32,768 (`/slots`, 2026-11-24), and
-  parallel requests share the cache. A spike on 2026-11-23 sent 35,000
-  Swedish characters with the summary prompt: `usage.prompt_tokens` was
-  9,680 (135 for the fixed prompt), or 0.273 tokens per character. With
-  2,048 output tokens, a 16,384-token budget fits 37,000 characters and
-  32,768 tokens fit 82,000. The default is 37,000: it fits when two
-  requests share the cache.
-- Up to `chunk_chars` characters: one call with the
-  `interactions-summarize` prompt.
-- Longer: split at line ends into chunks of at most `chunk_chars`,
-  summarize each, then one call with `interactions-combine` over the
-  chunk results. No chapters (PRD "Not planned").
-- Every call uses `response_format` with this JSON schema:
-
-```json
-{
-  "type": "object",
-  "additionalProperties": false,
-  "required": ["skip", "title", "overview", "points"],
-  "properties": {
-    "skip": { "type": "boolean" },
-    "title": { "type": "string" },
-    "overview": { "type": "string" },
-    "points": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["label", "text", "owner"],
-        "properties": {
-          "label": {
-            "type": "string",
-            "enum": ["Decided", "Insight", "Problem", "Context", "Next"]
-          },
-          "text": { "type": "string" },
-          "owner": { "type": ["string", "null"] }
-        }
-      }
-    }
-  }
-}
-```
-
-- The schema ships as `prompts/summary.schema.json`. The request sends it
-  as `response_format: {"type": "json_schema", "json_schema": {"name":
-  "summary", "schema": …}}`. The combine call uses the same schema.
-
-- The prompt (static rules, from the PRD):
-  - write in English, also for Swedish talk; never translate the
-    transcript;
-  - use only what the transcript says; leave a point out when unsure;
-  - an overview of 1 to 3 sentences; points only under the five labels;
-    leave out labels with nothing to say;
-  - a `Next` point names its owner when the transcript names one;
-  - notes are the owner's own context;
-  - lines from "Others" may be several people; never guess who;
-  - glossary terms keep their spelling.
-- Template variables: `owner_name`, `languages`, the glossary (most
-  important last), `title_max_words`. Overrides in
-  `config/prompts/interactions-summarize.md` and
-  `config/prompts/interactions-combine.md` are templates too (ADR-0010).
-- Reasoning is off for these calls. The daemon runs llama-server with
-  `--reasoning off` ([ADR-0023](0023-inference-servers.md)). The request also sends
-  `chat_template_kwargs: {"enable_thinking": false}`, so a server restart
-  with other flags does not turn it on.
-- Validation after the reply: strip reasoning blocks (`<think>…</think>`)
-  as a guard;
-  cut the title to `title_max_words` (8) words; cut the overview to 3
-  sentences; drop points with an unknown label or empty text. AC-3, AC-5.
-- `setup` in the record is the model name and a hash of the rendered
-  prompts, so bench can tell setups apart (`benchmarking` AC-11).
 
 #### Timing
 
@@ -376,30 +291,25 @@ of the pending window, 14 days).
 - The input view is kept sorted in memory. A new record is inserted, not
   resorted. A 14-day backlog with a `speaking` change every few seconds
   then costs no boundary work.
-- A 5 min interaction on an idle host gets its document within a few
-  minutes of its close. `interactions` AC-1 allows 24 h.
-- Requests use `request_timeout_s` (600 s): a long chunk on a busy slot can
-  take minutes.
+- A 5 min interaction gets its document at most 30 s (`DETECT_EVERY_S`)
+  after its close, once all its speech has text. `interactions` AC-1
+  allows 24 h.
 
 ### Failure modes
 
-| Fault                                     | What interactions does                                                   | Fault code                                    |
-| ----------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------- |
-| On battery                                | Detects boundaries; runs no batch pass                                   | none                                          |
-| llama-server unreachable or timing out    | Waits; retries every 60 s; the attempt does not count                    | none (speech reports `inference-unreachable`) |
-| Error reply, bad JSON, schema failure     | Retry after 1 min and 5 min; after `max_attempts` (3), a `failed` record | none                                          |
-| Context too long for the model            | Counts as an attempt; the owner lowers `chunk_chars`                     | none                                          |
-| A pending interaction ended over 24 h ago | Reports the Warning with the count and the oldest end                    | `interactions-waiting`                        |
-| Crash between document and records        | Step 1 finds the document and writes the missing records                 | none                                          |
-| No signals (Chrome off, no indicator)     | `sys` lines are "Others"; `meeting` may be null                          | none (signals reports)                        |
-| Unexpected exception                      | Ends the pipeline; systemd restarts it (ADR-0004)                        | none                                          |
+| Fault                                                   | What interactions does                                          | Fault code                                    |
+| ------------------------------------------------------- | --------------------------------------------------------------- | --------------------------------------------- |
+| Speech text pending (inference host down, battery)      | Detects boundaries; runs no batch pass                          | none (speech reports `inference-unreachable`) |
+| Bad front matter in an own document, bad meeting record | A `failed` record at once; no retry: the same inputs fail again | none                                          |
+| A pending interaction ended over 24 h ago               | Reports the Warning with the count and the oldest end           | `interactions-waiting`                        |
+| Crash between document and records                      | Step 1 finds the document and writes the missing records        | none                                          |
+| No signals (Chrome off, no indicator)                   | `sys` lines are "Others"; `meeting` may be null                 | none (signals reports)                        |
+| Unexpected exception                                    | Ends the pipeline; systemd restarts it (ADR-0004)               | none                                          |
 
 - `interactions-waiting` message: "N interaction documents waiting since
-  `<local time>`". `fix` is null: the cause is power or the inference host,
-  and their own states show it. The fault clears when no pending
+  `<local time>`". `fix` is null: the cause is pending speech text, and
+  speech's own state shows it. The fault clears when no pending
   interaction is over 24 h old (`interactions` AC-12).
-- Attempt counts live in memory. A restart gives a failing interaction 3
-  new tries. systemd's start limit bounds the loop.
 
 ### Config
 
@@ -410,20 +320,13 @@ Section `interactions`:
   "interactions": {
     "owner_name": "Owner",
     "owner_aliases": [],
-    "languages": ["Swedish", "English"],
     "silence_cutoff_s": 300,
     "meeting_cutoffs": {},
-    "model": "default",
-    "chunk_chars": 37000,
-    "request_timeout_s": 600,
-    "max_attempts": 3,
     "skip_max_lines": 3,
-    "title_max_words": 8,
     "speaker_pad_s": 0.5,
     "echo_threshold": 0.6,
     "echo_tolerance_s": 2,
-    "waiting_warn_h": 24,
-    "power_check_s": 60
+    "waiting_warn_h": 24
   }
 }
 ```
@@ -432,41 +335,36 @@ Section `interactions`:
   `{"abc-defg-hij": 60}` for the permanent call.
 - `owner_aliases` holds other names the platforms show for the owner's own
   tile.
+- The section ignores unknown keys. The keys of the old summary (`model`,
+  `chunk_chars`, `request_timeout_s`, `max_attempts`, `title_max_words`,
+  `languages`, `power_check_s`) still load, with no effect. Prompt
+  overrides `prompts/interactions-*.md` are no longer read.
 
 ### Tests
 
-Component tests use a temp state root, a fake clock, JSONL inputs in
-`testdata/` and the fake llama-server of `lib/inference`.
+Component tests use a temp state root, a fake clock and JSONL inputs.
 
-| Test                 | Input                                                                                                  | Checks                                              |
-| -------------------- | ------------------------------------------------------------------------------------------------------ | --------------------------------------------------- |
-| `test_boundaries.py` | Utterance timelines: 5 min gap, meeting change, pin, profile cutoff, backlog with no `covered`, logout | `interactions` AC-2                                 |
-| `test_speakers.py`   | `speaking` timelines with overlap, owner tile, no meeting                                              | Names and "Others": AC-3 (logic for AC-4)           |
-| `test_echo.py`       | `mic` lines that repeat `sys` lines                                                                    | Dropped with full context                           |
-| `test_document.py`   | Scripted summary reply                                                                                 | Fields, notes inline, title ≤ 8 words: AC-3, AC-13  |
-| `test_summary.py`    | Replies with 5 sentences, a bad label, `<think>`, bad JSON, long input                                 | Validation, retries, map-reduce: AC-5               |
-| `test_skip.py`       | 2 greeting lines; 0 lines; 10 lines with `skip: true`                                                  | AC-6                                                |
-| `test_power.py`      | Fake `/sys/class/power_supply`: battery, then mains                                                    | No pass on battery; start within 5 min: AC-7        |
-| `test_crash.py`      | Crash after the document write, before each record                                                     | One document, one `finished`: AC-8                  |
-| `test_dictation.py`  | `dic` text inside a meeting range                                                                      | Not in document or prompt: AC-11, `dictation` AC-24 |
-| `test_waiting.py`    | Pending interaction 25 h old                                                                           | Warning set, then cleared: AC-12                    |
-| `test_gate.py`       | Pending utterances; fake llama down then up                                                            | No request while pending; waits; AC-1               |
+| Test              | Input                                                                                                  | Checks                                                  |
+| ----------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
+| `test_core.py`    | Utterance timelines: 5 min gap, meeting change, pin, profile cutoff, backlog with no `covered`, logout | `interactions` AC-2                                     |
+| `test_core.py`    | `speaking` timelines with overlap, owner tile, no meeting; `mic` lines that repeat `sys` lines         | Names and "Others": AC-3 (logic for AC-4); echo drop    |
+| `test_core.py`    | Table: speech and note line counts around `skip_max_lines`                                             | Skip rule: AC-17                                        |
+| `test_core.py`    | Table: meeting titles, emoji only, none; a taken name                                                  | Title, H1, file name, `-2`: AC-16                       |
+| `test_core.py`    | Crash after the document write, before each record                                                     | One document, one `finished`: AC-8                      |
+| `test_service.py` | Pending dictation text, then its record; 25 h old interaction                                          | No pass while pending; Warning set, then cleared: AC-12 |
+| `test_service.py` | Old summary keys in the section                                                                        | They load with no error                                 |
 
-- System test (root `tests/`): fake CDP (ADR-0014), JSONL utterances and
-  text, fake llama. One scripted meeting gives one document with named
-  `sys` lines and its `ok` record (AC-1, AC-3, AC-13).
-- Bench (ADR-0019) checks AC-4, AC-9 and AC-10 on real cases. The `setup`
-  field lets it group results.
+- System test (root `tests/test_interactions.py`): JSONL signals,
+  utterances, text, a note and dictation; no LLM listens and the host is on
+  battery. One scripted meeting gives one document named after the meeting
+  title, with named `sys` lines and its `ok` record (AC-1, AC-3, AC-11,
+  AC-13, AC-16).
+- Bench (ADR-0019) checks AC-4 on real cases.
 
 ### Build without hardware
 
-- All of it, with the fakes. The summary logic is tested against scripted
-  replies.
-- The owner must:
-  - check real summaries against the model in use (AC-5 and AC-9 need a
-    real model; an agent can run it against the inference host);
-  - write reference summaries for bench (AC-10);
-  - check AC-14 by hand: one meeting on two hosts.
+- All of it. No step needs a model or the inference host.
+- The owner must check AC-14 by hand: one meeting on two hosts.
 
 ## Alternatives considered
 
@@ -479,8 +377,8 @@ Component tests use a temp state root, a fake clock, JSONL inputs in
 
 - ADR-0005 planned it. It costs one more LLM pass over the whole
   transcript and can change what people said.
-- Left out of v1: the summary reads through ASR errors, and the transcript
-  stays the live-pass text. Add it if bench shows that names or terms
+- Left out of v1: the brain vault agent reads through ASR errors, and the
+  transcript stays the live-pass text. Add it if bench shows that names or terms
   suffer.
 
 ### Multi-speaker attribution with percentages
@@ -489,11 +387,16 @@ Component tests use a temp state root, a fake clock, JSONL inputs in
 - Left out: the PRD wants one name per line. Largest overlap is simpler,
   and bench measures the error.
 
-### Free-form Markdown summary from the model
+### A summary from the local LLM
 
-- The Go recorder asks for Markdown in a JSON string.
-- Rejected: labels, overview length and title length can then only be
-  checked by parsing prose. The schema makes AC-5 a validation.
+- Until 2026-11-25 the batch pass asked llama-server for a JSON summary:
+  a title of at most 8 words, an overview and labeled points, with
+  map-reduce over 37,000-character chunks.
+- Dropped (owner decision, 2026-11-25): the brain vault agent summarizes
+  every document with a frontier model. The local model looped on a
+  47,000-character meeting and skipped a full standup (bench,
+  2026-11-25). The daemon summary was duplicate work of lower quality,
+  and it held a llama-server slot for tens of seconds.
 
 ### Boundaries in segmentation
 
@@ -506,13 +409,14 @@ Component tests use a temp state root, a fake clock, JSONL inputs in
 
 ## Consequences
 
-- One document per interaction on each host, hours late at worst, never
-  on battery.
+- One document per interaction on each host, within 30 s of its close
+  once speech has caught up. It has no summary, and no title outside a
+  meeting, until the brain vault agent runs.
 - Speaker names exist only inside Meet and Teams meetings with a working
   indicator. All else is the owner and "Others".
 - Boundaries need segmentation's `coverage/` stream. Without it, an
   interaction closes only at the next utterance, pin or meeting change.
-- The summary format is fixed by the schema. A change of labels is a
-  change of this ADR and the PRD.
+- Interactions do not depend on the inference host. Only the speech
+  text they read does.
 - Deliberately left out: second ASR pass, full-context cleanup,
   diarization, chapters, cross-host merge and a "run now" command.

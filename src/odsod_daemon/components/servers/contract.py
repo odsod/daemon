@@ -87,8 +87,8 @@ SERVERS: tuple[Server, ...] = (
             "off",
             "--parallel",
             "4",
-            # An explicit slot count turns the shared cache off; summaries need
-            # one slot with the full context (ADR-0016).
+            # An explicit slot count turns the shared cache off. One shared
+            # cache for the 4 slots is a safe default (ADR-0023).
             "--kv-unified",
             "--spec-type",
             "ngram-simple",

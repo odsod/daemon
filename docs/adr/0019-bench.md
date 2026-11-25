@@ -251,7 +251,8 @@ A setup in config:
   `run(cases) -> [(outcome, output, latency_ms)]`. The sandbox adapter accepts
   `ambient` and `dictation`. A later cloud adapter must accept only
   `dictation` (`benchmarking` AC-8, ADR-0002).
-- Interaction setups (summary prompts) come with the stage 2 measures.
+- Interactions call no LLM (ADR-0016), so there are no interaction setups.
+  Interaction cases serve the speaker name measure.
 
 #### Sandbox run
 
@@ -369,8 +370,9 @@ Measures in stage 1:
 
 #### What this ADR leaves out
 
-- Stage 2 measures: speaker names (`interactions` AC-4), summary points
-  (`interactions` AC-9, AC-10) and echo removal (`live-transcript` AC-6).
+- Stage 2 measures: speaker names (`interactions` AC-4) and echo removal
+  (`live-transcript` AC-6). The summary measures (`interactions` AC-9,
+  AC-10) are removed: the daemon writes no summary (2026-11-25).
   They wait for the timed review pilot of `benchmarking` AC-3. Interaction
   cases are built now, so references can grow before the pilot.
 - A streaming CPU model and a cloud model for dictation. Each needs a
