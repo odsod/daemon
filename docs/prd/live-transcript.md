@@ -39,7 +39,8 @@
   can tell "nothing recorded" from "nothing said".
 - One transcript per host per local day. Owner or an agent runs
   `odsodctl transcript` → today's transcript of this host, while the day
-  runs.
+  runs. On a satellite it comes from the base, which makes it
+  ([ADR-0024](../adr/0024-base-and-satellites.md)).
 - The local day ends and all its lines are done → the transcript is
   finished and copied to the configured targets, such as the vault inbox.
   It never changes after that.
@@ -57,6 +58,8 @@
 - The inference host is out of reach → lines stop, and the tray shows
   Warning. When it returns, the missed lines appear, each with its own time.
 - The pipeline service crashes → it restarts. No line is lost or doubled.
+- A satellite is out of reach of the base → its lines stop, and its tray
+  shows Warning after 5 min. When it reconnects, the missed lines appear.
 
 ## Acceptance criteria
 
@@ -103,6 +106,9 @@ All numbers are proposed targets for the owner to confirm.
     Transcription uses the inference host or waits. _Check: system test._
 16. **AC-16** One dictation gives exactly one line, marked as dictation, and
     no line from the owner for the same speech. _Check: system test._
+17. **AC-17** While a satellite reaches the base, its speech shows in its
+    transcript on the base in at most 60 s (target; live check confirms).
+    _Check: manual._
 
 ## Boundaries
 

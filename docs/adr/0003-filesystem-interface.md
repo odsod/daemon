@@ -52,7 +52,7 @@ dictation socket ([ADR-0007](0007-keys-service.md)).
   them.
 - An utterance ID is `<kind>-<UTC start>`, for example
   `mic-20261122T143005.120Z`. Kinds: `mic` and `sys` (ambient), `dic`
-  (dictation). IDs are unique per host.
+  (dictation). IDs are unique per host, and so per host root.
 - An interaction ID is its UTC start, for example `20261122T140000.000Z`.
 
 ### Pending work is derived, not queued
@@ -132,6 +132,7 @@ dictation socket ([ADR-0007](0007-keys-service.md)).
 | `state/documents/interactions/<local-day>-<HHMM>-<host>[-<slug>].md` | Document              | interactions                           | publish, bench                                                                             |
 | `state/published/<target>/<day>.jsonl`                               | Stream                | publish                                | publish                                                                                    |
 | `<target dir>/<document name>`                                       | Document copy         | publish                                | third parties                                                                              |
+| `state/hosts/<host>/…` (base only)                                   | Host root             | sync of that satellite; then as above  | the per-host components of the pipeline ([ADR-0024](0024-base-and-satellites.md))          |
 
 - `events/user/` takes appends from several CLI calls. Each call appends one
   short line with `O_APPEND`, which is atomic on a local filesystem. Notes,
@@ -196,8 +197,16 @@ dictation socket ([ADR-0007](0007-keys-service.md)).
   line for each utterance still pending, and the transcript is final.
   `transcript` then writes its `finished` record and never appends to that
   day file again.
-- Document names include the host, so targets that sync across hosts get no
-  name clashes.
+- Document names include the host, so the documents of the base and of each
+  satellite get no name clashes in one target.
+
+### Host roots
+
+- On the base, `state/hosts/<host>/` holds one satellite's files, with the
+  same paths as `state/`. Its run root is `state/hosts/<host>/run/`
+  ([ADR-0024](0024-base-and-satellites.md)).
+- The satellite's sync writes `audio/`, `events/`, `utterances/dictation/`
+  and `run/status.json` there. The base's pipeline writes the rest.
 
 ### Retention
 
@@ -216,6 +225,9 @@ dictation socket ([ADR-0007](0007-keys-service.md)).
   state (draft or accepted, and by whom) and the source (host, time,
   channel). Retention never reads `state/bench/`.
 - Only publish copies data out of `state/`, and only to configured targets.
+  On a satellite, sync also copies audio and events to its host root on the
+  base.
+- Retention deletes old audio in each host root too.
 
 ### Change notification
 

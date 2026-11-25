@@ -71,6 +71,7 @@ This ADR defines the code layout. ADR-0005 refers to it.
 | transcript   | transcript, note, pin                              | [ADR-0015](0015-transcript.md)                |
 | interactions | interactions                                       | [ADR-0016](0016-interactions.md)              |
 | publishing   | publish                                            | [ADR-0017](0017-publishing.md)                |
+| sync         | sync                                               | [ADR-0024](0024-base-and-satellites.md)       |
 | control      | health, status, pause, resume, tray, notify-failed | [ADR-0018](0018-control.md)                   |
 | bench        | bench                                              | [ADR-0019](0019-bench.md)                     |
 | shortcuts    | shortcuts                                          | [ADR-0008](0008-shortcuts-and-kwin-script.md) |
