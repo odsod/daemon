@@ -324,9 +324,15 @@ The worker tells host faults from input faults:
 - **Request:** system prompt from `prompts/cleanup.md` (ambient) or
   `prompts/cleanup-dictation.md`, rendered with the glossary and
   `prompt_languages`. The user message wraps the text in
-  `<transcript>…</transcript>`. The prompt says that the speaker never
-  talks to the model, that questions are never answered, and that the text
-  stays in its language (`live-transcript` AC-4, `dictation` AC-8).
+  `<transcript>…</transcript>`, then repeats "Output only the cleaned
+  transcript." (OpenWhispr). The system prompt has tagged parts:
+  `<task>`, `<rules>`, `<examples>`, `<glossary>`, then `<language>` and
+  `<terms_in_transcript>` per request. The rules say that the speaker talks
+  to another person, so questions and requests stay as text and are never
+  answered; that the text stays in its language; that every sentence and
+  the speaker's slang stay; that each sentence gets a capital and end
+  punctuation; and that number words and digits keep their form
+  (`live-transcript` AC-4, `dictation` AC-8). Bench and choice: ADR-0023.
   `temperature = 0`, reasoning off,
   `max_tokens = max(64, 2 · len(text) // 3)`, with `len` in characters
   (about twice the input in tokens).

@@ -73,8 +73,9 @@ SERVERS: tuple[Server, ...] = (
         args=(
             "--host",
             "0.0.0.0",
+            # 4 cleanup requests need about 3,500 tokens at most (ADR-0023).
             "--ctx-size",
-            "32768",
+            "8192",
             "--n-gpu-layers",
             "99",
             "--flash-attn",
@@ -85,6 +86,7 @@ SERVERS: tuple[Server, ...] = (
             "q8_0",
             "--reasoning",
             "off",
+            # One dictation, the ambient lanes of two hosts, and one spare.
             "--parallel",
             "4",
             # An explicit slot count turns the shared cache off. One shared

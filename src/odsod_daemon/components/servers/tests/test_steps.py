@@ -70,9 +70,12 @@ def test_server_facts_match_the_pins():
     assert by_name["whisper"].binary == (
         "servers/whisper.cpp-1.9.5/build/bin/whisper-server"
     )
-    assert by_name["llama"].model == "models/Qwen3.5-9B-Q5_K_M.gguf"
+    assert (
+        by_name["llama"].model == "models/NVIDIA-Nemotron-3.5-Bolt-E4B-UD-Q4_K_XL.gguf"
+    )
     llama = " ".join(by_name["llama"].args)
     assert "--parallel 4 --kv-unified" in llama
+    assert "--ctx-size 8192" in llama
     assert "--spec-type ngram-simple" in llama
     assert "--inference-path /v1/audio/transcriptions" in " ".join(
         by_name["whisper"].args

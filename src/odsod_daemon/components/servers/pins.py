@@ -94,11 +94,12 @@ MODELS: dict[str, Pin] = {
         3095033483,
     ),
     "llama": Pin(
-        "Qwen3.5-9B-Q5_K_M.gguf",
-        "https://huggingface.co/unsloth/Qwen3.5-9B-GGUF/resolve/"
-        "3885219b6810b007914f3a7950a8d1b469d598a5/Qwen3.5-9B-Q5_K_M.gguf",
-        "dc2a39aef291f91a9116ad214058da0d86eb648743a124bd8c333787c4b9c91c",
-        6577841376,
+        # Cleanup only (ADR-0012, ADR-0023 bench 2026-11-25).
+        "NVIDIA-Nemotron-3.5-Bolt-E4B-UD-Q4_K_XL.gguf",
+        "https://huggingface.co/unsloth/NVIDIA-Nemotron-3.5-Bolt-E4B-GGUF/resolve/"
+        "b738967d6da3441a7d1c71fcec15e49e32e16ecd/NVIDIA-Nemotron-3.5-Bolt-E4B-UD-Q4_K_XL.gguf",
+        "84ff34f5834b929043f5ae74799e8d562d4056998f6a5923ceb44831e8ad84d6",
+        5060482240,
     ),
 }
 
