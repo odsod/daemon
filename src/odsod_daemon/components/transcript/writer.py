@@ -126,7 +126,8 @@ class Writer:
                 day, set()
             ):
                 continue
-            if line.tag == "mic":
+            # A finished day takes no lines (append ignores them): skip the check.
+            if line.tag == "mic" and self.path(day).name not in self.closed:
                 decision = echo.decide(
                     record, utterances, texts, coverage, now, self.settings
                 )

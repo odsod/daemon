@@ -377,3 +377,34 @@ def test_dropped_echo_is_decided_once(transcript_root, monkeypatch):
     writer.flush(now + timedelta(seconds=2))
     assert calls == []
     assert [r.tag for r in read(writer)] == ["sys"]
+
+
+def test_finished_day_skips_the_echo_check(transcript_root, monkeypatch):
+    """Lines of a finished day are never written. Checking them for echo on
+    every flush cost the live pipeline most of a core (2026-11-25)."""
+    from odsod_daemon.components.transcript import echo
+    from odsod_daemon.components.transcript.days import bounds
+
+    day = NOW.astimezone(ZONE).date()
+    _, end = bounds(day, ZONE)
+    append(transcript_root, "text", RECORDS[0])
+    for channel in ("mic", "sys"):
+        append(
+            transcript_root,
+            "coverage",
+            {
+                "kind": "covered",
+                "channel": channel,
+                "ts": clock.iso(end),
+                "end": clock.iso(end),
+            },
+        )
+    writer = Writer(TranscriptConfig())
+    writer.flush(end + timedelta(seconds=61))
+    assert writer.path(day).name in writer.closed
+    append(transcript_root, "text", RECORDS[1])
+    calls = []
+    decide = echo.decide
+    monkeypatch.setattr(echo, "decide", lambda *a: calls.append(1) or decide(*a))
+    writer.flush(end + timedelta(seconds=62))
+    assert calls == []
