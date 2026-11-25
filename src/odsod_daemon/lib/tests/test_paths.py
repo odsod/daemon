@@ -55,3 +55,31 @@ def test_config_file(tmp_path: Path) -> None:
         config=tmp_path / "config",
     )
     assert roots.config_file == tmp_path / "config" / "config.json"
+
+
+def test_host_root_inside_host_context() -> None:
+    env = {"ODSOD_DAEMON_ROOT": "/tmp/example"}
+    with paths.host("laptop"):
+        roots = paths.roots(env)
+        assert paths.current_host() == "laptop"
+        assert paths.local_roots(env).state == Path("/tmp/example/state")
+    assert roots.state == Path("/tmp/example/state/hosts/laptop")
+    assert roots.run == Path("/tmp/example/state/hosts/laptop/run")
+    assert roots.config == Path("/tmp/example/config")
+    assert paths.current_host() is None
+
+
+def test_host_name_is_checked() -> None:
+    import pytest
+
+    with pytest.raises(ValueError), paths.host("../etc"):
+        pass
+
+
+def test_satellites_lists_host_roots(tmp_path: Path) -> None:
+    env = {"ODSOD_DAEMON_ROOT": str(tmp_path)}
+    assert paths.satellites(env) == []
+    (tmp_path / "state/hosts/b-laptop").mkdir(parents=True)
+    (tmp_path / "state/hosts/a-laptop").mkdir()
+    (tmp_path / "state/hosts/.tmp").mkdir()
+    assert paths.satellites(env) == ["a-laptop", "b-laptop"]

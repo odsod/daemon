@@ -309,3 +309,62 @@ async def test_snapshot_reads_the_inference_role(tmp_path: Path, enabled):
     assert snapshot.inference is enabled
     llama = snapshot.units["llama"]
     assert (llama is not None and llama.active_state == "failed") is enabled
+
+
+async def test_snapshot_reads_satellite_pipeline_faults(tmp_path: Path):
+    """ADR-0024: faults of a satellite host root show on the base, with the host."""
+    roots = paths.Roots(tmp_path / "state", tmp_path / "run", tmp_path / "config")
+    documents.write_json(
+        roots.config_file,
+        {
+            "common": {
+                "inference": {
+                    "whisper_url": "http://127.0.0.1:8178/v1/audio/transcriptions",
+                    "llama_url": "http://127.0.0.1:8179/v1/chat/completions",
+                }
+            }
+        },
+    )
+    source = systemd.FakeUnitStates()
+    source.set(state("pipeline"))
+    documents.write_json(
+        roots.state / "hosts/laptop/run/health/pipeline.json",
+        {
+            "service": "pipeline",
+            "ts": clock.iso(NOW),
+            "faults": [
+                {
+                    "code": "inference-unreachable",
+                    "since": clock.iso(NOW),
+                    "message": "whisper is down.",
+                    "fix": None,
+                }
+            ],
+        },
+    )
+    snapshot = await gather(roots, source, now=NOW)
+    assert [(f.code, f.message) for f in snapshot.faults] == [
+        ("inference-unreachable", "laptop: whisper is down.")
+    ]
+
+
+@pytest.mark.parametrize("role,seconds", [("base", 3600.0), ("satellite", 0.0)])
+async def test_satellite_audio_is_no_unsegmented_backlog(tmp_path: Path, role, seconds):
+    """ADR-0024: a satellite segments nothing, so its audio is no backlog."""
+    roots = paths.Roots(tmp_path / "state", tmp_path / "run", tmp_path / "config")
+    common = {
+        "role": role,
+        "base": "desktop",
+        "inference": {
+            "whisper_url": "http://127.0.0.1:8178/v1/audio/transcriptions",
+            "llama_url": "http://127.0.0.1:8179/v1/chat/completions",
+        },
+    }
+    documents.write_json(roots.config_file, {"common": common})
+    for channel in ("mic", "sys"):
+        file = audio.hour_file(roots.state, channel, NOW)
+        file.parent.mkdir(parents=True)
+        with file.open("wb") as handle:
+            handle.truncate(1800 * audio.BYTES_PER_SECOND)
+    snapshot = await gather(roots, systemd.FakeUnitStates(), now=NOW)
+    assert snapshot.backlog.seconds == seconds

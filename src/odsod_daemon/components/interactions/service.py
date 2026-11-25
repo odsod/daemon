@@ -124,6 +124,7 @@ class Worker:
         self.config = settings
         self.roots = roots
         self.common = config.load_common(roots)
+        self.host = config.host_name(roots)
         self.view = View(roots, self.common.retention_days)
         self.view.load()
         self.boundaries: list[Boundary] = []
@@ -213,7 +214,7 @@ class Worker:
                 data["events/signals"] + data["events/user"],
                 self.config,
                 self.roots,
-                self.common.host,
+                self.host,
                 self.zone,
             )
         except ValueError as error:

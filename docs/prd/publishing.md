@@ -23,6 +23,9 @@
   daemon never changes or reads the copy afterwards.
 - Document names include the host, so documents from several hosts in one
   synced target never clash.
+- The base publishes the documents of every host. A satellite publishes
+  nothing, so its own vault inbox gets no new files
+  ([ADR-0024](../adr/0024-base-and-satellites.md)).
 - The ingest agent moves or deletes a delivered copy → the daemon never
   writes it again.
 - When a document is finished is set by its own PRD: `live-transcript` for
@@ -67,8 +70,8 @@ Numbers are targets.
 
 ### Not planned
 
-- Sync between hosts or to the cloud. A target is a directory; what syncs it
-  is outside the daemon (ADR-0003).
+- Sync of targets between hosts or to the cloud. A target is a directory;
+  what syncs it is outside the daemon (ADR-0003).
 - Merging duplicates across hosts, also the second copy after a crash during
   delivery. The vault's ingest agent does it (owner decision, 2026-11-23).
 - Version control of targets. The daemon writes files; the vault's tools

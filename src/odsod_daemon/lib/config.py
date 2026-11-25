@@ -11,8 +11,9 @@ import json
 import socket
 from collections.abc import Mapping
 from pathlib import Path
+from typing import Literal
 
-from pydantic import BaseModel, Field, ValidationError, field_validator
+from pydantic import BaseModel, Field, ValidationError, field_validator, model_validator
 
 from odsod_daemon.lib import inference, paths
 
@@ -40,6 +41,21 @@ class CommonSection(BaseModel):
     host: str = Field(default_factory=socket.gethostname)
     retention_days: int = Field(default=14, ge=1)
     inference: InferenceSection
+    # ADR-0024: a satellite sends its audio and events to the base.
+    role: Literal["base", "satellite"] = "base"
+    # SSH host of the base; required on a satellite.
+    base: str | None = None
+
+    @model_validator(mode="after")
+    def _check_base(self) -> CommonSection:
+        if self.role == "satellite" and not self.base:
+            raise ValueError("a satellite needs common.base")
+        return self
+
+
+def host_name(roots: paths.Roots | None = None) -> str:
+    """The host whose files are current: a satellite host root, or this host."""
+    return paths.current_host() or load_common(roots).host
 
 
 def _raw(roots: paths.Roots | None = None) -> dict[str, object]:

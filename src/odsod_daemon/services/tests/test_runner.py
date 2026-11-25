@@ -188,3 +188,79 @@ async def test_service_start_voids_old_faults(temp_root: Path) -> None:
     with suppress(asyncio.CancelledError):
         await service
     assert documents.read_json(path)["faults"] == []
+
+
+def write_common(root: Path, **common: object) -> None:
+    inference = {
+        "whisper_url": "http://127.0.0.1:8178/v1/audio/transcriptions",
+        "llama_url": "http://127.0.0.1:8179/v1/chat/completions",
+    }
+    (root / "config/config.json").write_text(
+        json.dumps({"common": {"inference": inference, **common}})
+    )
+
+
+def recording_component(name: str, seen: list[tuple[str, str]]) -> ModuleType:
+    from odsod_daemon.lib import paths
+
+    async def run(_config: object, *, once: bool = False) -> None:
+        seen.append((name, paths.current_host() or "-"))
+
+    return component(name, run)
+
+
+async def test_base_runs_per_host_components_for_each_satellite(
+    temp_root: Path,
+) -> None:
+    """ADR-0024: the base runs the host components once per host root."""
+    write_common(temp_root)
+    (temp_root / "state/hosts/laptop").mkdir(parents=True)
+    seen: list[tuple[str, str]] = []
+    shared = recording_component("shared", seen)
+    hosted = recording_component("hosted", seen)
+    spec = ServiceSpec("test", [hosted, shared], per_host=[hosted])
+    await run_service(spec, once=True)
+    assert seen == [("hosted", "-"), ("shared", "-"), ("hosted", "laptop")]
+
+
+async def test_satellite_runs_only_satellite_components(temp_root: Path) -> None:
+    write_common(temp_root, role="satellite", base="desktop")
+    (temp_root / "state/hosts/laptop").mkdir(parents=True)
+    seen: list[tuple[str, str]] = []
+    spec = ServiceSpec(
+        "test",
+        [recording_component("full", seen)],
+        per_host=[],
+        satellite=[recording_component("sync", seen)],
+    )
+    await run_service(spec, once=True)
+    assert seen == [("sync", "-")]
+
+
+@pytest.mark.looptime(False)
+async def test_live_host_tasks_keep_their_host_root(temp_root: Path) -> None:
+    write_common(temp_root)
+    (temp_root / "state/hosts/laptop").mkdir(parents=True)
+    seen: list[tuple[str, str]] = []
+    done = asyncio.Event()
+
+    async def run(_config: object, *, once: bool = False) -> None:
+        from odsod_daemon.lib import paths
+
+        await asyncio.sleep(0)
+        seen.append(("hosted", paths.current_host() or "-"))
+        if len(seen) == 2:
+            done.set()
+        await asyncio.Event().wait()
+
+    hosted = component("hosted", run)
+    service = asyncio.create_task(
+        run_service(ServiceSpec("test", [hosted], per_host=[hosted]))
+    )
+    try:
+        await asyncio.wait_for(done.wait(), 3)
+    finally:
+        service.cancel()
+        with suppress(asyncio.CancelledError):
+            await service
+    assert sorted(seen) == [("hosted", "-"), ("hosted", "laptop")]

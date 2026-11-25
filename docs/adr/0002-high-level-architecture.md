@@ -75,7 +75,7 @@ The name follows the Unix term
    defaults. It also builds and runs whisper-server and llama-server on the
    inference host ([ADR-0023](0023-inference-servers.md)). The `machine`
    repo installs the OS packages and configures the daemon.
-5. **Five ways to communicate, each in its place.**
+5. **Six ways to communicate, each in its place.**
    - **Files** between components on one host. Paths and formats are
      documented contracts.
    - **Memory** inside a component: control loops and stream state. A
@@ -86,6 +86,9 @@ The name follows the Unix term
    - **D-Bus** between KWin and the session service, because a KWin script can
      reach other processes only through D-Bus
      ([ADR-0008](0008-shortcuts-and-kwin-script.md)).
+   - **rsync over SSH** from a satellite to the base: append-only copies of
+     its audio and events, on the tailnet only
+     ([ADR-0024](0024-base-and-satellites.md)).
    - **HTTP** from each host to the shared inference servers. No broker in
      between. Inference URLs must be `localhost` or a tailnet address. The
      clients refuse any other host, and the servers listen only on the
@@ -121,8 +124,11 @@ The name follows the Unix term
     speaker names from the meeting. It calls no LLM; the brain vault agent
     writes summaries (owner decision, 2026-11-25). Diarization is a later
     per-host extra, not part of v1 (owner decision, 2026-11-23).
-11. **Hosts are independent.** Each host records and writes its own files. Hosts
-    share only inference servers. No locks or coordination between hosts.
+11. **One base, many satellites.** The base processes the audio of every
+    host. A satellite records, dictates, and sends its audio and events to
+    its host root on the base. No locks: each file has one writer
+    ([ADR-0024](0024-base-and-satellites.md), replaces "Hosts are
+    independent").
 12. **Consumers are third parties.** The daemon keeps its own documents and
     copies finished ones to configured target directories, such as a vault
     inbox. It never reads from a target. What syncs a target is outside this

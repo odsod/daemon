@@ -100,7 +100,9 @@ host for 14 days, which the owner accepts.
     audio. _Check: system test._
 15. **AC-15** Only the owner's user account can read recorded audio.
     Ambient audio leaves the host only in requests to the configured
-    inference host, over localhost or the tailnet. _Check: manual._
+    inference host, or from a satellite to its base, over localhost or the
+    tailnet ([ADR-0024](../adr/0024-base-and-satellites.md)). _Check:
+    manual._
 16. **AC-16** After the owner plugs in a mic or picks another input,
     recording captures that mic in at most 5 s. When the mic in use
     disappears, recording captures another available mic in at most 5 s.
@@ -133,7 +135,8 @@ host for 14 days, which the owner accepts.
 ### Not planned
 
 - Recording before login. Capture runs in the owner's session (ADR-0004).
-- Audio shared between hosts. Hosts share only inference servers (ADR-0002).
+- Audio shared between satellites. A satellite sends its audio only to the
+  base (ADR-0024).
 - Channels beyond the mic and system audio, such as per-app capture
   (ADR-0005).
 - Automatic pause when the screen locks. While the host runs, the system

@@ -33,6 +33,7 @@ SUBSYSTEMS = {
     "pin": "transcript",
     "interactions": "interactions",
     "publish": "publishing",
+    "sync": "sync",
     "health": "control",
     "status": "control",
     "pause": "control",

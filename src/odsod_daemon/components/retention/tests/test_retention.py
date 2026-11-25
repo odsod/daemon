@@ -16,7 +16,7 @@ NOW = datetime(2026, 11, 23, 12, 0, tzinfo=UTC)
 
 
 def _touch(root: Path, channel: str, hour: str, size: int = 16) -> Path:
-    directory = root / "state" / "audio" / channel
+    directory = (root if root.name == "laptop" else root / "state") / "audio" / channel
     directory.mkdir(parents=True, exist_ok=True)
     path = directory / f"{hour}.pcm"
     path.write_bytes(b"\0" * size)
@@ -114,3 +114,17 @@ def test_command_fails_without_a_config(
     result = CliRunner().invoke(app, ["retention"])
     assert result.exit_code == 1
     assert "file not found" in result.output
+
+
+def test_command_deletes_old_audio_of_satellites(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """ADR-0024: each host root keeps the same retention period."""
+    _config(tmp_path)
+    monkeypatch.setenv("ODSOD_DAEMON_ROOT", str(tmp_path))
+    old = _touch(tmp_path / "state/hosts/laptop", "mic", "20200101T00Z")
+    young = _touch(tmp_path / "state/hosts/laptop", "mic", "29990101T00Z")
+    result = CliRunner().invoke(app, ["retention"])
+    assert result.exit_code == 0, result.output
+    assert not old.exists()
+    assert young.exists()
