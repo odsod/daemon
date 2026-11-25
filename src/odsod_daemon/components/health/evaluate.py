@@ -61,9 +61,11 @@ def evaluate(snapshot: Snapshot, config: ControlConfig) -> StatusReport:
     capture = snapshot.units.get("capture")
     if capture is not None and capture.active_state == "active":
         for channel in ("mic", "sys"):
+            # Time asleep is not a stall: count from the last wake too.
             since = max(
                 snapshot.newest_audio.get(channel) or timestamp(capture),
                 timestamp(capture),
+                snapshot.resumed or timestamp(capture),
                 key=clock.parse_iso,
             )
             if (

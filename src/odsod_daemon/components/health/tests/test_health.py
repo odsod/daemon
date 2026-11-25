@@ -134,6 +134,18 @@ def test_audio_stale_after_capture_resume(age, exit_code):
     assert all(r.since == clock.iso(NOW - timedelta(seconds=age)) for r in stale)
 
 
+@pytest.mark.parametrize("asleep_ago,exit_code", [(5, 0), (120, 0), (121, 2)])
+def test_audio_stale_counts_from_a_wake(asleep_ago, exit_code):
+    """Time asleep is not a stall: a lid close leaves old audio and a running
+    capture unit (owner report, 2026-11-25)."""
+    snapshot = healthy()
+    snapshot.units["capture"] = state("capture", age=2000)
+    snapshot.newest_audio = {"mic": OLD, "sys": OLD}
+    snapshot.resumed = clock.iso(NOW - timedelta(seconds=asleep_ago))
+    report = evaluate(snapshot, ControlConfig())
+    assert report.exit_code == exit_code
+
+
 @pytest.mark.parametrize(
     "capture_age,covered,seconds",
     [(10, False, 0), (601, False, 601), (10, True, 1000)],

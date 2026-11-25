@@ -196,7 +196,10 @@ Reasons, from the snapshot:
   Error. `failed` needs no grace (`health-and-control` AC-7).
 - `audio-stale` covers a capture that hangs without a crash and without a
   health file update. The watchdog restarts capture first; this reason is
-  the backstop for `ambient-recording` AC-13 (Error in 2 min).
+  the backstop for `ambient-recording` AC-13 (Error in 2 min). The tray
+  counts the age from the last wake from suspend that it saw (the
+  `CLOCK_BOOTTIME − CLOCK_MONOTONIC` jump of ADR-0011), so a lid close never
+  shows as a stall.
 - `unit-failed` and `unit-down` add the rollback command when the last
   install changed the commit: "If this started after the upgrade, run
   `mise run daemon:setup <previous commit>` in the machine repo"

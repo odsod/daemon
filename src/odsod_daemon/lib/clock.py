@@ -29,6 +29,24 @@ def boottime() -> float:
     return time.clock_gettime(time.CLOCK_BOOTTIME)
 
 
+class Resume:
+    """The wall time of the last resume from suspend that this process saw.
+
+    Suspend stops the monotonic clock but not the boot clock, so their
+    difference grows by the time spent asleep. Call ``poll`` on every tick."""
+
+    def __init__(self) -> None:
+        self._asleep = boottime() - monotonic()
+        self.at: float | None = None
+
+    def poll(self) -> float | None:
+        asleep = boottime() - monotonic()
+        if asleep - self._asleep > 1.0:
+            self.at = wall()
+        self._asleep = asleep
+        return self.at
+
+
 def utc_now() -> datetime:
     """The current time, in UTC."""
     return datetime.now(UTC)

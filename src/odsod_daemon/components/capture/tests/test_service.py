@@ -405,3 +405,54 @@ async def test_watchdog_stops_after_a_backward_wall_clock_step(
     )
     assert pings
     assert max(pings) < 7.0
+
+
+async def test_resume_from_suspend_is_not_a_stall(
+    tmp_path: Path,
+    virtual_wall: float,
+    fake_pw: FakePwRecord,
+    fake_source: FakeSource,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A lid close stops the clocks of the audio, not the wall clock. The first
+    health tick after the wake must not see the pre-suspend audio as a stall
+    (owner report, 2026-11-25)."""
+    offset = {"value": 0.0}
+    monkeypatch.setattr(
+        clock,
+        "wall",
+        lambda: WALL_BASE + asyncio.get_running_loop().time() + offset["value"],
+    )
+    monkeypatch.setattr(
+        clock,
+        "boottime",
+        lambda: 1_000.0 + asyncio.get_running_loop().time() + offset["value"],
+    )
+    monkeypatch.setattr(
+        clock, "monotonic", lambda: 1_000.0 + asyncio.get_running_loop().time()
+    )
+    fake_pw.script("mic", feed_blocks(1), feed_blocks(20))
+    fake_pw.script("sys", feed_blocks(1), feed_blocks(20))
+    flushed: list[str] = []
+    original = service.Health.flush
+
+    def record(self, active, now, *, force=False):
+        flushed.extend(item.code for item in active)
+        return original(self, active, now, force=force)
+
+    monkeypatch.setattr(service.Health, "flush", record)
+
+    async def suspend() -> None:
+        await clock.sleep(0.5)
+        offset["value"] = 600.0
+
+    task = asyncio.create_task(suspend())
+    await run_capture(
+        tmp_path,
+        seconds=1.5,
+        fake_pw=fake_pw,
+        fake_source=fake_source,
+        settings=config(stall_restart_s=2.0, stall_error_s=60.0),
+    )
+    await task
+    assert "capture-stalled" not in flushed

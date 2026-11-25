@@ -193,7 +193,8 @@ stdout and gives each block to `anchor.py`, with its arrival time from
 - **`capture-stalled` (Error):** set when a channel has no new audio for
   `stall_error_s` (60 s). The stall starts at the end of the channel's
   newest audio (from the file size) or at the service start, whichever is
-  later. Old audio from before a pause then never counts as a stall. A
+  later, or at the last wake from suspend. Old audio from before a pause
+  or a lid close then never counts as a stall. A
   stall that began before a watchdog restart shows Error about 90 s after
   it began, inside the 2 min of AC-13.
 - **Suspend:** a task compares `CLOCK_BOOTTIME − CLOCK_MONOTONIC` each
