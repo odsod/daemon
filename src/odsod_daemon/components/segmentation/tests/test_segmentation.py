@@ -393,3 +393,22 @@ def test_cursor_between_samples_cuts_whole_frames(temp_root):
         runner.cutter = Cutter(runner.settings, runner.cursor)
         runner.advance(once=True)
         assert runner.cursor > start.timestamp() + 1
+
+
+async def test_channel_polls_ten_times_a_second(temp_root, monkeypatch):
+    """Each pass reads status and lists files. 50 passes a second per channel
+    cost the laptop 13% of a core on battery (2026-11-25)."""
+    import asyncio
+
+    from odsod_daemon.components.segmentation.runner import _channel
+
+    setup_audio(temp_root)
+    calls = []
+    monkeypatch.setattr(ChannelRunner, "advance", lambda self, **kw: calls.append(1))
+    task = asyncio.create_task(_channel("sys", Speech(), once=False))
+    try:
+        await clock.sleep(1)
+        assert len(calls) <= 11
+    finally:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
