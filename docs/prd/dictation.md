@@ -1,7 +1,7 @@
 # PRD: Dictation
 
 - Status: Accepted
-- Updated: 2026-11-24
+- Updated: 2026-11-25
 - Design: [ADR-0002](../adr/0002-high-level-architecture.md),
   [ADR-0005](../adr/0005-components-and-implementation.md),
   [ADR-0007](../adr/0007-keys-service.md),
@@ -39,7 +39,7 @@
   first 350 ms, before the threshold, can reach the call (owner decision,
   2026-11-23). The owner's voice is still recorded.
 - A dictation is not part of the meeting: it never appears in the meeting's
-  document or summary.
+  document.
 - After the paste → the owner's clipboard holds what it held before. The
   dictated text is not in the clipboard history.
 - Dictation goes ahead of all other transcription work on the host, and
@@ -120,15 +120,15 @@ targets for the owner to confirm.
     dictation, also when it arrived late. _Check: system test._
 20. **AC-20** If the paste fails, the text stays on the clipboard and a
     desktop notification says so at most 1 s later. _Check: system test._
-21. **AC-21** AC-3 holds while another host runs a batch summary on the
-    inference host. _Check: system test._
+21. **AC-21** AC-3 holds while another host cleans its ambient speech on
+    the inference host. _Check: system test._
 22. **AC-22** When cleanup gives no text in time, the raw speech-to-text text
     is pasted, and the 2 s target of AC-3 still holds. _Check: system test._
 23. **AC-23** While recording is paused, or no inference host is reachable,
     Left Alt held alone gives no dictation and acts as a plain Alt. The tray
     shows the reason. _Check: system test._
 24. **AC-24** A dictation made during a meeting appears in no interaction
-    document or summary. _Check: system test._
+    document. _Check: system test._
 25. **AC-25** With the mic muted, a hold unmutes the mic only after every
     meeting stream is muted, and the release mutes the mic again. With the
     mic not muted, dictation does not change the mic. _Check: system test._

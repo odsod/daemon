@@ -40,7 +40,6 @@ class Interaction(BaseModel):
     error: str | None = None
     end_cause: EndCause = None
     lines: int | None = None
-    setup: str | None = None
 
 
 class FinishedInteraction(BaseModel):
@@ -64,7 +63,9 @@ class InteractionDocument(BaseModel):
     timezone: str
     meeting: MeetingInfo | None = None
     participants: list[str] = []
-    title: str
+    # The meeting title; null outside a meeting. The brain vault agent writes
+    # its own title and summary.
+    title: str | None = None
 
 
 # Public names used by readers in other subsystems.

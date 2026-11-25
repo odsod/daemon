@@ -1,7 +1,7 @@
 # PRD: Ambient recording
 
 - Status: Accepted
-- Updated: 2026-11-24
+- Updated: 2026-11-25
 - Design: [ADR-0002](../adr/0002-high-level-architecture.md),
   [ADR-0003](../adr/0003-filesystem-interface.md),
   [ADR-0004](../adr/0004-orchestration-with-systemd.md),
@@ -124,8 +124,7 @@ host for 14 days, which the owner accepts.
 ### Covered by other PRDs
 
 - The daily transcript, notes and pins → the `live-transcript` PRD.
-- Interaction documents, speaker names and summaries → the
-  `interactions` PRD.
+- Interaction documents and speaker names → the `interactions` PRD.
 - Dictation, which uses the same audio → the `dictation` PRD.
 - The meeting's echo in the mic: recording keeps the raw mic, and the
   transcript PRDs remove duplicate text.

@@ -1,7 +1,7 @@
 # PRD: Live transcript
 
 - Status: Accepted
-- Updated: 2026-11-23
+- Updated: 2026-11-25
 - Design: [ADR-0002](../adr/0002-high-level-architecture.md),
   [ADR-0003](../adr/0003-filesystem-interface.md),
   [ADR-0005](../adr/0005-components-and-implementation.md)
@@ -108,8 +108,7 @@ All numbers are proposed targets for the owner to confirm.
 
 ### Covered by other PRDs
 
-- Speaker names, interaction documents and summaries → the
-  `interactions` PRD.
+- Speaker names and interaction documents → the `interactions` PRD.
 - Delivery of the daily transcript to targets → the `publishing` PRD.
 - Recording, and what is kept when → the `ambient-recording` PRD.
 - Dictation itself → the `dictation` PRD.

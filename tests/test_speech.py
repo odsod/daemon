@@ -138,8 +138,9 @@ async def test_speech_pipeline_kill_and_restart(temp_root, boundary):
 @pytest.mark.looptime(False)
 async def test_speech_dictation_uses_second_llama_slot(temp_root):
     started = asyncio.Event()
-    # The fake uses a thread per request, like the server's two slots.
-    slow = pair("llama-summary")
+    # The fake uses a thread per request, like the server's slots. Another
+    # host's ambient cleanup holds the first one.
+    slow = pair("llama-cleanup-ambient")
     release = threading.Event()
 
     class HeldBatchServer(inference.ReplayServer):
@@ -172,13 +173,13 @@ async def test_speech_dictation_uses_second_llama_slot(temp_root):
             },
         )
 
-        async def summary():
+        async def ambient():
             started.set()
             return await inference.LlamaClient(
                 server.url + inference.LLAMA_PATH
-            ).complete([{"role": "user", "content": "Summarize this batch"}])
+            ).complete([{"role": "user", "content": "Ambient text"}])
 
-        task = asyncio.create_task(summary())
+        task = asyncio.create_task(ambient())
         await started.wait()
         while not server.requests:
             await clock.sleep(0.005)

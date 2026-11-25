@@ -127,8 +127,8 @@ shows the overview, [`overview.py`](../diagrams/overview.py). Regenerate with
   token, a model download and hours of CPU on laptops. Adopt it per host when
   bench data shows the host can keep up.
 - **Live shadow backends**, if offline bench runs are not enough.
-- **Chapters** in long interaction documents, if overview and pins are not
-  enough.
+- **Chapters** in long interaction documents, if pins are not enough for
+  the brain vault agent.
 
 ## Alternatives considered
 

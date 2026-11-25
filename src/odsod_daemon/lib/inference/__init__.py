@@ -153,7 +153,6 @@ class LlamaClient:
         *,
         max_tokens: int = 2048,
         temperature: float = 0.0,
-        response_format: Mapping[str, Any] | None = None,
     ) -> str:
         payload = {
             "model": self.model,
@@ -167,8 +166,6 @@ class LlamaClient:
             "temperature": temperature,
             "chat_template_kwargs": {"enable_thinking": False},
         }
-        if response_format is not None:
-            payload["response_format"] = dict(response_format)
         async with httpx.AsyncClient(timeout=self.timeout_s) as client:
             response = await client.post(self.url, json=payload)
             response.raise_for_status()

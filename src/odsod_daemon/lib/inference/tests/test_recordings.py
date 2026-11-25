@@ -21,8 +21,8 @@ def _load(path: Path) -> dict[str, Any]:
     return value
 
 
-def test_has_at_least_nine_recordings() -> None:
-    assert len(RECORDINGS) >= 9
+def test_has_at_least_eight_recordings() -> None:
+    assert len(RECORDINGS) >= 8
 
 
 def test_every_recording_has_request_and_response() -> None:

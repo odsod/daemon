@@ -41,8 +41,8 @@ The name follows the Unix term
   one utterance each, avoid most of that loss (benchmark 2026-11: mixed WER
   45% on long chunks, 5.3% split per utterance, as an upper bound).
 - Local inference runs on one shared GPU host. Whisper-server handles one
-  request at a time, so dictation competes with ambient work. A batch summary
-  can hold an LLM request for tens of seconds.
+  request at a time, so dictation competes with ambient work. Ambient
+  cleanup from other hosts holds llama-server slots too.
 - Raw ASR output is never final text. It needs LLM cleanup with a glossary.
 - Recording and dictation need the same audio, cut in different ways.
 - The keys service grabs every physical keyboard. No other process can read key
@@ -112,13 +112,14 @@ The name follows the Unix term
      host, so it never waits for an ambient whisper request
      ([ADR-0022](0022-dictation-asr.md)).
    - The inference host runs llama-server with 4 parallel slots, so dictation
-     cleanup never waits behind a batch summary
+     cleanup never waits behind the ambient cleanup of other hosts
      ([ADR-0023](0023-inference-servers.md)).
    - Dictation cleanup has a 1 s limit. After it, dictation uses the raw ASR
      text (owner decision, 2026-11-23).
 10. **Fast first, accurate later.** A live pass gives text only, within
     seconds. A batch pass reprocesses a finished interaction with full context:
-    speaker names from the meeting, summaries. Diarization is a later
+    speaker names from the meeting. It calls no LLM; the brain vault agent
+    writes summaries (owner decision, 2026-11-25). Diarization is a later
     per-host extra, not part of v1 (owner decision, 2026-11-23).
 11. **Hosts are independent.** Each host records and writes its own files. Hosts
     share only inference servers. No locks or coordination between hosts.
@@ -159,7 +160,7 @@ The name follows the Unix term
 | Ambient recording   | Every host records mic and system audio in the background. Audio is kept for a rolling period.               |
 | Live transcript     | A daily log of what was said, within seconds, with notes, pins and meeting changes.                          |
 | Dictation           | Hold a key, speak, release: the text appears in the active application. Meetings do not hear the dictation.  |
-| Interactions        | Each finished meeting or conversation gets a transcript with meeting speaker names and a summary.            |
+| Interactions        | Each finished meeting or conversation gets a transcript with meeting speaker names, titled by the meeting.   |
 | Publishing          | Finished documents go to configured directories, such as a vault inbox.                                      |
 | Benchmarking        | Stored cases compare models, prompts and strategies on real speech, offline.                                 |
 | Global shortcuts    | One key chord focuses or launches an app, or runs a window action.                                           |

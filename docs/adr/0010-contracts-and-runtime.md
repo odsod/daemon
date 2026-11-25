@@ -63,7 +63,7 @@ them.
 | `run/paused`                                                          | control                                                 | capture unit, control                                                    |
 | `state/install/current`                                               | install                                                 | control, bench                                                           |
 | `state/install/previous-commit`                                       | install                                                 | control                                                                  |
-| `config/glossary.yaml`                                                | owner                                                   | speech, interactions, bench                                              |
+| `config/glossary.yaml`                                                | owner                                                   | speech, bench                                                            |
 | `speech` config section, prompts `cleanup.md`, `cleanup-dictation.md` | owner (speech owns the schema)                          | speech, bench (sandbox overrides)                                        |
 | Keys package-data constants                                           | keys (`contract.py`)                                    | install (`install --system` builds and installs keys)                    |
 | `inference` config section; server unit facts (`servers/contract.py`) | owner (inference owns the schema); inference            | install (renders the server units), control (expects them)               |
@@ -220,8 +220,8 @@ Mic muted as `mic-muted`.
   service refuses to start on an invalid section of its own and writes the
   error to its log.
 - `config/glossary.yaml`: entries with `term`, `note` and `heard_as`, most
-  important last ([ADR-0021](0021-glossary.md)). speech, interactions and
-  bench read it through `lib.glossary`.
+  important last ([ADR-0021](0021-glossary.md)). speech and bench read it
+  through `lib.glossary`.
 - `config/prompts/<name>.md`: optional prompt overrides. The subsystem that
   owns the prompt names it.
 
