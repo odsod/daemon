@@ -252,10 +252,12 @@ Mic muted as `mic-muted`.
   dictation and speech use it, so both agree when no inference host is
   reachable. `is_loopback` tells a local server, which never runs on
   battery (`live-transcript` AC-15).
-- `streams.follow` sets a low watchfiles debounce. The default 1.6 s alone
-  would break `dictation` AC-3, which crosses three streams. The target is
-  20 ms. CI checks p95 under 100 ms over 1,000 appends, in a test marked
-  `timing`. bench and the owner measure the real dictation latency.
+- `streams.follow` and the tray wait on inotify (`lib/inotify.py`) in the
+  event loop: no thread, no polling, no debounce. A wake costs nothing
+  while idle, which matters on battery (watchfiles polled every 10 ms per
+  watcher and cost the laptop 12% of a core). `dictation` AC-3 crosses
+  three streams. CI checks p95 under 100 ms over 1,000 appends, in a test
+  marked `timing`. bench and the owner measure the real dictation latency.
 - `power.on_mains()` is False only when a battery with a scope other than
   `Device` reports `Discharging` and no `Mains` supply is online. No supply,
   or only device batteries, gives True. A desktop with a pen battery is on
