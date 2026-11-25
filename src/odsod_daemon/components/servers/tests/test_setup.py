@@ -78,7 +78,7 @@ def test_fresh_host_downloads_and_builds_once(host):
         "whisper: downloaded ggml-large-v3.bin",
         "whisper: downloaded whisper.cpp-1.9.5",
         "whisper: built whisper-server 1.9.5",
-        "llama: downloaded Qwen3.5-9B-Q5_K_M.gguf",
+        "llama: downloaded NVIDIA-Nemotron-3.5-Bolt-E4B-UD-Q4_K_XL.gguf",
         "llama: downloaded llama.cpp-1.0.0-b12359-b1b770d",
         "llama: built llama-server 1.0.0-b12359-b1b770d",
     ]
@@ -116,7 +116,7 @@ def test_adopts_matching_models_and_downloads_the_rest(host):
     llama.write_bytes(b"x" * host.models["llama"].size)
     changes = host.run()
     assert f"whisper: adopted ggml-large-v3.bin from {whisper.parent}" in changes
-    assert "llama: downloaded Qwen3.5-9B-Q5_K_M.gguf" in changes
+    assert "llama: downloaded NVIDIA-Nemotron-3.5-Bolt-E4B-UD-Q4_K_XL.gguf" in changes
     assert host.models["whisper"].name not in host.server.gets
     assert not whisper.exists()
     assert llama.exists()

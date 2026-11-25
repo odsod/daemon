@@ -19,6 +19,9 @@ from typing import Any
 
 import httpx
 
+# Same as cleanup.prompt.ANCHOR.
+ANCHOR = "\n\nOutput only the cleaned transcript."
+
 WHISPER_URL = "http://127.0.0.1:8178/v1/audio/transcriptions"
 LLAMA_URL = "http://127.0.0.1:8179/v1/chat/completions"
 WHISPER_PATH = "/v1/audio/transcriptions"
@@ -134,7 +137,7 @@ def _cleanup_body(system: str, text: str) -> dict[str, Any]:
         "model": "default",
         "messages": [
             {"role": "system", "content": system},
-            {"role": "user", "content": f"<transcript>{text}</transcript>"},
+            {"role": "user", "content": f"<transcript>{text}</transcript>{ANCHOR}"},
         ],
         "temperature": 0,
         "max_tokens": max(64, 2 * len(text) // 3),

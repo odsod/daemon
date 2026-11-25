@@ -66,15 +66,43 @@ runs whisper-server and llama-server.
 
 ### Pins
 
-| Item                     | Version or revision                     | SHA-256 (start)    | Bytes         |
-| ------------------------ | --------------------------------------- | ------------------ | ------------- |
-| whisper.cpp source       | tag `v1.9.5`                            | `ff1a9053feb509ff` | 9 626 464     |
-| llama.cpp source         | tag `v1.0.0-b12359-b1b770d`             | `79465cbc4d52f8d9` | 38 899 849    |
-| `ggml-large-v3.bin`      | `ggerganov/whisper.cpp` at `5359861c`   | `64d182b440b98d52` | 3 095 033 483 |
-| `Qwen3.5-9B-Q5_K_M.gguf` | `unsloth/Qwen3.5-9B-GGUF` at `3885219b` | `dc2a39aef291f91a` | 6 577 841 376 |
+| Item                                           | Version or revision                                       | SHA-256 (start)    | Bytes         |
+| ---------------------------------------------- | --------------------------------------------------------- | ------------------ | ------------- |
+| whisper.cpp source                             | tag `v1.9.5`                                              | `ff1a9053feb509ff` | 9 626 464     |
+| llama.cpp source                               | tag `v1.0.0-b12359-b1b770d`                               | `79465cbc4d52f8d9` | 38 899 849    |
+| `ggml-large-v3.bin`                            | `ggerganov/whisper.cpp` at `5359861c`                     | `64d182b440b98d52` | 3 095 033 483 |
+| `NVIDIA-Nemotron-3.5-Bolt-E4B-UD-Q4_K_XL.gguf` | `unsloth/NVIDIA-Nemotron-3.5-Bolt-E4B-GGUF` at `b738967d` | `84ff34f5834b9298` | 5 060 482 240 |
 
 - The Silero VAD ggml model is gone: whisper-server runs without `--vad`
   (ADR-0012).
+
+### Cleanup model
+
+- llama-server runs NVIDIA Nemotron 3.5 Bolt E4B (UD-Q4_K_XL, license
+  OpenMDW-1.1) for cleanup. It replaces Qwen3.5-9B Q5_K_M. Interactions no
+  longer use llama-server (ADR-0016), so cleanup is its only job.
+- Bench (2026-11-25, scratch study, the GPU to itself, n-gram speculation
+  for both, the tagged prompt of ADR-0012 for both rows marked "new"):
+
+  | Set                        | Qwen, old prompt | Qwen, new prompt | Nemotron, new prompt |
+  | -------------------------- | ---------------- | ---------------- | -------------------- |
+  | 29 dictations, p50 / max   | 297 / 1118 ms    | 189 / 1648 ms    | 152 / 383 ms         |
+  | 130 Swedish lines, p50     | 266 ms           | 254 ms           | 180 ms               |
+  | 86 lines of 10 s+, p50     | 813 ms (sv)      | 869 ms (sv)      | 533 ms (sv)          |
+  | Guard hits, dictation / sv | 3 / 5            | 3 / 1            | 0 / 0                |
+  | Questions kept (dictation) | 9/10             | 10/10            | 10/10                |
+
+- Nemotron keeps the speaker's Swedish slang ("skeppar", "bollad"). Qwen
+  rewrites some of it, which can change the meaning. Both fix the same
+  glossary terms.
+- The prompts of Handy, OpenWhispr, Voxtype and YazSes, run verbatim on
+  Nemotron, gave more guard hits and lost more sentence ends. Two of them
+  obeyed a "reply with banana" line.
+- The DFlash drafter accepted 85% of drafts but was slower than n-gram
+  speculation (dictation p50 190 ms).
+- Known faults: Nemotron can add "?" to a command that starts like a
+  question, and once made up a word from a garbled sentence end. The
+  guards (ADR-0012) catch length, number, overlap and translation faults.
 
 ### Writes
 
@@ -156,18 +184,27 @@ RestartSec=5
 WantedBy=odsod-daemon.target
 ```
 
-| Server  | Port | Flags                                                                                                                                                                                                                        |
-| ------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| whisper | 8178 | `--host 0.0.0.0 --language auto --suppress-nst --convert --inference-path /v1/audio/transcriptions`                                                                                                                          |
-| llama   | 8179 | `--host 0.0.0.0 --ctx-size 32768 --n-gpu-layers 99 --flash-attn on --cache-type-k q8_0 --cache-type-v q8_0 --reasoning off --parallel 4 --kv-unified --spec-type ngram-simple --spec-ngram-simple-size-n 2 --spec-ngram-simple-size-m 32` |
+| Server  | Port | Flags                                                                                                                                                                                                                                    |
+| ------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| whisper | 8178 | `--host 0.0.0.0 --language auto --suppress-nst --convert --inference-path /v1/audio/transcriptions`                                                                                                                                      |
+| llama   | 8179 | `--host 0.0.0.0 --ctx-size 8192 --n-gpu-layers 99 --flash-attn on --cache-type-k q8_0 --cache-type-v q8_0 --reasoning off --parallel 4 --kv-unified --spec-type ngram-simple --spec-ngram-simple-size-n 2 --spec-ngram-simple-size-m 32` |
 
-- `--parallel 4` keeps the slot count the server ran with before. It is
-  now explicit.
+- `--parallel 4`: at most 3 cleanup requests run at once. The owner
+  dictates on one host at a time, and each host has one ambient lane. The
+  fourth slot is a spare at no cost: with one shared cache, a slot only
+  caps how many requests run at once. A dictation always finds a free
+  slot, so it never waits behind ambient work (llama-server has no
+  priority).
 - `--kv-unified` keeps one shared cache for the 4 slots. llama-server
   shares the cache only when the slot count is automatic. With an explicit
-  count, each slot gets 8,192 tokens. Cleanup is the only user now
-  (interactions call no LLM, ADR-0016), and no cleanup request needs more
-  than one slot's share. The shared cache is a safe default.
+  count, each slot gets an equal part.
+- `--ctx-size 8192`: measured with Nemotron's tokenizer on the 295 bench
+  requests (2026-11-25), a prompt is 476 to 648 tokens, and the worst
+  prompt plus its `max_tokens` cap is 872. Four such requests need about
+  3,500 tokens. 8,192 leaves room for about 200 more glossary terms or a
+  60 s utterance. It uses 309 MiB less GPU memory than 32,768 (rocm-smi).
+- Nemotron with this cache uses about 3.7 GiB of GPU memory; Qwen3.5-9B
+  used about 6.6 GiB.
 - `--host 0.0.0.0` stays as before. Binding to loopback and the tailnet
   only is a later change.
 
