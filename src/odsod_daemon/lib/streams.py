@@ -10,6 +10,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+from collections import OrderedDict
 from collections.abc import AsyncIterator, Iterable, Mapping
 from datetime import date, timedelta
 from pathlib import Path
@@ -35,18 +36,36 @@ def append(path: Path, record: Mapping[str, Any]) -> None:
         os.close(fd)
 
 
+# Day files are append-only, so read_day keeps what it parsed and reads only
+# the new bytes. Services re-read whole days about 30 times a second.
+_CACHE_SIZE = 64
+_cache: OrderedDict[Path, tuple[int, int, list[dict[str, Any]]]] = OrderedDict()
+
+
 def read_day(path: Path) -> list[dict[str, Any]]:
     """Read the complete lines of a day file."""
-    if not path.exists():
+    try:
+        stat = path.stat()
+    except FileNotFoundError:
+        _cache.pop(path, None)
         return []
-    data = path.read_bytes()
-    if not data.endswith(b"\n"):
+    inode, offset, records = _cache.pop(path, (stat.st_ino, 0, []))
+    if inode != stat.st_ino or stat.st_size < offset:
+        offset, records = 0, []
+    if stat.st_size > offset:
+        with path.open("rb") as handle:
+            handle.seek(offset)
+            data = handle.read(stat.st_size - offset)
         data = data[: data.rfind(b"\n") + 1]
-    records: list[dict[str, Any]] = []
-    for raw in data.splitlines():
-        if raw.strip():
-            records.append(json.loads(raw))
-    return records
+        offset += len(data)
+        for raw in data.splitlines():
+            if raw.strip():
+                records.append(json.loads(raw))
+    _cache[path] = (stat.st_ino, offset, records)
+    while len(_cache) > _CACHE_SIZE:
+        _cache.popitem(last=False)
+    # Callers may change what they get: give each a copy of every record.
+    return [dict(record) for record in records]
 
 
 def read_days(directory: Path, start: date, end: date) -> list[dict[str, Any]]:
