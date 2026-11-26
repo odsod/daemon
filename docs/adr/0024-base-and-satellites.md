@@ -109,6 +109,8 @@ inbox).
   The flag is in `state/`, not `run/`, so a reboot on mobile data does not
   sync. A pause is a mark in `odsodctl status` and the tray, not
   `sync-behind`. Detection of a metered network is not built.
+- After each complete pass, sync writes `run/sync.json` (`last_ok`). The
+  tray and `odsodctl status` show it as the time of the last sync.
 - Offline: the satellite keeps its 14 days of audio. Sync catches up when
   the base answers. Nothing is lost while a gap is under 14 days.
 - Retention: each host root keeps 14 days on the base (about 77 GB per

@@ -30,7 +30,7 @@ def render(report: StatusReport) -> str:
             f"mode: {report.mode}; dictation available: {report.dictation.available}; "
             f"reason: {report.dictation.reason}",
             f"paused since: {report.paused_since}; sync: {report.sync or 'none'}; "
-            f"exit code: {report.exit_code}; "
+            f"last sync: {report.last_sync or 'none'}; exit code: {report.exit_code}; "
             f"ts: {report.ts}",
         ]
     )

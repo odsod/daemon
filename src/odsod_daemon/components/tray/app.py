@@ -9,7 +9,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from PySide6.QtCore import QObject, QProcess, Qt, Signal, Slot
-from PySide6.QtGui import QIcon
+from PySide6.QtGui import QAction, QIcon
 from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
 from odsod_daemon.components.health.config import ControlConfig
@@ -42,6 +42,7 @@ class TrayApp(QObject):
         self.model: menu.Model | None = None
         self.icon = QSystemTrayIcon()
         self.menu = QMenu()
+        self._toggles: list[QAction] = []
         self.icon.setContextMenu(self.menu)
 
     def show(self) -> None:
@@ -56,23 +57,39 @@ class TrayApp(QObject):
         model = menu.build(report)
         if model == self.model:
             return
-        self.model = model
+        old, self.model = self.model, model
+        if (
+            old is not None
+            and old.lines == model.lines
+            and [t.key for t in old.toggles] == [t.key for t in model.toggles]
+        ):
+            # Same items: update in place, so an open menu stays open.
+            for action, toggle in zip(self._toggles, model.toggles, strict=True):
+                action.setText(toggle.text)
+                action.setChecked(toggle.checked)
+            return
         self.menu.clear()
         for line in model.lines:
             action = self.menu.addAction(line.text)
             action.setEnabled(False)
         if model.lines:
             self.menu.addSeparator()
-        for name in (model.action, model.sync):
-            if name is not None:
-                self._add(name)
+        self._toggles = []
+        for index, toggle in enumerate(model.toggles):
+            action = self.menu.addAction(toggle.text)
+            action.setCheckable(True)
+            action.setChecked(toggle.checked)
+            action.triggered.connect(
+                lambda _checked=False, index=index: self._run(index)
+            )
+            self._toggles.append(action)
 
-    def _add(self, name: menu.Action | menu.SyncAction) -> None:
-        action = self.menu.addAction(menu.text(name))
-        action.triggered.connect(lambda _checked=False: self._run(name))
-
-    def _run(self, action: menu.Action | menu.SyncAction) -> None:
-        self._start(menu.command(action))
+    def _run(self, index: int) -> None:
+        """Flip from the state the menu showed, not from the click."""
+        assert self.model is not None
+        toggle = self.model.toggles[index]
+        self._toggles[index].setChecked(toggle.checked)
+        self._start(menu.command(toggle))
 
 
 def run(

@@ -8,7 +8,8 @@ from collections.abc import Callable
 
 from odsod_daemon.components.sync import flag, plan
 from odsod_daemon.components.sync.config import SyncConfig
-from odsod_daemon.lib import clock, config, healthfile, paths
+from odsod_daemon.components.sync.contract import SyncStatus
+from odsod_daemon.lib import clock, config, documents, healthfile, paths
 
 log = logging.getLogger(__name__)
 CODE = "sync-behind"
@@ -60,6 +61,11 @@ async def run(settings: SyncConfig, *, once: bool = False) -> None:
         commands = plan.commands(roots, common.host, common.base, settings.remote_state)
         error = await run_pass(commands, paused)
         now = clock.monotonic()
+        if error is None:
+            # The tray and status show the time of the last good pass.
+            documents.write_json(
+                roots.run / "sync.json", SyncStatus(last_ok=clock.iso()).model_dump()
+            )
         if error is None or error == PAUSED:
             # A pause is the owner's choice, not a fault: count from its end.
             last_ok = now
