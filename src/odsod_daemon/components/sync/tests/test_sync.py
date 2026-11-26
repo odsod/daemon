@@ -156,3 +156,12 @@ def test_sync_commands_refuse_a_base(temp_root: Path) -> None:
     result = CliRunner().invoke(app, ["sync", "pause"])
     assert result.exit_code == 1
     assert "not a satellite" in result.stderr
+
+
+async def test_good_pass_records_its_time(satellite: Path) -> None:
+    """The tray shows how recent the last sync is."""
+    roots = paths.roots()
+    write(roots.state / "events/user/2026-11-25.jsonl", b"{}\n")
+    await service.run(SyncConfig(remote_state="state"), once=True)
+    last = json.loads((roots.run / "sync.json").read_text())["last_ok"]
+    assert abs((clock.utc_now() - clock.parse_iso(last)).total_seconds()) < 60

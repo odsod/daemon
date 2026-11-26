@@ -152,6 +152,8 @@ def evaluate(snapshot: Snapshot, config: ControlConfig) -> StatusReport:
             if snapshot.sync_paused_since
             else "running"
         ),
+        base=snapshot.base,
+        last_sync=snapshot.last_sync,
         dev=installed is not None and installed.source == "dev",
         commit=installed.commit if installed else None,
         workspace=installed.workspace if installed else None,

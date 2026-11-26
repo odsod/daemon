@@ -34,10 +34,12 @@
   `odsodctl status` shows `dev`. It is not a Warning, so the dev host does
   not live in Warning (owner decision, 2026-11-23).
 - Owner opens the tray → sees the reason for a Warning or an Error in plain
-  words, since when, and the command that fixes it. The menu has Pause or
-  Resume. On a satellite it also has Pause sync or Resume sync, and a
-  paused sync shows as a menu line, not a Warning
-  ([ADR-0024](../adr/0024-base-and-satellites.md)).
+  words, since when, and the command that fixes it. Below them is a check
+  item "Recording": checked while recording, unchecked with the pause time
+  while paused. A click pauses or resumes. On a satellite a second check
+  item "Sync to <base>" shows how recent the last sync is, or since when
+  sync is paused, and a click pauses or resumes sync. A paused sync is not
+  a Warning ([ADR-0024](../adr/0024-base-and-satellites.md)).
 - Owner or an agent runs `odsodctl status` → the same state and reasons as
   the tray, plus each service, the time of the newest audio, and the
   transcription backlog. On the inference host, the services include

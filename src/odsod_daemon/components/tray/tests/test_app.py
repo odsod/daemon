@@ -87,14 +87,19 @@ def test_menu_and_pause_command(qt_app):
     )
     labels = [a.text() for a in tray.menu.actions() if not a.isSeparator()]
     assert labels[0].startswith("The mic audio has stopped advancing.")
-    assert labels[-1] == "Resume"
+    recording = tray.menu.actions()[-1]
+    assert recording.text().startswith("Recording · paused since ")
+    assert recording.isCheckable() and not recording.isChecked()
     assert not tray.icon.icon().isNull()
     assert tray.tooltip.startswith("Error:")
-    next(a for a in tray.menu.actions() if a.text() == "Resume").trigger()
+    recording.trigger()
     assert calls == [["resume", "--by", "tray"]]
+    # The check follows the report, not the click.
+    assert not recording.isChecked()
     tray.apply(report(state="running", paused_since=None))
-    pause = next(a for a in tray.menu.actions() if a.text() == "Pause")
-    pause.trigger()
+    recording = tray.menu.actions()[-1]
+    assert (recording.text(), recording.isChecked()) == ("Recording", True)
+    recording.trigger()
     assert calls[-1] == ["pause", "--by", "tray"]
     assert not tray.icon.icon().isNull()
 
@@ -102,24 +107,29 @@ def test_menu_and_pause_command(qt_app):
 def test_satellite_menu_toggles_sync(qt_app):
     calls = []
     tray = TrayApp(start=lambda args: calls.append(args) or True)
-    tray.apply(report(state="running", paused_since=None, sync="running"))
+    tray.apply(report(state="running", paused_since=None, sync="running", base="desk"))
     labels = [a.text() for a in tray.menu.actions() if not a.isSeparator()]
-    assert labels[-2:] == ["Pause", "Pause sync"]
-    next(a for a in tray.menu.actions() if a.text() == "Pause sync").trigger()
+    assert labels[-2:] == ["Recording", "Sync to desk"]
+    tray.menu.actions()[-1].trigger()
     assert calls == [["sync", "pause"]]
-    tray.apply(report(state="running", paused_since=None, sync="paused"))
-    next(a for a in tray.menu.actions() if a.text() == "Resume sync").trigger()
+    tray.apply(report(state="running", paused_since=None, sync="paused", base="desk"))
+    sync = tray.menu.actions()[-1]
+    assert (sync.text(), sync.isChecked()) == ("Sync to desk · paused", False)
+    sync.trigger()
     assert calls[-1] == ["sync", "resume"]
 
 
-def test_unchanged_report_keeps_the_open_menu(qt_app):
+def test_unchanged_items_update_in_place(qt_app):
+    """An open menu stays open: a new text or check keeps the same items."""
     tray = TrayApp(start=lambda _args: True)
     tray.apply(report(state="running", paused_since=None))
     before = tray.menu.actions()
     tray.apply(report(state="running", paused_since=None, ts=clock.iso()))
     assert tray.menu.actions() == before
     tray.apply(report(state="paused", paused_since=clock.iso()))
-    assert tray.menu.actions()[-1].text() == "Resume"
+    assert tray.menu.actions() == before
+    assert not before[-1].isChecked()
+    assert before[-1].text().startswith("Recording · paused since ")
 
 
 def test_odsodctl_resolves_next_to_the_interpreter(tmp_path, monkeypatch):

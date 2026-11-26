@@ -68,6 +68,9 @@ class StatusReport(BaseModel):
     paused_since: str | None = None
     # A satellite's sync to the base; None on a base (ADR-0024).
     sync: Literal["running", "paused"] | None = None
+    base: str | None = None
+    # The end of the last complete sync pass.
+    last_sync: str | None = None
     dev: bool = False
     commit: str | None = None
     workspace: str | None = None

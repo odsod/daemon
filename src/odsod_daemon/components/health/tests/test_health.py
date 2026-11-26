@@ -392,9 +392,13 @@ async def test_sync_pause_is_a_mark_on_a_satellite(tmp_path: Path, role, paused,
     documents.write_json(roots.config_file, {"common": common})
     if paused:
         documents.write_json(roots.state / "sync-paused", {"since": OLD})
+    documents.write_json(roots.run / "sync.json", {"last_ok": OLD})
     snapshot = await gather(roots, systemd.FakeUnitStates(), now=NOW)
     report = evaluate(snapshot, ControlConfig())
     assert report.sync == sync
+    assert (report.base, report.last_sync) == (
+        (None, None) if sync is None else ("desktop", OLD)
+    )
     marks = [r for r in report.reasons if r.code == "sync-paused"]
     assert [(r.severity, r.since) for r in marks] == (
         [("mark", OLD)] if sync == "paused" else []

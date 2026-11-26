@@ -3,7 +3,7 @@
 SUBSYSTEM: sync
 Reads: audio, events, utterances/dictation, run/status.json.
 Writes: the host root of this host on the base, run/health/pipeline.json,
-state/sync-paused (odsodctl sync pause).
+run/sync.json, state/sync-paused (odsodctl sync pause).
 ADR: docs/adr/0024-base-and-satellites.md
 """
 

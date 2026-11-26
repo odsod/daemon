@@ -48,6 +48,8 @@ class Snapshot:
     # None on a base: it has no sync (ADR-0024).
     sync_paused_since: str | None = None
     satellite: bool = False
+    base: str | None = None
+    last_sync: str | None = None
     install: InstallRecord | None = None
     previous: PreviousCommit | None = None
 
@@ -160,14 +162,21 @@ async def gather(
         tracker.rebuild(now)
     # ADR-0024: a satellite segments nothing; the base does its ambient work.
     try:
-        satellite = config.load_common(roots).role == "satellite"
+        common = config.load_common(roots)
     except config.ConfigError, ValueError:
-        satellite = False
+        common = None
+    satellite = common is not None and common.role == "satellite"
     result.satellite = satellite
-    if satellite:
+    if common is not None and satellite:
+        result.base = common.base
         flag = optional(roots.state / "sync-paused")
         if flag is not None:
             result.sync_paused_since = flag["since"]
+        try:
+            status = optional(roots.run / "sync.json")
+            result.last_sync = status["last_ok"] if status else None
+        except OSError, ValueError, KeyError, TypeError:
+            pass
     result.backlog = tracker.report(
         now,
         {} if satellite else result.newest_audio,

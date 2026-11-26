@@ -2,7 +2,8 @@
 
 Sync copies a satellite's audio, events, dictation utterances and
 ``run/status.json`` into its host root on the base, byte for byte
-(ADR-0024). Its own record is the pause flag ``state/sync-paused``.
+(ADR-0024). Its own records are the pause flag ``state/sync-paused`` and
+``run/sync.json``.
 """
 
 from __future__ import annotations
@@ -16,6 +17,14 @@ class SyncPaused(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     since: str
+
+
+class SyncStatus(BaseModel):
+    """``run/sync.json``: the end of the last complete pass."""
+
+    model_config = ConfigDict(extra="allow")
+
+    last_ok: str
 
 
 class SyncResult(BaseModel):
