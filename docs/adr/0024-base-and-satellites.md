@@ -102,6 +102,13 @@ inbox).
   far-field speech.
 - Writer per path: on the base, the satellite's sync writes only these
   paths. Base components write only their outputs.
+- Pause (owner decision, 2026-11-26: for mobile data):
+  `odsodctl sync pause` and the tray write `state/sync-paused`, and
+  `odsodctl sync resume` removes it. While it exists, sync starts no pass
+  and stops a running rsync within 1 s; `--append` later sends the rest.
+  The flag is in `state/`, not `run/`, so a reboot on mobile data does not
+  sync. A pause is a mark in `odsodctl status` and the tray, not
+  `sync-behind`. Detection of a metered network is not built.
 - Offline: the satellite keeps its 14 days of audio. Sync catches up when
   the base answers. Nothing is lost while a gap is under 14 days.
 - Retention: each host root keeps 14 days on the base (about 77 GB per

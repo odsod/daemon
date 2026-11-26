@@ -7,10 +7,12 @@ import os
 from pathlib import Path
 
 import pytest
+from typer.testing import CliRunner
 
+from odsod_daemon.cli import app
 from odsod_daemon.components.sync import plan, service
 from odsod_daemon.components.sync.config import SyncConfig
-from odsod_daemon.lib import paths
+from odsod_daemon.lib import clock, paths
 
 BIN = Path(__file__).parents[5] / "tests/bin"
 
@@ -112,3 +114,45 @@ async def test_base_role_does_nothing(temp_root: Path) -> None:
     )
     await service.run(SyncConfig(), once=True)
     assert not (temp_root / "run/health/pipeline.json").exists()
+
+
+async def test_paused_sync_sends_nothing_and_is_no_fault(
+    satellite: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """ADR-0024: on mobile data, audio stays here until resume."""
+    roots = paths.roots()
+    write(roots.state / "audio/mic/20261125T12Z.pcm", b"\x01\x00" * 1000)
+    runner = CliRunner()
+    assert runner.invoke(app, ["sync", "pause"]).exit_code == 0
+    again = runner.invoke(app, ["sync", "pause", "--json"])
+    assert not json.loads(again.stdout)["changed"]
+    monkeypatch.setenv("FAKE_SSH_DOWN", "1")
+    await service.run(SyncConfig(remote_state="state", behind_after_s=0), once=True)
+    assert not (satellite / "state/hosts").exists()
+    assert not (roots.run / "health/pipeline.json").exists()
+    monkeypatch.delenv("FAKE_SSH_DOWN")
+    assert runner.invoke(app, ["sync", "resume"]).exit_code == 0
+    await service.run(SyncConfig(remote_state="state"), once=True)
+    assert (satellite / "state/hosts/laptop/audio/mic/20261125T12Z.pcm").exists()
+
+
+async def test_pause_stops_a_running_transfer(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(service, "POLL_S", 0.05)
+    flags = iter([False, False, True])
+    started = clock.monotonic()
+    result = await service.run_pass([["sleep", "30"]], lambda: next(flags, True))
+    assert result == service.PAUSED
+    assert clock.monotonic() - started < 5
+
+
+def test_sync_commands_refuse_a_base(temp_root: Path) -> None:
+    inference = {
+        "whisper_url": "http://127.0.0.1:8178/v1/audio/transcriptions",
+        "llama_url": "http://127.0.0.1:8179/v1/chat/completions",
+    }
+    (temp_root / "config/config.json").write_text(
+        json.dumps({"common": {"inference": inference}})
+    )
+    result = CliRunner().invoke(app, ["sync", "pause"])
+    assert result.exit_code == 1
+    assert "not a satellite" in result.stderr

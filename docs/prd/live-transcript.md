@@ -1,7 +1,7 @@
 # PRD: Live transcript
 
 - Status: Accepted
-- Updated: 2026-11-25
+- Updated: 2026-11-26
 - Design: [ADR-0002](../adr/0002-high-level-architecture.md),
   [ADR-0003](../adr/0003-filesystem-interface.md),
   [ADR-0005](../adr/0005-components-and-implementation.md)
@@ -41,6 +41,11 @@
   `odsodctl transcript` → today's transcript of this host, while the day
   runs. On a satellite it comes from the base, which makes it
   ([ADR-0024](../adr/0024-base-and-satellites.md)).
+- Owner runs `odsodctl sync pause` or picks "Pause sync" in the tray of a
+  satellite, such as on mobile data → the satellite keeps recording and
+  dictating, but sends no audio to the base. Its lines on the base stop.
+  `odsodctl sync resume` or "Resume sync" → the missed lines appear. The
+  pause stays on after a restart.
 - The local day ends and all its lines are done → the transcript is
   finished and copied to the configured targets, such as the vault inbox.
   It never changes after that.
@@ -109,6 +114,10 @@ All numbers are proposed targets for the owner to confirm.
 17. **AC-17** While a satellite reaches the base, its speech shows in its
     transcript on the base in at most 60 s (target; live check confirms).
     _Check: manual._
+18. **AC-18** While sync is paused, a satellite sends no audio to the base,
+    and stops a running transfer in at most 2 s. After resume, no audio of
+    the pause is missing on the base. The pause gives no Warning. _Check:
+    system test._
 
 ## Boundaries
 

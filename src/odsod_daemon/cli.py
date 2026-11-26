@@ -28,6 +28,7 @@ from odsod_daemon.components.retention.cli import app as retention_app
 from odsod_daemon.components.servers.cli import app as inference_app
 from odsod_daemon.components.shortcuts.cli import app as shortcuts_app
 from odsod_daemon.components.status.cli import app as status_app
+from odsod_daemon.components.sync.cli import app as sync_app
 from odsod_daemon.components.transcript.cli import app as transcript_app
 from odsod_daemon.components.unmute_stale.cli import app as unmute_stale_app
 from odsod_daemon.components.version.cli import app as version_app
@@ -62,6 +63,7 @@ app.add_typer(notify_failed_app, name="notify-failed")
 app.add_typer(pause_app, name="pause")
 app.add_typer(resume_app, name="resume")
 app.add_typer(status_app, name="status")
+app.add_typer(sync_app, name="sync")
 
 app.add_typer(dictation_app, name="dictation")
 

@@ -1,7 +1,7 @@
 # PRD: Health and control
 
 - Status: Accepted
-- Updated: 2026-11-24
+- Updated: 2026-11-26
 - Design: [ADR-0004](../adr/0004-orchestration-with-systemd.md),
   [ADR-0005](../adr/0005-components-and-implementation.md)
 
@@ -35,14 +35,17 @@
   not live in Warning (owner decision, 2026-11-23).
 - Owner opens the tray → sees the reason for a Warning or an Error in plain
   words, since when, and the command that fixes it. The menu has Pause or
-  Resume.
+  Resume. On a satellite it also has Pause sync or Resume sync, and a
+  paused sync shows as a menu line, not a Warning
+  ([ADR-0024](../adr/0024-base-and-satellites.md)).
 - Owner or an agent runs `odsodctl status` → the same state and reasons as
   the tray, plus each service, the time of the newest audio, and the
   transcription backlog. On the inference host, the services include
   whisper-server and llama-server
   ([ADR-0023](../adr/0023-inference-servers.md)). It works with no graphical session, such as over
   SSH.
-- Every tray action has an `odsodctl` command: `pause`, `resume`. Other
+- Every tray action has an `odsodctl` command: `pause`, `resume`,
+  `sync pause`, `sync resume`. Other
   PRDs add commands, such as `dictation last`, `transcript`, `note`, `pin`,
   `shortcuts`, `bench` and `version`. Each command that queries or controls
   the system takes `--json` for agents. Long-running and setup commands do

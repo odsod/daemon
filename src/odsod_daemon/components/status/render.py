@@ -29,7 +29,8 @@ def render(report: StatusReport) -> str:
             f"{report.backlog.seconds:g} seconds; oldest: {report.backlog.oldest}",
             f"mode: {report.mode}; dictation available: {report.dictation.available}; "
             f"reason: {report.dictation.reason}",
-            f"paused since: {report.paused_since}; exit code: {report.exit_code}; "
+            f"paused since: {report.paused_since}; sync: {report.sync or 'none'}; "
+            f"exit code: {report.exit_code}; "
             f"ts: {report.ts}",
         ]
     )

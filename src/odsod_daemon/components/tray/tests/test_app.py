@@ -99,6 +99,19 @@ def test_menu_and_pause_command(qt_app):
     assert not tray.icon.icon().isNull()
 
 
+def test_satellite_menu_toggles_sync(qt_app):
+    calls = []
+    tray = TrayApp(start=lambda args: calls.append(args) or True)
+    tray.apply(report(state="running", paused_since=None, sync="running"))
+    labels = [a.text() for a in tray.menu.actions() if not a.isSeparator()]
+    assert labels[-2:] == ["Pause", "Pause sync"]
+    next(a for a in tray.menu.actions() if a.text() == "Pause sync").trigger()
+    assert calls == [["sync", "pause"]]
+    tray.apply(report(state="running", paused_since=None, sync="paused"))
+    next(a for a in tray.menu.actions() if a.text() == "Resume sync").trigger()
+    assert calls[-1] == ["sync", "resume"]
+
+
 def test_unchanged_report_keeps_the_open_menu(qt_app):
     tray = TrayApp(start=lambda _args: True)
     tray.apply(report(state="running", paused_since=None))

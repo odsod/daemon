@@ -66,6 +66,8 @@ class StatusReport(BaseModel):
     mode: Mode
     dictation: DictationState
     paused_since: str | None = None
+    # A satellite's sync to the base; None on a base (ADR-0024).
+    sync: Literal["running", "paused"] | None = None
     dev: bool = False
     commit: str | None = None
     workspace: str | None = None

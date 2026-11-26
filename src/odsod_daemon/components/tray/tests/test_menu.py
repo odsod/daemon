@@ -87,3 +87,12 @@ def test_every_state_and_dev_mark_has_an_icon():
 def test_unreadable_service_states_show_the_error_icon():
     assert menu.icon_path(report(state="unknown")).name == "error.svg"
     assert menu.icon_path(report(state="unknown", dev=True)).name == "error-dev.svg"
+
+
+def test_menu_offers_sync_toggle_only_on_a_satellite():
+    assert menu.build(report()).sync is None
+    assert menu.build(report(sync="running")).sync == "pause-sync"
+    assert menu.build(report(sync="paused")).sync == "resume-sync"
+    assert menu.text("pause-sync") == "Pause sync"
+    assert menu.command("resume-sync") == ["sync", "resume"]
+    assert menu.command("pause") == ["pause", "--by", "tray"]

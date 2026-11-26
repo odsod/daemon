@@ -368,3 +368,34 @@ async def test_satellite_audio_is_no_unsegmented_backlog(tmp_path: Path, role, s
             handle.truncate(1800 * audio.BYTES_PER_SECOND)
     snapshot = await gather(roots, systemd.FakeUnitStates(), now=NOW)
     assert snapshot.backlog.seconds == seconds
+
+
+@pytest.mark.parametrize(
+    "role,paused,sync",
+    [
+        ("base", True, None),
+        ("satellite", False, "running"),
+        ("satellite", True, "paused"),
+    ],
+)
+async def test_sync_pause_is_a_mark_on_a_satellite(tmp_path: Path, role, paused, sync):
+    """ADR-0024: a paused sync shows in status, and the state stays OK."""
+    roots = paths.Roots(tmp_path / "state", tmp_path / "run", tmp_path / "config")
+    common = {
+        "role": role,
+        "base": "desktop",
+        "inference": {
+            "whisper_url": "http://127.0.0.1:8178/v1/audio/transcriptions",
+            "llama_url": "http://127.0.0.1:8179/v1/chat/completions",
+        },
+    }
+    documents.write_json(roots.config_file, {"common": common})
+    if paused:
+        documents.write_json(roots.state / "sync-paused", {"since": OLD})
+    snapshot = await gather(roots, systemd.FakeUnitStates(), now=NOW)
+    report = evaluate(snapshot, ControlConfig())
+    assert report.sync == sync
+    marks = [r for r in report.reasons if r.code == "sync-paused"]
+    assert [(r.severity, r.since) for r in marks] == (
+        [("mark", OLD)] if sync == "paused" else []
+    )
