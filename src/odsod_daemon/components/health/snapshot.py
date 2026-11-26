@@ -45,6 +45,9 @@ class Snapshot:
     oldest_end: str | None = None
     status: dict[str, Any] = field(default_factory=dict)
     paused_since: str | None = None
+    # None on a base: it has no sync (ADR-0024).
+    sync_paused_since: str | None = None
+    satellite: bool = False
     install: InstallRecord | None = None
     previous: PreviousCommit | None = None
 
@@ -160,6 +163,11 @@ async def gather(
         satellite = config.load_common(roots).role == "satellite"
     except config.ConfigError, ValueError:
         satellite = False
+    result.satellite = satellite
+    if satellite:
+        flag = optional(roots.state / "sync-paused")
+        if flag is not None:
+            result.sync_paused_since = flag["since"]
     result.backlog = tracker.report(
         now,
         {} if satellite else result.newest_audio,

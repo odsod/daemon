@@ -98,6 +98,17 @@ def evaluate(snapshot: Snapshot, config: ControlConfig) -> StatusReport:
                 ),
             )
         )
+    if snapshot.sync_paused_since is not None:
+        reasons.append(
+            Reason(
+                code="sync-paused",
+                severity="mark",
+                service="pipeline",
+                since=snapshot.sync_paused_since,
+                message="Sync to the base is paused. Audio stays on this host.",
+                fix="Run `odsodctl sync resume` off mobile data.",
+            )
+        )
     session = snapshot.units.get("session")
     session_active = session is not None and session.active_state == "active"
     mode = (
@@ -134,6 +145,13 @@ def evaluate(snapshot: Snapshot, config: ControlConfig) -> StatusReport:
         mode=mode,
         dictation=dictation,
         paused_since=snapshot.paused_since,
+        sync=(
+            None
+            if not snapshot.satellite
+            else "paused"
+            if snapshot.sync_paused_since
+            else "running"
+        ),
         dev=installed is not None and installed.source == "dev",
         commit=installed.commit if installed else None,
         workspace=installed.workspace if installed else None,

@@ -63,11 +63,16 @@ class TrayApp(QObject):
             action.setEnabled(False)
         if model.lines:
             self.menu.addSeparator()
-        action = self.menu.addAction(model.action.capitalize())
-        action.triggered.connect(lambda _checked=False: self._run(model.action))
+        for name in (model.action, model.sync):
+            if name is not None:
+                self._add(name)
 
-    def _run(self, action: str) -> None:
-        self._start([action, "--by", "tray"])
+    def _add(self, name: menu.Action | menu.SyncAction) -> None:
+        action = self.menu.addAction(menu.text(name))
+        action.triggered.connect(lambda _checked=False: self._run(name))
+
+    def _run(self, action: menu.Action | menu.SyncAction) -> None:
+        self._start(menu.command(action))
 
 
 def run(

@@ -22,6 +22,7 @@ LABELS: dict[State, str] = {
 }
 
 Action = Literal["pause", "resume"]
+SyncAction = Literal["pause-sync", "resume-sync"]
 
 
 @dataclass(frozen=True)
@@ -33,6 +34,8 @@ class Line:
 class Model:
     lines: tuple[Line, ...]
     action: Action
+    # Only a satellite syncs (ADR-0024).
+    sync: SyncAction | None = None
 
 
 def label(state: State) -> str:
@@ -68,4 +71,17 @@ def build(report: StatusReport) -> Model:
         reason = report.dictation.reason or "session-down"
         lines.append(Line(f"Dictation unavailable: {reason}."))
     action: Action = "resume" if report.paused_since else "pause"
-    return Model(tuple(lines), action)
+    sync: SyncAction | None = None
+    if report.sync is not None:
+        sync = "resume-sync" if report.sync == "paused" else "pause-sync"
+    return Model(tuple(lines), action, sync)
+
+
+def text(action: Action | SyncAction) -> str:
+    return action.replace("-", " ").capitalize()
+
+
+def command(action: Action | SyncAction) -> list[str]:
+    if action in ("pause-sync", "resume-sync"):
+        return ["sync", action.removesuffix("-sync")]
+    return [action, "--by", "tray"]

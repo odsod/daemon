@@ -62,8 +62,11 @@
 - 2026-11-25: bench done. Opus changes 47 to 65% of whisper's words on
   far-field mic clips, so sync is lossless rsync. Steps 2 to 6 built;
   `mise run build` passes.
+- 2026-11-26: cutover done (PRs #66, #67). Sync pause for mobile data:
+  `odsodctl sync pause|resume` and the tray.
 
 ## Decisions to confirm
 
-- Network cost: about 70 to 105 MB per recorded mic hour. A pause on a
-  metered connection is not built.
+- Network cost: about 70 to 105 MB per recorded mic hour. The owner pauses
+  sync by hand on mobile data; automatic detection of a metered network is
+  not built.
