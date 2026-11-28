@@ -95,7 +95,7 @@ Proposed
 | `systemctl --user`, `systemctl` | `install`            | `daemon-reload`, enable, restart                                                                 |
 | `gcc`, kernel headers           | `install --system`   | Build the keys service                                                                           |
 | `sudo`                          | `daemon:setup`       | Run `install --system`                                                                           |
-| dnf packages                    | `daemon:setup`       | `pipewire-utils`, `pulseaudio-utils`, `wl-clipboard`, `gcc`, `kernel-headers`, `jq`, `libnotify` |
+| dnf packages                    | `machine` bootstrap  | `pipewire-utils`, `pulseaudio-utils`, `wl-clipboard`, `gcc`, `kernel-headers`, `jq`, `libnotify` |
 
 ### Internal design
 
@@ -127,7 +127,9 @@ uv tool install --force \
 
 - No releases, no package index, no build pipeline.
 - `<ref>` is `main` by default. To roll back, install `@<commit>`.
-- uv fetches the Python version that `requires-python` asks for.
+- A bare `uv tool install` picks the newest Python that `requires-python`
+  allows. `daemon:setup` pins the version of `.python-version` with
+  `--python` (see below).
 - The extra `bench` (`jiwer`, small) is on every host, so agents can run
   bench where the audio is ([ADR-0019](0019-bench.md)).
 - The keys service's C source and unit template ship as package data.
@@ -282,37 +284,23 @@ design; ADR-0004 fixes the unit set.
 #### The `machine` repo owns install and upgrade
 
 One mise task installs, upgrades and rolls back. Rerun it to upgrade.
+The `machine` repo holds it:
 
-```toml
-[tasks."daemon:setup"]
-usage = 'arg "[ref]" default="main"'
-run = """
-set -eu
-step() { echo "[daemon:setup] $1"; }
-fail() { echo "[daemon:setup] failed: $1. Rerun: mise run daemon:setup ${usage_ref}" >&2; exit 1; }
-step "packages"
-sudo dnf install -y pipewire-utils pulseaudio-utils wl-clipboard gcc kernel-headers jq libnotify || fail "dnf install"
-url=https://github.com/odsod/daemon
-step "resolve ${usage_ref}"
-if echo "${usage_ref}" | grep -Eq '^[0-9a-f]{40}$'; then
-  commit="${usage_ref}"
-else
-  commit="$(git ls-remote "$url" "${usage_ref}" | cut -f1)" || fail "git ls-remote (network?)"
-  [ -n "$commit" ] || fail "unknown ref ${usage_ref}"
-fi
-installed="$(odsodctl version --json 2>/dev/null | jq -r '"\(.source) \(.commit)"' || true)"
-if [ "$installed" != "git $commit" ]; then
-  step "uv tool install ${commit}"
-  uv tool install --force "odsod-daemon[bench] @ git+$url@$commit" || fail "uv tool install"
-fi
-step "linger"
-loginctl enable-linger "$USER" || fail "loginctl enable-linger"
-step "install --system"
-sudo "$(command -v odsodctl)" install --system || fail "odsodctl install --system"
-step "install"
-odsodctl install || fail "odsodctl install"
-"""
-```
+- `mise/conf.d/daemon.toml`: the task `daemon:setup [ref]` (default
+  `main`), the dnf packages that only the daemon needs (`gcc`,
+  `kernel-headers`, `libnotify`, in `[bootstrap.packages]`), and the
+  Python pin `[vars] daemon_python`. The other packages in the table
+  above are declared by other parts of the `machine` repo.
+- `daemon/setup.sh`: the steps. Resolve the ref to a commit;
+  `uv tool install --force --python "$DAEMON_PYTHON"` when the installed
+  source or commit differs; `loginctl enable-linger`;
+  `sudo odsodctl install --system`; `odsodctl install`. Each step prints
+  `[daemon:setup] <step>`. A failure prints the rerun command and exits 1.
+- `mise run apply` in the `machine` repo installs the packages and runs
+  `daemon:setup` through its bootstrap task. A new host gets the daemon
+  with the rest of its setup.
+- `daemon_python` must match this repo's `.python-version`. mise's global
+  Python is newer and has no `onnxruntime` wheels.
 
 - The task resolves `[ref]` to a commit. It reinstalls when the installed
   source is not `git` or the installed commit differs. A dev deploy at the
