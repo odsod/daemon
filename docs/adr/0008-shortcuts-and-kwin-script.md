@@ -260,15 +260,16 @@ interface is the component.
 
 ### Failure modes
 
-| Fault                                  | What happens                                                                                                 | Code                        |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------ | --------------------------- |
-| Session service down                   | Window chords and focus of open apps work; launches do nothing until restart. control shows Error (ADR-0018) | none (control: `unit-down`) |
-| Session service restarts               | Apps in their scopes stay open                                                                               | none                        |
-| App command fails to start             | One log line with app and error                                                                              | none                        |
-| `Run` with an unknown name             | D-Bus error reply; one log line                                                                              | none                        |
-| KGlobalAccel call fails in `Configure` | Log the shortcut and the error; go on with the rest                                                          | none                        |
-| Script install or reload fails         | Three tries, then one log line; old script stays loaded                                                      | none                        |
-| KWin not running at session start      | Install retries; the next session start tries again                                                          | none                        |
+| Fault                                     | What happens                                                                                                 | Code                        |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------ | --------------------------- |
+| Session service down                      | Window chords and focus of open apps work; launches do nothing until restart. control shows Error (ADR-0018) | none (control: `unit-down`) |
+| Session service restarts                  | Apps in their scopes stay open                                                                               | none                        |
+| App command fails to start                | One log line with app and error                                                                              | none                        |
+| `Run` with an unknown name                | D-Bus error reply; one log line                                                                              | none                        |
+| KGlobalAccel call fails in `Configure`    | Log the shortcut and the error; go on with the rest                                                          | none                        |
+| Script install or reload fails            | Three tries, then one log line; old script stays loaded                                                      | none                        |
+| KWin not running at session start         | Install retries; the next session start tries again                                                          | none                        |
+| shortcuts fails at start or loses the bus | One log line; a new try every 10 s. Dictation and the session service keep running                           | none                        |
 
 ### Config
 
@@ -290,6 +291,7 @@ test session bus or as in-process doubles.
 | `odsodctl shortcuts --json` holds every chord and action                                       | `global-shortcuts` AC-10  |
 | Rendered `main.js`: placeholder replaced; the embedded list parses as JSON and equals the file | `global-shortcuts` AC-6   |
 | Same package on disk: no `kpackagetool6` call, no reconfigure                                  | no chord drop on restart  |
+| A shortcuts failure or a lost bus logs and retries; the other session components keep running  | failure modes             |
 
 ### Build without hardware
 
