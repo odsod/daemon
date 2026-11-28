@@ -6,10 +6,38 @@ Writes: KWin package, kwinrc, KGlobalAccel, D-Bus interface, systemd scopes, log
 ADR: docs/adr/0008-shortcuts-and-kwin-script.md
 """
 
+import logging
+
+from odsod_daemon.lib import clock
+
 SUBSYSTEM = "shortcuts"
+
+LOG = logging.getLogger(__name__)
+
+# Wait before a new try after a failure or a lost bus.
+RETRY_S = 10.0
 
 
 async def run(config: None, *, once: bool = False) -> None:
+    """Serve shortcuts; ``once`` installs the script and stops.
+
+    A failure logs and tries again. It never raises, so it never stops the
+    other components of the session service (ADR-0008).
+    """
+    while True:
+        try:
+            await serve(once=once)
+        except Exception:
+            LOG.exception("shortcuts failed; try again in %.0f s", RETRY_S)
+        else:
+            if not once:
+                LOG.warning("shortcuts: session bus lost; try again in %.0f s", RETRY_S)
+        if once:
+            return
+        await clock.sleep(RETRY_S)
+
+
+async def serve(*, once: bool = False) -> None:
     """Serve the interface, then install the script; ``once`` stops there."""
     from functools import partial
 
