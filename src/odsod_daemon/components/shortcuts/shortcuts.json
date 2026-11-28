@@ -62,7 +62,7 @@
       "command": [
         "sh",
         "-c",
-        "t=$(kdialog --title Note --geometry 420 --inputbox Note:) && [ -n \"$t\" ] && printf %s \"$t\" | odsodctl note -"
+        "t=$(kdialog --title Note --geometry 420 --inputbox Note:) || exit 0; [ -n \"$t\" ] || exit 0; printf %s \"$t\" | odsodctl note -"
       ]
     },
     {
