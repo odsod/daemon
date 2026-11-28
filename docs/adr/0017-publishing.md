@@ -238,7 +238,7 @@ Component tests use temp dirs for state and targets, and a fake clock.
 ### Build without hardware
 
 - All of it. Targets are temp directories.
-- The owner sets the real target in the `machine` repo config and checks
+- The owner sets the real target in the host's `config.json` and checks
   that the vault's ingest agent handles a second copy.
 
 ## Alternatives considered

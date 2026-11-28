@@ -162,7 +162,7 @@ if is_ydotool_available() {
 - **Wayland overlay placement and focus**: layer-shell overlay appears on the wrong monitor or steals focus on some compositors ([#1375](https://github.com/cjpais/Handy/issues/1375), [#2181](https://github.com/cjpais/Handy/issues/2181)).
 - **Vulkan GPU reload timeout**: reloading a model after idle unload on NVIDIA Vulkan can take ~70 s and trip timeouts ([#1841](https://github.com/cjpais/Handy/issues/1841)).
 
-## Ideas for the recorder
+## Ideas for the daemon
 
 - **Copy: dual clipboard + PRIMARY selection with Shift+Insert.** Writing the transcript to both Wayland clipboard (`wl-copy` with `Stdio::null()` so it never blocks) and `PRIMARY` (`wl-copy --primary`), waiting ~500 ms before restoring both, lets one `Shift+Insert` paste cleanly into KDE GUI apps and terminals alike ([primary_selection.rs](https://github.com/cjpais/Handy/blob/939c9573a346859016de1f9d87369a9765af1671/src-tauri/src/primary_selection.rs#L1-L143), [settings.rs](https://github.com/cjpais/Handy/blob/939c9573a346859016de1f9d87369a9765af1671/src-tauri/src/settings.rs#L679-L685)).
 - **Copy: vocabulary echo filter.** When passing a glossary or custom words to Whisper, discard transcripts that simply echo 3+ glossary terms in list order on silent or noisy audio ([transcription.rs](https://github.com/cjpais/Handy/blob/939c9573a346859016de1f9d87369a9765af1671/src-tauri/src/managers/transcription.rs#L1624-L1650)).

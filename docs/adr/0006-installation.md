@@ -14,9 +14,7 @@ Proposed
   provisions. Installation must be practical for that person only.
 - The system is a Python package ([ADR-0005](0005-components-and-implementation.md))
   plus one C service ([ADR-0007](0007-keys-service.md)), in the public GitHub
-  repo `odsod/daemon`. The repo is `odsod/recorder` today and is renamed to
-  `odsod/daemon` before the first `daemon:setup`. `uv` and `mise` are on
-  every host.
+  repo `odsod/daemon`. `uv` and `mise` are on every host.
 - `main` is always deployable: `mise run build` gates every merge.
 - The keys service needs root to install. Everything else installs as the
   owner.
@@ -25,8 +23,8 @@ Proposed
   2026-11-23).
 - [ADR-0004](0004-orchestration-with-systemd.md) fixes the units, the pause
   flag and the notify unit. This ADR designs the code that writes them.
-- Today the old Go recorder runs on each host, and the `machine` repo
-  installs the old keyboard remapper, the KWin script and its D-Bus service.
+- Before the daemon, the `machine` repo installed the keyboard remapper,
+  the KWin script and its D-Bus service.
 
 ## Decision
 
@@ -334,9 +332,11 @@ odsodctl install || fail "odsodctl install"
   (`install-and-upgrade` AC-9). A full commit id skips the lookup, but
   `uv tool install` still needs the network and fails before it replaces
   the old environment.
-- The `machine` repo also links the per-host `config.json` into
-  `~/.config/odsod-daemon/`, and keeps the platform settings the services
-  rely on, such as the WirePlumber Bluetooth profile config.
+- Each host's `~/.config/odsod-daemon/config.json` is a plain host-local
+  file. It differs per host and holds tailnet addresses, so no repo links
+  it (owner decision, 2026-11-28).
+- The `machine` repo keeps the platform settings the services rely on,
+  such as the WirePlumber Bluetooth profile config.
 - The `machine` repo keeps the KWin settings (window rules, focus policy).
 
 #### The repo has a dev deploy
@@ -374,29 +374,12 @@ run = 'sudo "$(command -v odsodctl)" install --system'
 - A later diarization extra needs a Hugging Face token for its gated model.
   Its ADR decides how the token gets to the host.
 
-#### Migration from the old recorder and the `machine` repo
+#### Migration from the `machine` repo
 
-1. Install the daemon and run capture and pipeline beside the old Go
-   recorder. Compare until the new transcript meets `live-transcript` AC-1
-   and AC-10.
-   - The Go recorder needs whisper-server with server-side VAD (`--vad`).
-     The daemon needs it without (ADR-0012). The `machine` repo drops
-     `--vad` from the one whisper-server. A Go recorder that still uses it
-     runs without server-side VAD until it stops. A second server does not
-     fit in the GPU memory next to llama-server (owner decision,
-     2026-11-23).
-   - Both inference servers listen on the tailnet address only, not
-     `0.0.0.0` (ADR-0002). llama-server runs with `--parallel 4`, so
-     dictation cleanup never waits behind the ambient cleanup of the
-     hosts (ADR-0002, principle 9). The daemon owns these server settings
-     ([ADR-0023](0023-inference-servers.md), owner decision 2026-11-24;
-     it keeps `--host 0.0.0.0` for now).
-2. Stop the old recorder. Keep its files read-only. The vault keeps the old
-   transcripts and segments as they are. Nothing converts them.
-3. Switch the keyboard in one script: stop and disable `odsod-keys.service`,
+1. Switch the keyboard in one script: stop and disable `odsod-keys.service`,
    then start `odsod-daemon-keys.service`. Two programs cannot grab the
    same keyboard, so the order matters.
-4. The `machine` repo commit that removes the old parts (the remapper, the
+2. The `machine` repo commit that removes the old parts (the remapper, the
    KWin script `odsod` and the `io.github.odsod.kwin` D-Bus service) lands
    together with the daemon commit that replaces them, so no host is left
    with no chords (`install-and-upgrade` AC-8).

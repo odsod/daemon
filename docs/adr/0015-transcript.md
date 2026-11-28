@@ -20,10 +20,9 @@ Proposed
 - The daily transcript is append-only Markdown (ADR-0003). It is finished
   when its local day has ended and none of its utterances is pending, at
   the latest 48 h after the day ended.
-- The Go recorder writes one line per chunk in the form
-  `[HH:MM:SS] <emoji> **<tag>** <text>` and drops `mic` text that overlaps
-  `sys` text by 60% of tokens. The owner reads that format today. This ADR
-  keeps the line format and the match, and adds IDs, gaps and the finish.
+- The owner reads lines in the form `[HH:MM:SS] <emoji> **<tag>** <text>`.
+  `mic` text that overlaps `sys` text by 60% of tokens is an echo. This ADR
+  fixes the line format and the match, with IDs, gaps and the finish.
 
 ## Decision
 
@@ -230,7 +229,7 @@ dropped if it repeats it. `live-transcript` AC-6.
    all of them joined in time order (an echo can span two `sys`
    utterances). Overlap ≥ `echo_threshold` (0.6) drops the line.
 5. Overlap: `lib.textmatch.overlap(a, b)`, which implements exactly this
-   rule (from the Go recorder): lowercase, strip punctuation, split on
+   rule: lowercase, strip punctuation, split on
    space. 1.0 when one text contains the other. 0.0 when the shorter text
    has fewer than 3 tokens. Else common tokens (multiset) divided by the
    tokens of the shorter text. interactions uses the same function
@@ -434,7 +433,7 @@ Component tests use a temp state root, a fake clock and JSONL inputs in
 
 ### Participant lines in the live transcript
 
-- The Go recorder wrote a `ppl` line on each change.
+- A `ppl` line on each change of the participants.
 - Left out: no PRD needs it, and documents list the participants. Add it
   later if agents miss it.
 

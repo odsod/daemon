@@ -149,7 +149,7 @@ once in the dictation. Reply [] when nothing needs fixing.
 - **PipeWire/ALSA mic latency and mute**: First ~0.7 s of each recording can be lost while a suspended mic source wakes up (https://github.com/peteonrails/voxtype/issues/817), a muted input records silently (https://github.com/peteonrails/voxtype/issues/1061), and selecting ALSA device names fails on Ubuntu with PipeWire (https://github.com/peteonrails/voxtype/issues/1110).
 - **OSD layer-shell fragility**: OSD layer surface is lost on compositor restart (https://github.com/peteonrails/voxtype/issues/745), fails invisibly on GNOME/Mutter without `wlr-layer-shell` (https://github.com/peteonrails/voxtype/issues/807), and can outlive a crashed daemon (https://github.com/peteonrails/voxtype/issues/922).
 
-## Ideas for the recorder
+## Ideas for the daemon
 
 - **Copy `ModifierGuard` (`EVIOCGKEY` polling) for hold-Alt dictation**: Before synthesizing Ctrl+V / Ctrl+Shift+V after releasing Alt, passively poll `evdev` `EVIOCGKEY` until Alt is physically released so KWin does not see Alt+Ctrl+V ([src/output/modifier_guard.rs](https://github.com/peteonrails/voxtype/blob/4d26c1f40a71f4e9dbcedf13f1f2a887feefd96c/src/output/modifier_guard.rs#L115-L149)).
 - **Copy process-group clipboard save/restore + newer-copy guard, and add `wl-copy --sensitive`**: Run `wl-paste` in its own process group with a 2 s `killpg` timeout, verify the clipboard still holds the dictation before restoring, and pass `--sensitive` (per issue #749) so dictations do not pollute KDE Klipper ([src/output/clipboard_restore.rs](https://github.com/peteonrails/voxtype/blob/4d26c1f40a71f4e9dbcedf13f1f2a887feefd96c/src/output/clipboard_restore.rs#L105-L140), https://github.com/peteonrails/voxtype/issues/749).

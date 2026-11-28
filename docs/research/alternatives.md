@@ -74,11 +74,11 @@ These two parts of our design have no prior art in this set.
   ([Handy](handy.md#text-delivery-paste-vs-type-tools-clipboard-restore-per-app-unicode)).
   Our choice of `ydotool` holds.
 - **Silero as ONNX on onnxruntime.** The `silero-vad` package pulls torch and
-  CUDA, about 3 GB ([YazSes](yazses.md#ideas-for-the-recorder)).
+  CUDA, about 3 GB ([YazSes](yazses.md#ideas-for-the-daemon)).
   Affects: ADR-0005 libraries.
 - **Keep mic and system audio apart.** Meetily mixes them into one track and
   loses "you" versus "others" for free
-  ([Meetily](meetily.md#ideas-for-the-recorder)). hyprwhspr keeps them apart.
+  ([Meetily](meetily.md#ideas-for-the-daemon)). hyprwhspr keeps them apart.
   Affects: ADR-0003 channels.
 - **Talk to PipeWire, not PortAudio or ALSA.** hyprwhspr carries about 2,000
   lines of PortAudio workarounds. Meetily left cpal because ALSA probing made
@@ -95,7 +95,7 @@ These two parts of our design have no prior art in this set.
   request already gives this. Affects: ADR-0005 `transcription`.
 - **Resident inference server.** VOXD starts `whisper-cli` per utterance and
   pays the model load each time. Handy reports a 70 s reload after idle
-  unload on Vulkan. Affects: inference host, outside the recorder.
+  unload on Vulkan. Affects: inference host, outside the daemon.
 - **Diarize offline, assign by overlap.** WhisperX runs pyannote
   `speaker-diarization-community-1` and assigns speakers by largest time
   overlap. Affects: ADR-0005 `reprocessing` and `diarize`.

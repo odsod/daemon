@@ -534,7 +534,7 @@ spelling (AC-5), dictation latency (`dictation` AC-3, AC-21).
 
 ## Alternatives considered
 
-### Server-side VAD (the Go recorder)
+### Server-side VAD
 
 - Simple: send RMS-gated chunks, let whisper-server's Silero pick speech.
 - Rejected: chunks then span language changes and pauses, and utterances

@@ -208,5 +208,3 @@ shows the overview, [`overview.py`](../diagrams/overview.py). Regenerate with
   other voices "Others". Separate unnamed voices need diarization (Later).
 - The meeting mute relies on how meeting apps react to a muted capture stream.
   Test it with Meet and Teams before dictation ships.
-- The existing Go code is a reference for porting until the Python version
-  replaces it.

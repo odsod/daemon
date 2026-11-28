@@ -18,10 +18,10 @@ Proposed
   (`interactions` AC-13, AC-14). The live transcript marks each meeting
   start and end (`live-transcript` AC-8). Interaction boundaries split at a
   meeting change (`interactions` AC-2).
-- The Go recorder already reads these signals over the Chrome DevTools
-  Protocol (CDP). It finds the CSS class of the speaking indicator by
-  snapshot diffing, confirms it by toggles, and debounces flicker. This
-  works today. This ADR ports it and fixes its output as a stream.
+- Chrome exposes the meeting page over the Chrome DevTools Protocol
+  (CDP). The CSS class of the speaking indicator can be found by snapshot
+  diffing, confirmed by toggles, and debounced against flicker. This ADR
+  reads the signals that way and fixes the output as a stream.
 - [ADR-0010](0010-contracts-and-runtime.md) fixes the seam fields of
   `events/signals/`. [ADR-0009](0009-taxonomy-and-code-organization.md)
   rule 3 puts the browser in this subsystem only.
@@ -160,31 +160,12 @@ idle ──(tiles seen in a matching tab)──► active ──(no tiles for en
   Detection takes at most `tab_poll_s` plus `end_grace_s`, so 12 s, plus the
   transcript's own delay.
 
-#### Port source
-
-The Go recorder at the repo root is the reference. Port the behavior, not
-the code layout:
-
-| Go file                                 | Gives                                                          |
-| --------------------------------------- | -------------------------------------------------------------- |
-| `internal/speaker/detector.go`          | Discovery: snapshot diff, candidate class, toggle count        |
-| `internal/conference/meet/meet.go`      | Meet URL match, tile selector, `.notranslate` name rule, JS    |
-| `internal/conference/teams/teams.go`    | Teams URL match, `[data-tid="voice-level-stream-outline"]`, JS |
-| `internal/conference/conference.go`     | The shared provider interface                                  |
-| `internal/signals/speaker_tracker.go`   | Debounce: two polls in a row before a name speaks              |
-| `internal/signals/speaker_collector.go` | Poll loop and port scan                                        |
-
-- The Go tests seed the fixtures: `internal/speaker/detector_test.go`,
-  `internal/conference/meet/meet_test.go`,
-  `internal/conference/teams/teams_test.go`,
-  `internal/conference/teams/teams_dom_test.go` and
-  `internal/signals/speaker_tracker_test.go`. Their snapshot sequences and
-  DOM strings become `testdata/discovery/*.json` and `testdata/dom/*.html`
-  before the Go code moves to `legacy/` (ADR-0009).
+- Snapshot sequences and DOM strings live in `testdata/discovery/*.json`
+  and `testdata/dom/*.html`.
 
 #### Speaking-class discovery
 
-Meet: the Go recorder's method, kept as is:
+Meet:
 
 1. Snapshot: for each participant tile, the name and the set of CSS classes
    of all elements in the tile.
@@ -198,13 +179,13 @@ Meet: the Go recorder's method, kept as is:
 - A confirmed class is kept in memory per platform, across meetings, until
   it fails (see below) or the process ends. A restart rediscovers it in
   seconds once people speak.
-- Name rule (Meet, from the Go code): the first `.notranslate` text in the
+- Name rule (Meet): the first `.notranslate` text in the
   tile that has 3 to 49 characters, starts with a capital letter and has a
   space. Tiles with no name are left out.
 - The poll expression checks the class name against `^[A-Za-z0-9_-]+$`
   before it builds JavaScript from it.
 - Teams: the tile outline has a stable `data-tid`
-  (`voice-level-stream-outline`, from the Go code). If a saved Teams DOM
+  (`voice-level-stream-outline`). If a saved Teams DOM
   fixture shows that an attribute or class on that element marks
   speaking, the Teams poll reads it directly, with no discovery and no
   5 min wait. Until such a fixture exists, Teams uses the same discovery
@@ -220,8 +201,8 @@ Meet: the Go recorder's method, kept as is:
   `at` is the last time seen speaking plus one poll period.
 - After each poll, if the set of active speakers changed, write one
   `speaking` record with the new set.
-- These values come from the Go recorder, where they filter Meet's short
-  indicator flashes. Bench data on `interactions` AC-4 tunes them.
+- These values filter Meet's short indicator flashes. Bench data on
+  `interactions` AC-4 tunes them.
 
 #### Participants
 
@@ -251,8 +232,7 @@ Meet: the Go recorder's method, kept as is:
 
 - Outside a meeting: one HTTP request per port every 2 s.
 - In a meeting: one `Runtime.evaluate` every 250 ms on one open WebSocket.
-  The poll expression is a few DOM queries. This is below 1% of one core
-  in the Go recorder.
+  The poll expression is a few DOM queries, below 1% of one core.
 
 ### Failure modes
 
@@ -358,8 +338,7 @@ Component tests in `components/signals/tests/`. No browser.
 
 - Reads the DOM with no debug port, and gets events instead of polls.
 - Rejected: one more artifact to build, sign and install per browser, and
-  it needs a channel to the daemon. The debug port already works in the Go
-  recorder.
+  it needs a channel to the daemon. The debug port needs neither.
 
 ### Fixed CSS selectors for the speaking indicator
 
