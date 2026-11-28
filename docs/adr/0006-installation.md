@@ -383,6 +383,20 @@ run = 'sudo "$(command -v odsodctl)" install --system'
    KWin script `odsod` and the `io.github.odsod.kwin` D-Bus service) lands
    together with the daemon commit that replaces them, so no host is left
    with no chords (`install-and-upgrade` AC-8).
+3. Install already writes the session unit with
+   `BusName=io.github.odsod.daemon.session` and the D-Bus activation file,
+   since `session` is in `install.contract.SERVICES`. Nothing takes the
+   name until shortcuts runs.
+4. Ship shortcuts: the daemon commit adds `shortcuts` to the session
+   service's `COMPONENTS`. On the next `odsodctl install`, the commit
+   change restarts the session service. At start, shortcuts takes the bus
+   name, installs and loads the KWin script `odsod-daemon`, and binds the
+   chords ([ADR-0008](0008-shortcuts-and-kwin-script.md)). Per host,
+   remove the old parts first: disable and remove the KWin script `odsod`,
+   remove the `io.github.odsod.kwin` activation file, and stop the old
+   service. Then install the daemon. Both scripts use the same `[odsod]`
+   action names, and the old activation file starts the old service again
+   on the next call from the old script.
 
 ### Failure modes
 
