@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted
 
 ## Date
 
@@ -136,6 +136,25 @@ components/shortcuts/
   classes of all windows. The list holds no JavaScript.
 - Keys stay camelCase, as in the script. The pydantic model uses aliases.
 - The ported list is the one in the `machine` repo today.
+
+#### Window matches for Chrome apps
+
+Chrome on Wayland sets the window's `app_id`, which KWin reports as
+`resourceClass`. The launch flags decide the `app_id`:
+
+- `--app=<url>`: Chrome ignores `--class` and sets `app_id` to
+  `chrome-<host>__-<profile>`, such as `chrome-mail.google.com__-Default`.
+  Match these windows with `resourceClassIncludes: "<host>"`.
+- Normal mode (no `--app`): Chrome uses `--class=<Name>` as the `app_id`.
+  Pair `--class` with `--user-data-dir=<dir>` for an own profile with a
+  known `resourceClass`. A full path: the command runs with no shell, so
+  `$HOME` does not expand.
+- Plasma finds the icon and app name of a window from the desktop file
+  with the same basename as the `app_id`. The `machine` repo keeps one
+  `chrome-<host>__-Default.desktop` per app. Its `Exec=` must match the
+  command in `shortcuts.json`.
+- To see the classes of open windows, press the `debug` chord (`Meta+;`)
+  and read `journalctl --user -u odsod-daemon-session`.
 
 #### KWin script
 

@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from odsod_daemon.components import dictation, shortcuts  # noqa: F401
+from odsod_daemon.components import dictation, shortcuts
 from odsod_daemon.services.runner import ServiceSpec
 
 NAME = "session"
 
 COMPONENTS = [
     dictation,
-    # shortcuts,
+    shortcuts,
 ]
 
 SERVICE = ServiceSpec(NAME, COMPONENTS)

@@ -1,4 +1,4 @@
-# Plan: shortcuts (built with fakes, not shipped)
+# Plan: shortcuts (built with fakes, shipped 2026-11-28)
 
 - Status: Done 2026-11-23
 - Depends on: [python-scaffold](2026-11-23-python-scaffold.md)
@@ -79,7 +79,6 @@
 mise run build
 uv run pytest src/odsod_daemon/components/shortcuts
 uv run odsodctl shortcuts --json | jq -e '.shortcuts | length > 0'
-uv run python -c "from odsod_daemon.services.session import COMPONENTS; from odsod_daemon.components.install.contract import SERVICES; assert all(c.SUBSYSTEM != 'shortcuts' for c in COMPONENTS); assert 'session' not in SERVICES"
 ```
 
 ## Progress log
@@ -148,3 +147,14 @@ uv run python -c "from odsod_daemon.services.session import COMPONENTS; from ods
 - Not done here, for the ship step: add `shortcuts` to the session
   service `COMPONENTS`, write the D-Bus activation file in install, and
   remove the old package and service in the `machine` repo.
+
+## Ship step (2026-11-28)
+
+- The owner approved the ship step. The session service's `COMPONENTS`
+  lists `shortcuts`. `install.contract.SERVICES` already listed `session`,
+  so install already wrote the activation file and `BusName=`.
+- The not-shipped check left "Done when": it fails by design now.
+- `tests/test_dictation.py` runs `odsodctl run dictation --once`, not the
+  session service, so no test uses the live session bus or KWin.
+- The `machine` repo removes its KWin script and D-Bus service and does
+  the cutover per host (ADR-0006, "Migration from the `machine` repo").

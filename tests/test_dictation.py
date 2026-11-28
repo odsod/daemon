@@ -315,9 +315,11 @@ async def test_dictation_crash_cleanup_without_restart(temp_root, desktop):
         assert (temp_root / "run/muted.json").read_bytes() == record
         await until(lambda: fake.writer is None)
         # A later start clears the record and reports the recovered mutes.
+        # Run dictation alone: the session service also runs shortcuts, which
+        # would use the live session bus and KWin.
         result = await asyncio.to_thread(
             subprocess.run,
-            ["timeout", "10", "uv", "run", "odsodctl", "run", "session", "--once"],
+            ["timeout", "10", "uv", "run", "odsodctl", "run", "dictation", "--once"],
             capture_output=True,
             text=True,
             timeout=15,
