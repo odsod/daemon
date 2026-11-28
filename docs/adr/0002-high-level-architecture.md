@@ -215,7 +215,7 @@ benchmark: reads stored audio and results
 
 ## Alternatives considered
 
-### Separate repos for the keys service and the recorder
+### Separate repos for the keys service and the daemon
 
 - The keyboard daemon `odsod-keys` lived in the `machine` repo.
 - Rejected: dictation depends on it. The socket contract, both of its ends

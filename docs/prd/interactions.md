@@ -71,8 +71,7 @@
 
 ## Acceptance criteria
 
-The 5 min cutoff comes from ADR-0005. The 3-line skip limit comes from the
-old recorder's config. Other numbers are targets.
+The 5 min cutoff comes from ADR-0005. Other numbers are targets.
 
 1. **AC-1** The document is finished at most 24 h after the interaction
    ends, if all speech of the host had text for at least 1 h in that time.

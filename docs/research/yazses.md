@@ -124,7 +124,7 @@
 - **No toggle mode**: [#869](https://github.com/MSKazemi/yazses/issues/869) tracks adding press-to-start / press-to-stop toggle mode.
 - **Wayland semantic targeting / libei**: [#102](https://github.com/MSKazemi/yazses/issues/102), [#418](https://github.com/MSKazemi/yazses/issues/418), and [#818](https://github.com/MSKazemi/yazses/issues/818) track Wayland `libei` injection and GNOME/KDE Wayland assistive-tech targeting limits.
 
-## Ideas for the recorder
+## Ideas for the daemon
 
 - **Copy: Silero speech-presence gate at 0.3 threshold before Whisper decode**: RMS energy alone lets fans and key clicks through, and Whisper echoes `initial_prompt` on noise ([#598](https://github.com/MSKazemi/yazses/issues/598)). A Silero gate at `0.3` (failing open) drops noise without clipping short single-word utterances ([speech_presence.py](https://github.com/MSKazemi/yazses/blob/8ecfd4aeadcdeea8590754445653854ddc2ae82a/src/yazses/audio/speech_presence.py#L35-L51)).
 - **Copy: Critical-token + boundary-number guards on LLM cleanup**: Verifying output length ratio (`[0.5, 2.0]`) and preserving proper nouns, code identifiers, and boundary-matched numbers (`(?<![\w.])100(?!\w)`) prevents silent LLM hallucinations or altered figures, falling back to raw ASR text on rejection ([llm_cleanup.py](https://github.com/MSKazemi/yazses/blob/8ecfd4aeadcdeea8590754445653854ddc2ae82a/src/yazses/postprocess/llm_cleanup.py#L110-L215)).

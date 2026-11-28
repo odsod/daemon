@@ -177,7 +177,7 @@
 - **Python version whitelist breaks on Python 3.14+** ([issue #29](https://github.com/jakovius/voxd/issues/29)): `voxd.wrapper` hardcodes `3.9|3.10|3.11|3.12|3.13` ([packaging/voxd.wrapper](https://github.com/jakovius/voxd/blob/9c067c6f41ede6392d4f47c7475a46b689a30ce4/packaging/voxd.wrapper#L47-L49)).
 - **Global stylesheet cascade makes GUI dialogs white-on-white** ([issue #39](https://github.com/jakovius/voxd/issues/39)): `VoxdApp` sets `QWidget { color: white; }` which cascades into child dialogs with light system backgrounds ([src/voxd/gui/gui_main.py](https://github.com/jakovius/voxd/blob/9c067c6f41ede6392d4f47c7475a46b689a30ce4/src/voxd/gui/gui_main.py#L39-L43)).
 
-## Ideas for the recorder
+## Ideas for the daemon
 
 ### Copy
 

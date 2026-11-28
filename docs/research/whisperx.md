@@ -139,7 +139,7 @@ Wayland/KDE issues: Not found (no desktop integration; the single search hit [#1
 - **Wildcard alignment regressions:** Reintroducing the CTC wildcard column for digits and punctuation in v3.8.3+ brought back alignment accuracy regressions reported in [issue #1449](https://github.com/m-bain/whisperX/issues/1449) ([whisperx/alignment.py](https://github.com/m-bain/whisperX/blob/8d8e43bf3698dd1df4b011c0f1a8dd1d468ae365/whisperx/alignment.py#L314-L322)).
 - **Slow or noisy diarization:** Pyannote diarization does not expose batch size controls from the CLI and can be slow or misassign speakers on overlapping or noisy audio ([issue #274](https://github.com/m-bain/whisperX/issues/274), [issue #1208](https://github.com/m-bain/whisperX/issues/1208)).
 
-## Ideas for the recorder
+## Ideas for the daemon
 
 - **Copy: min-cut splitting for long continuous speech.** When a speaker talks past the 30-second Whisper window without a full pause, cut in the second half of the active region at the frame with the lowest VAD speech score (pyannote `Binarize`, used for both VAD backends) rather than at a hard 30-second boundary ([whisperx/vads/pyannote.py](https://github.com/m-bain/whisperX/blob/8d8e43bf3698dd1df4b011c0f1a8dd1d468ae365/whisperx/vads/pyannote.py#L140-L149)).
 - **Copy: greedy chunk merging up to a target window.** Packing short adjacent VAD utterances into chunks up to `chunk_size` (for example 15-30s for always-on recording) gives Whisper fuller sentence context and fewer short-clip hallucinations ([whisperx/vads/vad.py](https://github.com/m-bain/whisperX/blob/8d8e43bf3698dd1df4b011c0f1a8dd1d468ae365/whisperx/vads/vad.py#L20-L53)).

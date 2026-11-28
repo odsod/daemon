@@ -323,5 +323,3 @@ More components make the list in `components/` longer and never add a level.
   a process.
 - The flat list of components gets long. It stays sorted and one level deep.
 - Component tests must be excluded from the built package.
-- The Go reference code at the repo root moves to `legacy/` when the first
-  Python code lands, and goes away when the rewrite replaces it.

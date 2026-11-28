@@ -398,8 +398,8 @@ Each subsystem ADR has these sections, in this order, under `## Decision`:
 ### One config file per subsystem
 
 - Each subsystem edits only its file.
-- Rejected: the owner keeps one file per host in the `machine` repo. Sections
-  give the same ownership in one file.
+- Rejected: the owner keeps one host-local file per host. Sections give
+  the same ownership in one file.
 
 ### import-linter for the seam rule too
 

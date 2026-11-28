@@ -271,8 +271,8 @@ of the pending window, 14 days).
      tile speaks when mic bleed or the owner speaks). Widen the line's
      range by `speaker_pad_s` (0.5 s). The name with the largest overlap
      wins. No overlap, or no meeting: "Others".
-   - This is the Go recorder's rule. Bench measures it (`interactions`
-     AC-4). A wrong name never stops a document.
+   - Bench measures this rule (`interactions` AC-4). A wrong name never
+     stops a document.
 5. **Skip.** At most `skip_max_lines` (3) speech lines and no note line:
    `skipped`, with no document. Any note, or more speech lines: always a
    document. The rule is deterministic, so a restart gives the same
@@ -383,7 +383,7 @@ Component tests use a temp state root, a fake clock and JSONL inputs.
 
 ### Multi-speaker attribution with percentages
 
-- The Go recorder writes `[Alice 70% / Bob 30%]` when two speakers overlap.
+- Write `[Alice 70% / Bob 30%]` when two speakers overlap.
 - Left out: the PRD wants one name per line. Largest overlap is simpler,
   and bench measures the error.
 

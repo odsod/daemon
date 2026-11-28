@@ -135,8 +135,7 @@ components/shortcuts/
 - `debug` replaces the old inline callback: the script logs the window
   classes of all windows. The list holds no JavaScript.
 - Keys stay camelCase, as in the script. The pydantic model uses aliases.
-- The ported list is the one in the `machine` repo today. Entries that call
-  the old recorder change to `odsodctl` commands in the same commit.
+- The ported list is the one in the `machine` repo today.
 
 #### KWin script
 

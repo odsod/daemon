@@ -51,9 +51,6 @@
   model reloads.
 - The first `daemon:setup` replaces the old remapper, KWin script and D-Bus
   service from the `machine` repo in one step, with no step by the owner.
-- Move from the old Go recorder → the new system records next to the old
-  one until the new transcript is good. Then the old recorder stops. Its
-  old transcripts stay where they are.
 
 ### When something fails
 
@@ -128,8 +125,6 @@ during an upgrade is `ambient-recording` AC-4.
 - Hosts that the `machine` repo does not provision, or other Linux
   distributions.
 - Secrets read by running services.
-- Conversion of the old recorder's transcripts and segments. They stay as
-  they are.
 - A live link from the workspace to the running system. Each change goes
   through `deploy` (owner decision, 2026-11-23).
 

@@ -158,7 +158,7 @@ recording"** (config key `muteSystemAudioDuringRecording`), in
   - the mic stops mid-recording (`E-AUD-01`)
   - speakers stay muted after quit (`E-MUT-04`)
 
-## Ideas for the recorder
+## Ideas for the daemon
 
 - **Mute the browser's capture stream, not a virtual mic.** The PulseAudio
   protocol has `SetSourceOutputMute`. While the owner dictates, `mute` could
@@ -167,7 +167,7 @@ recording"** (config key `muteSystemAudioDuringRecording`), in
   `application.name`. The meeting hears nothing, and `capture` still reads the
   physical mic node. This could remove the virtual meeting mic from ADR-0005.
   Test it with Meet first: Meet may react to a silent stream.
-- **Restore only what the recorder changed.** Remember each stream it muted.
+- **Restore only what the daemon changed.** Remember each stream it muted.
   Skip streams that were muted before. Handle streams that end during
   dictation.
 - **Clear stale mutes at start.** A crash between mute and unmute leaves the

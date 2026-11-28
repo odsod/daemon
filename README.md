@@ -24,10 +24,7 @@ owner uses one CLI, `odsodctl`.
 
 ## Status
 
-- The Python daemon replaces the Go recorder. It runs capture, pipeline and
-  tray as systemd user services.
-- The Go recorder is gone from the tree. Its last version is in the history
-  before this change.
+- The daemon runs capture, pipeline and tray as systemd user services.
 - Dictation and keys wait for the keyboard cutover, see
   [`docs/plans/`](docs/plans/README.md).
 
